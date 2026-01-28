@@ -27,8 +27,8 @@ export interface PlayerStats {
 }
 
 export async function getLeaderboardData(): Promise<PlayerStats[]> {
-    // Locate the file in the project root
-    const filePath = path.join(process.cwd(), 'E.P.T. 2026.xlsx');
+    // Locate the file in the public directory (better for Vercel deployment)
+    const filePath = path.join(process.cwd(), 'public', 'E.P.T. 2026.xlsx');
 
     if (!fs.existsSync(filePath)) {
         console.warn(`Spreadsheet not found at ${filePath}`);
@@ -195,7 +195,7 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
 export async function getGlobalStats() {
     // We need to fetch the explicit stats from the sheet as shown in the screenshot
     // "2026 League Statistics" block
-    const filePath = path.join(process.cwd(), 'E.P.T. 2026.xlsx');
+    const filePath = path.join(process.cwd(), 'public', 'E.P.T. 2026.xlsx');
     if (!fs.existsSync(filePath)) return { totalPot: 0, nextGameDate: 'TBD' };
 
     const buffer = fs.readFileSync(filePath);
