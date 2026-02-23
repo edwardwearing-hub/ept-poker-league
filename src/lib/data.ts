@@ -4,10 +4,26 @@ import fs from 'fs';
 import { google } from 'googleapis';
 
 async function getSheetsClient() {
-    const auth = new google.auth.GoogleAuth({
-        keyFile: path.join(process.cwd(), 'google-credentials.json'),
-        scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-    });
+    let auth;
+
+    // Check if we are running in Vercel/Production with ENV variables injected
+    if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+        auth = new google.auth.GoogleAuth({
+            credentials: {
+                client_email: process.env.GOOGLE_CLIENT_EMAIL,
+                // Ensure \n characters in the Vercel string correctly parse to literal newlines
+                private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n')
+            },
+            scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+        });
+    } else {
+        // Fallback for Local Development
+        auth = new google.auth.GoogleAuth({
+            keyFile: path.join(process.cwd(), 'google-credentials.json'),
+            scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+        });
+    }
+
     return google.sheets({ version: 'v4', auth });
 }
 
