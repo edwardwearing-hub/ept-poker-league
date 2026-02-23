@@ -46,7 +46,7 @@ export default function PokerDictionary() {
                         </div>
                     ))
                 ) : (
-                    <p className="text-gray-500 italic text-center py-4">No terms found matching "{search}"</p>
+                    <p className="text-gray-500 italic text-center py-4">No terms found matching &quot;{search}&quot;</p>
                 )}
             </div>
         </div>

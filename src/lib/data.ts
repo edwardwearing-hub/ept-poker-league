@@ -114,7 +114,7 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
 
     const defaults = ["/avatars/avatar_hoodie.png"];
 
-    const parseMoney = (val: any) => {
+    const parseMoney = (val: string | number | undefined | null) => {
         if (!val) return 0;
         if (typeof val === 'number') return val;
         return parseFloat(val.toString().replace(/[^0-9.-]+/g, "")) || 0;
@@ -139,7 +139,7 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
         let bullied = "N/A";
         let winPct = 0;
         let avgKo = 0;
-        let cashFlow: { date: string; profit: number }[] = [];
+        const cashFlow: { date: string; profit: number }[] = [];
 
         // Check the batched responses for this player's specific sheet
         const pRange = valueRanges.find(r => r.range?.toLowerCase().includes(matchedName.toLowerCase()));
@@ -160,7 +160,7 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
                     if (!dateRaw && !profitRaw) continue;
                     if (dateRaw === "Total") continue;
 
-                    let dateStr = dateRaw ? String(dateRaw) : `G${c}`;
+                    const dateStr = dateRaw ? String(dateRaw) : `G${c}`;
                     if (profitRaw !== undefined && profitRaw !== null && profitRaw !== "") {
                         cashFlow.push({
                             date: dateStr,

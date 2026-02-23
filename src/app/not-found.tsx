@@ -17,7 +17,7 @@ export default function NotFound() {
             </h2>
 
             <p className="text-gray-400 max-w-md mb-10 text-lg">
-                The table you're looking for doesn't exist, has been moved, or the dealer misdealt the cards.
+                The table you&apos;re looking for doesn&apos;t exist, has been moved, or the dealer misdealt the cards.
             </p>
 
             <Link

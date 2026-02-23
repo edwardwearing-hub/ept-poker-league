@@ -124,10 +124,10 @@ export default async function PlayerProfile({ params }: Props) {
                 </div>
                 <div className="relative z-10">
                     <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                        <span className="text-gold">★</span> The Analyst's Take
+                        <span className="text-gold">★</span> The Analyst&apos;s Take
                     </h3>
                     <div className="prose prose-invert max-w-none">
-                        <h4 className="text-2xl font-black text-white italic tracking-tight mb-4">"{report.headline}"</h4>
+                        <h4 className="text-2xl font-black text-white italic tracking-tight mb-4">&quot;{report.headline}&quot;</h4>
                         <p className="text-lg text-zinc-300 leading-relaxed">
                             {report.body}
                         </p>

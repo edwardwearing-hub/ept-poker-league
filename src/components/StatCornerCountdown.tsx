@@ -7,7 +7,11 @@ export default function StatCornerCountdown({ targetDateStr }: { targetDateStr: 
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
-        setIsMounted(true);
+        const timer = setTimeout(() => setIsMounted(true), 0);
+        return () => clearTimeout(timer);
+    }, []);
+
+    useEffect(() => {
         const targetDate = new Date(targetDateStr).getTime();
 
         const calculateTimeLeft = () => {

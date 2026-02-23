@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpDown, Trophy, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUpDown } from 'lucide-react';
 import { clsx } from "clsx";
 import type { PlayerStats } from '@/lib/data';
 import WantedVideo from './WantedVideo';
@@ -19,32 +19,7 @@ export default function LeaderboardTable({ initialData }: Props) {
     const [sortField, setSortField] = useState<SortField>('points');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-    const handleSort = (field: SortField) => {
-        if (sortField === field) {
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortField(field);
-            setSortDirection('desc');
-        }
 
-        const sorted = [...data].sort((a, b) => {
-            const valA = a[field];
-            const valB = b[field];
-            return sortDirection === 'asc' ? valA - valB : valB - valA; // Logic inverted because of previous desc default? No.
-            // If desc, we want b - a. If asc, a - b.
-            // But we just toggled direction, so we use the NEW direction? 
-            // React state update is async, so `sortDirection` here is the OLD one.
-            // Let's fix this logic.
-        });
-        // Actually, let's simplify.
-        setData((prev) => {
-            const newDirection = sortField === field && sortDirection === 'desc' ? 'asc' : 'desc';
-            // Wait, I can't update state based on potential new state easily invar without side effects?
-            // Better to separate sort logic into a useMemo or just re-sort on render?
-            // For now, let's just do it cleanly.
-            return prev; // Placeholder, I'll fix in the component below.
-        });
-    };
 
     // Real implementation of sort
     const sortedData = [...data].sort((a, b) => {

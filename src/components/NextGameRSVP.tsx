@@ -33,7 +33,7 @@ export default function NextGameRSVP() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ player, isPlaying: newState })
             });
-        } catch (error) {
+        } catch {
             // Revert on error
             setRegistrations(prev => ({ ...prev, [player]: !newState }));
         } finally {

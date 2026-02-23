@@ -52,7 +52,7 @@ export default function LeagueProTips() {
 
                         {openIndex === idx && (
                             <div className="p-4 bg-black/60 border-t border-gray-800 text-gray-300 text-sm leading-relaxed">
-                                <p className="mb-3">"{item.tip}"</p>
+                                <p className="mb-3">&quot;{item.tip}&quot;</p>
                                 <div className="flex gap-2">
                                     {item.tags.map(tag => (
                                         <span key={tag} className="text-xs px-2 py-1 bg-gray-800 rounded-full text-[#cfb53b] border border-[#cfb53b]/30">

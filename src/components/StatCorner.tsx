@@ -1,6 +1,6 @@
 
 import { getGlobalStats } from '@/lib/data';
-import { Coins, Calendar, Trophy } from 'lucide-react';
+import { Coins, Calendar } from 'lucide-react';
 import StatCornerCountdown from './StatCornerCountdown';
 
 export default async function StatCorner() {

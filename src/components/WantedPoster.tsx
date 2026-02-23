@@ -1,5 +1,5 @@
 
-import { type PlayerStats, getLeaderboardData } from "@/lib/data";
+import { getLeaderboardData } from "@/lib/data";
 import WantedVideo from "./WantedVideo";
 
 export default async function WantedPoster() {
@@ -27,7 +27,7 @@ export default async function WantedPoster() {
                 </div>
 
                 <h2 className="text-2xl font-bold uppercase mb-1 text-center leading-none">{target?.name}</h2>
-                <p className="text-xs uppercase font-bold text-[#3e3221]/70 mb-4">The "Bounty" Hunter</p>
+                <p className="text-xs uppercase font-bold text-[#3e3221]/70 mb-4">The &quot;Bounty&quot; Hunter</p>
 
                 <div className="w-full border-t-2 border-b-2 border-[#3e3221] py-2 mb-4 text-center">
                     <div className="text-xs uppercase font-bold">Current Bounty</div>

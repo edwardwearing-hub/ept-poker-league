@@ -14,7 +14,12 @@ export default function NextGameCountdown() {
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
-        setIsMounted(true);
+        const timer = setTimeout(() => setIsMounted(true), 0);
+        return () => clearTimeout(timer);
+    }, []);
+
+    useEffect(() => {
+        if (!isMounted) return;
         fetch('/api/admin/countdown')
             .then(res => res.json())
             .then(data => {
@@ -23,7 +28,7 @@ export default function NextGameCountdown() {
                 }
             })
             .catch(console.error);
-    }, []);
+    }, [isMounted]);
 
     useEffect(() => {
         if (!targetDate) return;

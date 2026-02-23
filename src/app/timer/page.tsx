@@ -30,7 +30,7 @@ export default function BlindsTimer() {
     const [wakeLockEnabled, setWakeLockEnabled] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [chips, setChips] = useState(DEFAULT_CHIPS);
-    const wakeLockRef = useRef<any>(null);
+    const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const updateChip = (index: number, field: string, value: string | number) => {
@@ -86,27 +86,34 @@ export default function BlindsTimer() {
     }, []);
 
     useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (isRunning && timeLeft > 0) {
-            interval = setInterval(() => {
-                setTimeLeft((prev) => prev - 1);
-            }, 1000);
-        } else if (isRunning && timeLeft === 0) {
-            // Level Up!
-            if (soundEnabled && audioRef.current) {
-                audioRef.current.play().catch(e => console.log('Audio error:', e));
-            }
+        let interval: NodeJS.Timeout | null = null;
 
-            if (currentLevelIdx < levels.length - 1) {
-                const nextIdx = currentLevelIdx + 1;
-                setCurrentLevelIdx(nextIdx);
-                setTimeLeft(levels[nextIdx].duration * 60);
-            } else {
-                setIsRunning(false);
-            }
+        if (isRunning) {
+            interval = setInterval(() => {
+                setTimeLeft((prev) => {
+                    if (prev > 0) return prev - 1;
+
+                    // Level Up!
+                    if (soundEnabled && audioRef.current) {
+                        audioRef.current.play().catch(e => console.log('Audio error:', e));
+                    }
+
+                    if (currentLevelIdx < levels.length - 1) {
+                        const nextIdx = currentLevelIdx + 1;
+                        setCurrentLevelIdx(nextIdx);
+                        return levels[nextIdx].duration * 60;
+                    } else {
+                        setIsRunning(false);
+                        return 0;
+                    }
+                });
+            }, 1000);
         }
-        return () => clearInterval(interval);
-    }, [isRunning, timeLeft, currentLevelIdx, levels, soundEnabled]);
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isRunning, currentLevelIdx, levels, soundEnabled]);
 
     const toggleTimer = () => setIsRunning(!isRunning);
 
@@ -135,15 +142,18 @@ export default function BlindsTimer() {
         if ('wakeLock' in navigator) {
             try {
                 if (!wakeLockEnabled) {
-                    wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+                    // Type-safe check for wakeLock in navigator
+                    const nav = navigator as unknown as { wakeLock: { request: (type: string) => Promise<any> } };
+                    wakeLockRef.current = await nav.wakeLock.request('screen');
                     setWakeLockEnabled(true);
                 } else {
                     await wakeLockRef.current?.release();
                     wakeLockRef.current = null;
                     setWakeLockEnabled(false);
                 }
-            } catch (err: any) {
-                console.error(`${err.name}, ${err.message}`);
+            } catch (err) {
+                const error = err as Error;
+                console.error(`${error.name}, ${error.message}`);
             }
         } else {
             alert("Wake Lock API not supported in this browser.");
