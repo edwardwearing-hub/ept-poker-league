@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Users, BarChart2, Radio, Skull, Trophy, Table } from 'lucide-react';
+import { Home, Users, BarChart2, Radio, Skull, Trophy, Table, GraduationCap, Gamepad2, Clock, Shield } from 'lucide-react';
 import { clsx } from 'clsx';
 import RiverReportPlayer from './RiverReportPlayer';
 import SidebarCountdown from './SidebarCountdown';
@@ -10,14 +10,18 @@ import NextGameRSVP from './NextGameRSVP';
 const navItems = [
     { name: 'League Home', href: '/', icon: Home },
     { name: 'Leaderboard', href: '/#leaderboard', icon: Trophy },
+    { name: 'The Academy', href: '/academy', icon: GraduationCap },
+    { name: 'Poker Engine', href: '/game', icon: Gamepad2 },
+    { name: 'Blinds Timer', href: '/timer', icon: Clock },
     { name: 'Scouting Reports', href: '/scouting', icon: Users },
     { name: 'Wanted Posters', href: '/wanted', icon: Skull },
     { name: 'League Sheet', href: '/table', icon: Table },
     { name: 'Stat Corner', href: '/stats', icon: BarChart2 },
+    { name: 'Admin Update', href: '/admin-update', icon: Shield },
 ];
 
 interface Props {
-    stats: { totalPot: number; nextGameDate: string };
+    stats: { totalPot: number; totalSidePot?: number; nextGameDate: string };
     onLinkClick?: () => void;
 }
 
@@ -52,9 +56,28 @@ export default function SidebarContent({ stats, onLinkClick }: Props) {
                     ))}
                 </nav>
 
-                {/* Next Game Countdown */}
-                <div className="px-4 pt-4">
+                {/* Next Game Countdown and Stats */}
+                <div className="px-4 pt-4 space-y-4">
                     <SidebarCountdown targetDateStr={stats.nextGameDate} />
+
+                    <div className="bg-black/30 border border-white/5 rounded-xl p-4 text-center">
+                        <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">
+                            Main Pot
+                        </div>
+                        <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gold to-[#ffe578]">
+                            £{stats.totalPot}
+                        </div>
+                        {stats.totalSidePot !== undefined && stats.totalSidePot > 0 && (
+                            <div className="mt-3 pt-3 border-t border-white/5">
+                                <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">
+                                    Total Side Pot
+                                </div>
+                                <div className="text-lg font-black text-gray-300">
+                                    £{stats.totalSidePot}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* RSVP Widget */}

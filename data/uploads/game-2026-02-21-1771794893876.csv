@@ -1,0 +1,12 @@
+Player,Position,Winnings,Rebuys,AddOns,KOs,KOsDetails,KnockedOutBy,Date,PotTotal,SidePot
+Edward Wearing,3,,,1,1,"Daniel Horne","Chris Daly",2026-02-21,150,10
+Georgina Wearing,2,40,,1,,,"Chris Daly",2026-02-21,150,10
+Luke Daly,4,,1,1,2,"Liam Duxbury, Dave Taylor","Chris Daly, Liam Duxbury",2026-02-21,150,10
+Daniel Horne,5,,,1,,,"Edward Wearing",2026-02-21,150,10
+Darren Daly,,100,,,,,,2026-02-21,150,10
+Chris Daly,1,,,1,3,"Edward Wearing, Georgina Wearing, Luke Daly",,2026-02-21,150,10
+Stephen Flood,,,,,,,,2026-02-21,150,10
+Phil Landsberger,,,,,,,,2026-02-21,150,10
+Liam Duxbury,7,,,1,1,"Liam Duxbury","Luke Daly",2026-02-21,150,10
+Nathen Benson,,,,,,,,2026-02-21,150,10
+Dave Taylor,6,,,1,,,"Luke Daly",2026-02-21,150,10

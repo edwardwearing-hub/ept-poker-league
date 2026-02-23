@@ -1,11 +1,23 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Play, Pause, SkipForward, Volume2 } from 'lucide-react';
 
 export default function RiverReportPlayer() {
     const [isPlaying, setIsPlaying] = useState(false);
+    const [report, setReport] = useState({ title: 'The Flop', episode: 'Episode 4' });
+
+    useEffect(() => {
+        fetch('/api/admin/report')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.error) {
+                    setReport(data);
+                }
+            })
+            .catch(console.error);
+    }, []);
 
     return (
         <div className="bg-charcoal-dark border border-white/5 rounded-lg p-3">
@@ -14,7 +26,7 @@ export default function RiverReportPlayer() {
                     <span className="text-lg">🎙️</span>
                 </div>
                 <div className="overflow-hidden">
-                    <h4 className="text-sm font-semibold text-white truncate">Episode 4: The Flop</h4>
+                    <h4 className="text-sm font-semibold text-white truncate">{report.episode}: {report.title}</h4>
                     <p className="text-xs text-zinc-500 truncate">Host: The Dealer</p>
                 </div>
             </div>

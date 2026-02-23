@@ -1,6 +1,7 @@
 
 import { getGlobalStats } from '@/lib/data';
 import { Coins, Calendar, Trophy } from 'lucide-react';
+import StatCornerCountdown from './StatCornerCountdown';
 
 export default async function StatCorner() {
     const stats = await getGlobalStats();
@@ -27,17 +28,7 @@ export default async function StatCorner() {
                 <div className="text-xl font-bold text-white">
                     {stats.nextGameDate}
                 </div>
-                <div className="mt-2 flex gap-2 text-center">
-                    {/* Simplified static countdown for demo - typically would use client component for tick */}
-                    <div className="bg-black/30 rounded p-1.5 min-w-[3rem]">
-                        <div className="text-lg font-bold text-ept-red">24</div>
-                        <div className="text-[9px] uppercase text-zinc-500">Days</div>
-                    </div>
-                    <div className="bg-black/30 rounded p-1.5 min-w-[3rem]">
-                        <div className="text-lg font-bold text-white">08</div>
-                        <div className="text-[9px] uppercase text-zinc-500">Hrs</div>
-                    </div>
-                </div>
+                <StatCornerCountdown targetDateStr={stats.nextGameDate} />
             </div>
         </div>
     );

@@ -1,8 +1,29 @@
 'use client';
 
 import { FileText, Calendar, Trophy } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import WantedVideo from './WantedVideo';
 
 export default function LastGameReport() {
+    const [report, setReport] = useState({
+        title: 'Loading...',
+        episode: '',
+        date: '',
+        winner: 'Edward Wearing', // default for video
+        content: 'Loading latest report...'
+    });
+
+    useEffect(() => {
+        fetch('/api/admin/report')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.error) {
+                    setReport(data);
+                }
+            })
+            .catch(console.error);
+    }, []);
+
     return (
         <div className="glass-panel p-8 rounded-2xl border-l-4 border-gold relative overflow-hidden group">
 
@@ -17,32 +38,45 @@ export default function LastGameReport() {
                     <div>
                         <h2 className="text-sm font-bold uppercase tracking-widest text-gold">Latest League Report</h2>
                         <div className="text-xs text-zinc-500 font-mono flex items-center gap-2">
-                            <Calendar size={12} /> January 24, 2026
+                            <Calendar size={12} /> {report.date}
                         </div>
                     </div>
                 </div>
 
-                <div className="space-y-6">
-                    <h1 className="text-4xl font-black text-white italic tracking-tight uppercase leading-none">
-                        "The Flop" <span className="text-zinc-600 block text-2xl mt-1">Episode 1</span>
-                    </h1>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <div className="lg:col-span-7 space-y-6">
+                        <h1 className="text-4xl font-black text-white italic tracking-tight uppercase leading-none">
+                            {report.title} <span className="text-zinc-600 block text-2xl mt-1">{report.episode}</span>
+                        </h1>
 
-                    <div className="prose prose-invert max-w-none text-zinc-300 leading-relaxed">
-                        <p>
-                            The chips were flying in Episode 4 as <strong>Liam Duxbury</strong> solidified his position at the top of the table.
-                            The night saw intense action, with the "Bounty" <strong>Edward Wearing</strong> taking significant heat from his rivals.
-                        </p>
-                        <p>
-                            Notable plays included a massive river bluff that secured the pot leader position for <strong>Luke Daly</strong>,
-                            keeping him in close contention for the crown.
-                        </p>
+                        <div className="prose prose-invert max-w-none text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                            {report.content}
+                        </div>
+
+                        <div className="flex items-center gap-4 pt-4 border-t border-white/5">
+                            <div className="flex items-center gap-2">
+                                <Trophy className="text-gold w-4 h-4" />
+                                <span className="text-white font-bold text-sm">Winner:</span>
+                                <span className="text-gold font-mono font-bold">{report.winner}</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-4 pt-4 border-t border-white/5">
-                        <div className="flex items-center gap-2">
-                            <Trophy className="text-gold w-4 h-4" />
-                            <span className="text-white font-bold text-sm">Winner:</span>
-                            <span className="text-gold font-mono font-bold">Liam Duxbury</span>
+                    <div className="lg:col-span-5 w-full bg-black rounded-xl overflow-hidden border-2 border-gold/30 shadow-[0_0_30px_rgba(212,175,55,0.2)] relative group/video flex items-center justify-center min-h-[250px]">
+                        {/* Winner's Highlight Video */}
+                        <WantedVideo
+                            playerName={report.winner}
+                            className="w-full h-auto max-h-[500px] object-contain grayscale contrast-125 transition-opacity z-10"
+                        />
+
+                        {/* Dramatic Overlay */}
+                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" />
+                        <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1 bg-ept-red/90 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-lg backdrop-blur z-10">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                            Live Cam
+                        </div>
+                        <div className="absolute bottom-4 left-4 right-4 text-center z-10 pointer-events-none">
+                            <span className="text-gold font-black uppercase text-2xl tracking-widest drop-shadow-[0_2px_10px_rgba(0,0,0,1)]">Champion</span>
                         </div>
                     </div>
                 </div>

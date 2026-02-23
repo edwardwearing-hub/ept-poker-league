@@ -1,10 +1,12 @@
 
 import { type PlayerStats, getLeaderboardData } from "@/lib/data";
+import WantedVideo from "./WantedVideo";
 
 export default async function WantedPoster() {
     const players = await getLeaderboardData();
-    const target = players.find(p => p.name.includes("Edward")) || players[0]; // Default to first if not found
-    const rivals = players.filter(p => p.name !== target?.name).slice(0, 7);
+    const sortedPlayers = [...players].sort((a, b) => b.points - a.points);
+    const target = sortedPlayers[0];
+    const rivals = sortedPlayers.slice(1, 8);
 
     return (
         <div className="bg-[#e4dccb] text-[#3e3221] p-1 rounded-sm shadow-xl transform rotate-1 hover:rotate-0 transition-transform duration-300">
@@ -14,12 +16,14 @@ export default async function WantedPoster() {
                     Dead or Alive
                 </div>
 
-                <div className="w-32 h-32 bg-zinc-800 grayscale contrast-125 mb-4 border-2 border-[#3e3221] flex items-center justify-center overflow-hidden">
-                    {target?.name.includes("Edward") ? (
-                        <img src="/avatars/edward.png" alt="Wanted Target" className="w-full h-full object-cover" />
-                    ) : (
-                        <span className="text-4xl text-white font-serif">{target?.name.charAt(0)}</span>
-                    )}
+                <div className="w-32 h-32 bg-zinc-800 border-2 border-[#3e3221] flex items-center justify-center overflow-hidden relative group">
+                    {/* Video Background Layer (Client Component) */}
+                    {target?.name && <WantedVideo playerName={target.name} />}
+
+                    {/* Fallback Layer (Letter) */}
+                    <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center z-0">
+                        <span className="text-4xl text-white font-serif">{target?.name?.charAt(0)}</span>
+                    </div>
                 </div>
 
                 <h2 className="text-2xl font-bold uppercase mb-1 text-center leading-none">{target?.name}</h2>

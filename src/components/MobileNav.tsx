@@ -6,7 +6,7 @@ import SidebarContent from './SidebarContent';
 import { clsx } from 'clsx';
 
 interface Props {
-    stats: { totalPot: number; nextGameDate: string };
+    stats: { totalPot: number; totalSidePot?: number; nextGameDate: string };
 }
 
 export default function MobileNav({ stats }: Props) {

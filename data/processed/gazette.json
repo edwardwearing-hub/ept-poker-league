@@ -1,0 +1,15 @@
+{
+  "headline": "Epic Clash on 2026-02-21!",
+  "date": "2026-02-21",
+  "potTotal": "100",
+  "winner": {
+    "name": "Edward Wearing",
+    "profit": 95,
+    "winnings": 100
+  },
+  "biggestLoser": {
+    "name": "Edward Wearing",
+    "profit": 95,
+    "spent": 5
+  }
+}

@@ -27,6 +27,7 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${outfit.variable} antialiased bg-charcoal text-foreground min-h-screen`}
+        suppressHydrationWarning
       >
         {/* Mobile Navigation (Visible on small screens) */}
         <MobileNav stats={stats} />

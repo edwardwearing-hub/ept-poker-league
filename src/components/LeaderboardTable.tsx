@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { ArrowUpDown, Trophy, ArrowUp, ArrowDown } from 'lucide-react';
 import { clsx } from "clsx";
 import type { PlayerStats } from '@/lib/data';
+import WantedVideo from './WantedVideo';
 
 interface Props {
     initialData: PlayerStats[];
@@ -96,10 +97,11 @@ export default function LeaderboardTable({ initialData }: Props) {
                         </div>
 
                         <div className="col-span-4 flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-charcoal-light border border-white/10 overflow-hidden relative">
-                                {/* Avatar Placeholder - User requested Nano Banana Pro style avatars. 
-                     I don't have the images yet, so I'll use a gradient or generic. */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-charcoal to-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500">
+                            <div className="h-10 w-10 rounded-full bg-charcoal-light border border-white/10 overflow-hidden relative group-hover:border-[#cfb53b] transition-colors">
+                                {/* Video Profile layer */}
+                                <WantedVideo playerName={player.name} />
+
+                                <div className="absolute inset-0 bg-gradient-to-br from-charcoal to-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500 z-0">
                                     {player.name.substring(0, 2).toUpperCase()}
                                 </div>
                             </div>
