@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 interface Props {
     params: Promise<{ name: string }>;

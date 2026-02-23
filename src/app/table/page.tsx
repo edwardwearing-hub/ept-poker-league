@@ -2,6 +2,8 @@ import { getLeaderboardData } from '@/lib/data';
 import FullLeagueTable from '@/components/FullLeagueTable';
 import { Table } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function TablePage() {
     const players = await getLeaderboardData();
 

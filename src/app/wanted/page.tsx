@@ -3,6 +3,7 @@ import WantedPosterCard from "@/components/WantedPosterCard";
 import { Users } from "lucide-react";
 
 export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 export default async function WantedPage() {
     const players = await getLeaderboardData();

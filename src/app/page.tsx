@@ -5,7 +5,8 @@ import StatCorner from "@/components/StatCorner";
 import LastGameReport from "@/components/LastGameReport";
 import NextGameCountdown from "@/components/NextGameCountdown";
 
-export const revalidate = 0; // Ensure fresh data on every request
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 export default function Home() {
   return (
