@@ -23,7 +23,7 @@ export default function WantedPosterCard({ player, isTarget }: Props) {
                     <div className="border-[3px] border-[#3e3221] p-4 flex flex-col items-center relative overflow-hidden">
 
                         {/* Texture Overlay */}
-                        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 pointer-events-none mix-blend-multiply"></div>
+
 
                         <h3 className="text-3xl font-extrabold tracking-widest uppercase mb-1 z-10" style={{ fontFamily: 'serif' }}>Wanted</h3>
                         <div className="text-xs font-bold uppercase tracking-widest mb-3 border-b-2 border-[#3e3221] pb-1 w-full text-center z-10">

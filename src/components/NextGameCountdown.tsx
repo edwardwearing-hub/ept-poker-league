@@ -60,7 +60,6 @@ export default function NextGameCountdown() {
 
             {/* Decorative Gradients */}
             <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-transparent to-transparent" />
-            <div className="absolute inset-0 bg-[url('/images/noise.png')] opacity-[0.03] mix-blend-overlay" />
 
             {/* Content */}
             <div className="relative z-10 text-center max-w-5xl mx-auto flex flex-col items-center">

@@ -228,20 +228,14 @@ export async function getGlobalStats() {
         const sheets = await getSheetsClient();
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: 'Sheet1!A1:AA100',
+            range: 'Sheet1!AF25', // User requested explicit mapping to AF25
         });
 
-        const jsonData = response.data.values || [];
+        const jsonData = response.data.values;
 
-        // Search the 2D array grid for the "Total Side Pot" or similar labels
-        for (const row of jsonData) {
-            if (row.includes("Total Pot") || row.includes("Total Side Pot")) {
-                const idx = row.findIndex(c => typeof c === 'string' && (c.includes("Total Pot") || c.includes("Total Side Pot")));
-                if (idx !== -1 && row[idx + 1]) {
-                    const matchedVal = parseFloat(row[idx + 1].toString().replace(/[^0-9.-]+/g, ""));
-                    if (!isNaN(matchedVal)) totalPot = matchedVal;
-                }
-            }
+        if (jsonData && jsonData[0] && jsonData[0][0]) {
+            const rawPot = jsonData[0][0].toString().replace(/[^0-9.-]+/g, "");
+            if (rawPot) totalPot = parseFloat(rawPot);
         }
 
     } catch (e) {
