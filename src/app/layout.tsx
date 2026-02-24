@@ -11,6 +11,8 @@ const outfit = Outfit({
   weight: ['300', '400', '500', '700'],
 });
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "E.P.T. 2026 Poker League",
   description: "The official league tracker for E.P.T. 2026",
