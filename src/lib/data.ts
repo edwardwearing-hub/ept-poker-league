@@ -52,7 +52,7 @@ export interface PlayerStats {
 }
 
 export async function getLeaderboardData(): Promise<PlayerStats[]> {
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
     if (!spreadsheetId) {
         console.warn("No GOOGLE_SHEET_ID provided in .env.local");
         return [];
@@ -217,7 +217,7 @@ export async function getGlobalStats() {
     let totalPot = 0;
     let nextGameDate = 'February 21, 2026';
 
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
     if (!spreadsheetId) return { totalPot: 0, totalSidePot: 0, nextGameDate: 'TBD' };
 
     try {
