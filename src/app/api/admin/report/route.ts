@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getLeaderboardData, getSheetsClient } from '@/lib/data';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function GET() {
     try {
@@ -47,8 +48,8 @@ export async function POST(request: Request) {
 
         // If the user provided notes and we have an API key, generate a story
         if (payload.content) {
-            if (!process.env.OPENAI_API_KEY) {
-                aiFallbackMsg = "Missing OPENAI_API_KEY in Vercel Environment Variables. Fell back to raw notes.";
+            if (!process.env.GEMINI_API_KEY) {
+                aiFallbackMsg = "Missing GEMINI_API_KEY in Vercel Environment Variables. Fell back to raw notes.";
                 console.warn(aiFallbackMsg);
             } else {
                 console.log("Generating AI Report from notes...");
@@ -63,36 +64,17 @@ export async function POST(request: Request) {
                     console.error("Failed to fetch standings for AI context", e);
                 }
 
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-                    },
-                    body: JSON.stringify({
-                        model: 'gpt-4o-mini',
-                        messages: [
-                            {
-                                role: 'system',
-                                content: `You are the snarky, engaging sports journalist for "The E.P.T. Gazette" poker league. Write a fun, dramatic, 150-word newspaper-style report based EXACTLY on the raw bullet-point notes. Make it sound like a high-stakes casino recap. Reference the players' current leaderboard standings if relevant.` + standingsContext
-                            },
-                            {
-                                role: 'user',
-                                content: `RAW GAME NOTES:\n${payload.content}`
-                            }
-                        ],
-                        temperature: 0.7
-                    })
-                });
+                try {
+                    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+                    const systemInstruction = `You are the snarky, engaging sports journalist for "The E.P.T. Gazette" poker league. Write a fun, dramatic, 150-word newspaper-style report based EXACTLY on the raw bullet-point notes. Make it sound like a high-stakes casino recap. Reference the players' current leaderboard standings if relevant.${standingsContext}`;
+                    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction });
 
-                if (response.ok) {
-                    const aiData = await response.json();
-                    const aiReport = aiData.choices[0].message.content;
+                    const result = await model.generateContent(`RAW GAME NOTES:\n${payload.content}`);
+                    const aiReport = result.response.text();
                     payload.content = aiReport; // Replace the raw notes with the AI story
-                } else {
-                    const errorText = await response.text();
-                    aiFallbackMsg = `OpenAI API Error: ${errorText}`;
-                    console.error("OpenAI API Error:", errorText);
+                } catch (error: any) {
+                    aiFallbackMsg = `Gemini API Error: ${error.message}`;
+                    console.error("Gemini API Error:", error);
                     // Fall back to raw notes if AI fails
                 }
             }
