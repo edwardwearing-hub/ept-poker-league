@@ -11,8 +11,8 @@ async function getSheetsClient() {
         auth = new google.auth.GoogleAuth({
             credentials: {
                 client_email: process.env.GOOGLE_CLIENT_EMAIL,
-                // Ensure \n characters in the Vercel string correctly parse to literal newlines
-                private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n')
+                // Robustly handle both literal \n and escaped \\n that Vercel might inject
+                private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/\n/g, '\n')
             },
             scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
         });
