@@ -206,7 +206,8 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
         return players;
 
     } catch (error) {
-        console.error("Error fetching Leaderboard Data from Google Sheets:", error);
+        console.error("Critical: Error fetching Leaderboard Data from Google Sheets!");
+        console.error("Full Error Details:", JSON.stringify(error, null, 2));
         return []; // Return empty array to prevent 500 errors on the frontend
     }
 }
@@ -239,7 +240,8 @@ export async function getGlobalStats() {
         }
 
     } catch (e) {
-        console.error("Error fetching Global Stats from Google Sheets:", e);
+        console.error("Critical: Error fetching Global Stats from Google Sheets!");
+        console.error("Full Error Details:", JSON.stringify(e, null, 2));
     }
 
     // Calculate Dynamic Pot additions from submitted CSVs (since Side Pots aren't directly in the main Excel formula yet)
