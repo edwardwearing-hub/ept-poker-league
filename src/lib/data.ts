@@ -249,26 +249,8 @@ export async function getGlobalStats() {
         console.error("Full Error Details:", JSON.stringify(e, null, 2));
     }
 
-    // Calculate Dynamic Pot additions from submitted CSVs (since Side Pots aren't directly in the main Excel formula yet)
+    // Removed the legacy CSV Pot logic. The Total Pot and Side Pot are now expected to be managed entirely via Google Sheets.
     let totalSidePot = 0;
-    const uploadsDir = path.join(process.cwd(), 'data', 'uploads');
-
-    if (fs.existsSync(uploadsDir)) {
-        const files = fs.readdirSync(uploadsDir).filter(f => f.endsWith('.csv'));
-        for (const file of files) {
-            const content = fs.readFileSync(path.join(uploadsDir, file), 'utf-8');
-            const lines = content.split('\n').filter(l => l.trim().length > 0);
-            if (lines.length > 1) {
-                const firstRow = lines[1].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                if (firstRow.length >= 11) {
-                    const filePotTotal = parseFloat(firstRow[9]) || 0;
-                    const fileSidePot = parseFloat(firstRow[10]) || 0;
-                    totalPot += filePotTotal;
-                    totalSidePot += fileSidePot;
-                }
-            }
-        }
-    }
 
     // Attempt to pull real Next Game date from API if the countdown API has it saved
     const countdownFile = path.join(process.cwd(), 'data', 'countdown.json');

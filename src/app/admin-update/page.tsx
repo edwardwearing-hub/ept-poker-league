@@ -21,7 +21,7 @@ export default function AdminUpdate() {
     const [reportTitle, setReportTitle] = useState('"The Flop"');
     const [reportEpisode, setReportEpisode] = useState('Episode 1');
     const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
-    const [reportWinner, setReportWinner] = useState('Edward Wearing');
+    const [reportWinner, setReportWinner] = useState('');
     const [reportContent, setReportContent] = useState('');
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -123,14 +123,20 @@ export default function AdminUpdate() {
                     content: reportContent
                 })
             });
+            const data = await response.json();
+
             if (response.ok) {
-                setReportStatus('Report published successfully!');
+                if (data.aiFallbackMsg) {
+                    setReportStatus(`Warning: ${data.aiFallbackMsg}`);
+                } else {
+                    setReportStatus('Report published successfully!');
+                }
             } else {
-                setReportStatus('Error publishing report.');
+                setReportStatus(`Error: ${data.error || 'Failed to publish report.'}`);
             }
         } catch (err) {
             console.error(err);
-            setReportStatus('Failed to publish.');
+            setReportStatus('Failed to publish (Network error).');
         }
     };
 
@@ -224,7 +230,9 @@ export default function AdminUpdate() {
                                     value={reportWinner}
                                     onChange={e => setReportWinner(e.target.value)}
                                     className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-[#cfb53b] outline-none shadow-inner"
+                                    required
                                 >
+                                    <option value="" disabled>Select Winner</option>
                                     {PLAYERS.map((p: string) => (
                                         <option key={p} value={p}>{p}</option>
                                     ))}

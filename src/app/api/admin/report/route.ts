@@ -43,49 +43,58 @@ export async function POST(request: Request) {
     try {
         const payload = await request.json();
 
+        let aiFallbackMsg = '';
+
         // If the user provided notes and we have an API key, generate a story
-        if (payload.content && process.env.OPENAI_API_KEY) {
-            console.log("Generating AI Report from notes...");
-
-            // Inject the live leaderboard data so the AI knows who the players are and their current ranks
-            let standingsContext = "";
-            try {
-                const standings = await getLeaderboardData();
-                standingsContext = "\n\nCURRENT LEAGUE STANDINGS (Rank - Name - Points - Profit):\n" +
-                    standings.map(p => `${p.rank}. ${p.name} - ${p.points}pts (£${p.profit}) - KOs: ${p.knockOuts}`).join('\n');
-            } catch (e) {
-                console.error("Failed to fetch standings for AI context", e);
-            }
-
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: 'gpt-4o-mini',
-                    messages: [
-                        {
-                            role: 'system',
-                            content: `You are the snarky, engaging sports journalist for "The E.P.T. Gazette" poker league. Write a fun, dramatic, 150-word newspaper-style report based EXACTLY on the raw bullet-point notes. Make it sound like a high-stakes casino recap. Reference the players' current leaderboard standings if relevant.` + standingsContext
-                        },
-                        {
-                            role: 'user',
-                            content: `RAW GAME NOTES:\n${payload.content}`
-                        }
-                    ],
-                    temperature: 0.7
-                })
-            });
-
-            if (response.ok) {
-                const aiData = await response.json();
-                const aiReport = aiData.choices[0].message.content;
-                payload.content = aiReport; // Replace the raw notes with the AI story
+        if (payload.content) {
+            if (!process.env.OPENAI_API_KEY) {
+                aiFallbackMsg = "Missing OPENAI_API_KEY in Vercel Environment Variables. Fell back to raw notes.";
+                console.warn(aiFallbackMsg);
             } else {
-                console.error("OpenAI API Error:", await response.text());
-                // Fall back to raw notes if AI fails
+                console.log("Generating AI Report from notes...");
+
+                // Inject the live leaderboard data so the AI knows who the players are and their current ranks
+                let standingsContext = "";
+                try {
+                    const standings = await getLeaderboardData();
+                    standingsContext = "\n\nCURRENT LEAGUE STANDINGS (Rank - Name - Points - Profit):\n" +
+                        standings.map(p => `${p.rank}. ${p.name} - ${p.points}pts (£${p.profit}) - KOs: ${p.knockOuts}`).join('\n');
+                } catch (e) {
+                    console.error("Failed to fetch standings for AI context", e);
+                }
+
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: `You are the snarky, engaging sports journalist for "The E.P.T. Gazette" poker league. Write a fun, dramatic, 150-word newspaper-style report based EXACTLY on the raw bullet-point notes. Make it sound like a high-stakes casino recap. Reference the players' current leaderboard standings if relevant.` + standingsContext
+                            },
+                            {
+                                role: 'user',
+                                content: `RAW GAME NOTES:\n${payload.content}`
+                            }
+                        ],
+                        temperature: 0.7
+                    })
+                });
+
+                if (response.ok) {
+                    const aiData = await response.json();
+                    const aiReport = aiData.choices[0].message.content;
+                    payload.content = aiReport; // Replace the raw notes with the AI story
+                } else {
+                    const errorText = await response.text();
+                    aiFallbackMsg = `OpenAI API Error: ${errorText}`;
+                    console.error("OpenAI API Error:", errorText);
+                    // Fall back to raw notes if AI fails
+                }
             }
         }
 
@@ -110,7 +119,7 @@ export async function POST(request: Request) {
             console.warn("No GOOGLE_SHEET_ID found, cannot save report.");
         }
 
-        return NextResponse.json({ success: true, aiGenerated: !!process.env.OPENAI_API_KEY });
+        return NextResponse.json({ success: true, aiGenerated: !aiFallbackMsg, aiFallbackMsg });
     } catch (err) {
         console.error("Report save error:", err);
         return NextResponse.json({ error: 'Failed to save report' }, { status: 500 });
