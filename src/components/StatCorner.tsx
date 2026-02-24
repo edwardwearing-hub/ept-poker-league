@@ -6,6 +6,15 @@ import StatCornerCountdown from './StatCornerCountdown';
 export default async function StatCorner() {
     const stats = await getGlobalStats();
 
+    const formattedDate = new Date(stats.nextGameDate).toLocaleString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
     return (
         <div className="space-y-4">
             {/* Pot Display */}
@@ -26,7 +35,7 @@ export default async function StatCorner() {
                 </div>
                 <h3 className="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-1">Next Game</h3>
                 <div className="text-xl font-bold text-white">
-                    {stats.nextGameDate}
+                    {formattedDate}
                 </div>
                 <StatCornerCountdown targetDateStr={stats.nextGameDate} />
             </div>
