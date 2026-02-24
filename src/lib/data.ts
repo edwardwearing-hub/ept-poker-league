@@ -6,13 +6,13 @@ import { google } from 'googleapis';
 async function getSheetsClient() {
     let auth;
 
-    // Check if we are running in Vercel/Production with ENV variables injected
-    if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+    // Check if we are running in Vercel/Production with ENV variables injected via Base64 to avoid string escaping issues
+    if (process.env.GOOGLE_CREDENTIALS_BASE64) {
+        const credentialsJson = JSON.parse(Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf-8'));
         auth = new google.auth.GoogleAuth({
             credentials: {
-                client_email: process.env.GOOGLE_CLIENT_EMAIL,
-                // Robustly handle both literal \n and escaped \\n that Vercel might inject
-                private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/\n/g, '\n')
+                client_email: credentialsJson.client_email,
+                private_key: credentialsJson.private_key,
             },
             scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
         });
