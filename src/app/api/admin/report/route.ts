@@ -1,15 +1,28 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import { getLeaderboardData } from '@/lib/data';
-
-const reportFilePath = path.join(process.cwd(), 'data', 'latest-report.json');
+import { getLeaderboardData, getSheetsClient } from '@/lib/data';
 
 export async function GET() {
     try {
-        if (fs.existsSync(reportFilePath)) {
-            const data = fs.readFileSync(reportFilePath, 'utf8');
-            return NextResponse.json(JSON.parse(data));
+        const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
+        if (spreadsheetId) {
+            const sheets = await getSheetsClient();
+            const response = await sheets.spreadsheets.values.get({
+                spreadsheetId,
+                range: 'Gazette!A2:E'
+            });
+
+            const rows = response.data.values;
+            if (rows && rows.length > 0) {
+                // Return the very last row in the Gazette sheet
+                const lastRow = rows[rows.length - 1];
+                return NextResponse.json({
+                    title: lastRow[0] || '"The Flop"',
+                    episode: lastRow[1] || 'Episode 1',
+                    date: lastRow[2] || 'January 24, 2026',
+                    winner: lastRow[3] || 'Liam Duxbury',
+                    content: lastRow[4] || 'The chips were flying...'
+                });
+            }
         }
 
         // Default report data
@@ -76,12 +89,27 @@ export async function POST(request: Request) {
             }
         }
 
-        const dir = path.dirname(reportFilePath);
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
+        const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
+        if (spreadsheetId) {
+            const sheets = await getSheetsClient();
+            await sheets.spreadsheets.values.append({
+                spreadsheetId,
+                range: 'Gazette!A:E',
+                valueInputOption: 'USER_ENTERED',
+                requestBody: {
+                    values: [[
+                        payload.title || '',
+                        payload.episode || '',
+                        payload.date || '',
+                        payload.winner || '',
+                        payload.content || ''
+                    ]]
+                }
+            });
+        } else {
+            console.warn("No GOOGLE_SHEET_ID found, cannot save report.");
         }
 
-        fs.writeFileSync(reportFilePath, JSON.stringify(payload, null, 2));
         return NextResponse.json({ success: true, aiGenerated: !!process.env.OPENAI_API_KEY });
     } catch (err) {
         console.error("Report save error:", err);

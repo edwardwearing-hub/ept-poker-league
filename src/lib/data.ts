@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { google } from 'googleapis';
 
-async function getSheetsClient() {
+export async function getSheetsClient() {
     let auth;
 
     // Check if we are running in Vercel/Production with ENV variables injected via Base64 to avoid string escaping issues
@@ -15,13 +15,13 @@ async function getSheetsClient() {
                 client_email: credentialsJson.client_email,
                 private_key: credentialsJson.private_key,
             },
-            scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
         });
     } else {
         // Fallback for Local Development
         auth = new google.auth.GoogleAuth({
             keyFile: path.join(process.cwd(), 'google-credentials.json'),
-            scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
         });
     }
 
