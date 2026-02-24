@@ -39,13 +39,13 @@ export default function LeaderboardTable({ initialData }: Props) {
 
     return (
         <div className="w-full overflow-hidden">
-            <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-white/10 text-xs font-bold uppercase tracking-wider text-zinc-500">
+            <div className="grid grid-cols-8 md:grid-cols-12 gap-2 md:gap-4 px-3 md:px-6 py-4 border-b border-white/10 text-[10px] md:text-xs font-bold uppercase tracking-wider text-zinc-500">
                 <div className="col-span-1 text-center cursor-pointer hover:text-white" onClick={() => onHeaderClick('rank')}>Rank</div>
-                <div className="col-span-4 cursor-pointer hover:text-white" onClick={() => onHeaderClick('points')}>Player</div> {/* Sort by points defaults? or Name? Name usually. */}
-                <div className="col-span-2 text-center cursor-pointer hover:text-white" onClick={() => onHeaderClick('points')}>Points <ArrowUpDown className="w-3 h-3 inline ml-1" /></div>
-                <div className="col-span-2 text-center cursor-pointer hover:text-white" onClick={() => onHeaderClick('winnings')}>Winnings</div>
-                <div className="col-span-2 text-center cursor-pointer hover:text-white" onClick={() => onHeaderClick('knockOuts')}>KOs</div>
-                <div className="col-span-1 text-center cursor-pointer hover:text-white" onClick={() => onHeaderClick('profit')}>P/L</div>
+                <div className="col-span-5 md:col-span-4 cursor-pointer hover:text-white" onClick={() => onHeaderClick('points')}>Player</div>
+                <div className="col-span-2 text-center cursor-pointer hover:text-white" onClick={() => onHeaderClick('points')}>Points <ArrowUpDown className="w-3 h-3 inline md:ml-1" /></div>
+                <div className="hidden md:block col-span-2 text-center cursor-pointer hover:text-white" onClick={() => onHeaderClick('winnings')}>Winnings</div>
+                <div className="hidden md:block col-span-2 text-center cursor-pointer hover:text-white" onClick={() => onHeaderClick('knockOuts')}>KOs</div>
+                <div className="hidden md:block col-span-1 text-center cursor-pointer hover:text-white" onClick={() => onHeaderClick('profit')}>P/L</div>
             </div>
 
             <div className="divide-y divide-white/5">
@@ -56,7 +56,7 @@ export default function LeaderboardTable({ initialData }: Props) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
                         className={clsx(
-                            "grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-white/5 transition-colors group",
+                            "grid grid-cols-8 md:grid-cols-12 gap-2 md:gap-4 px-3 md:px-6 py-4 items-center hover:bg-white/5 transition-colors group",
                             player.rank === 1 && "bg-gold/5 border-l-2 border-gold"
                         )}
                     >
@@ -71,37 +71,37 @@ export default function LeaderboardTable({ initialData }: Props) {
                             </span>
                         </div>
 
-                        <div className="col-span-4 flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-charcoal-light border border-white/10 overflow-hidden relative group-hover:border-[#cfb53b] transition-colors">
+                        <div className="col-span-5 md:col-span-4 flex items-center gap-2 md:gap-3">
+                            <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-charcoal-light border border-white/10 overflow-hidden relative group-hover:border-[#cfb53b] transition-colors shrink-0">
                                 {/* Video Profile layer */}
                                 <WantedVideo playerName={player.name} />
 
-                                <div className="absolute inset-0 bg-gradient-to-br from-charcoal to-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500 z-0">
+                                <div className="absolute inset-0 bg-gradient-to-br from-charcoal to-zinc-800 flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-500 z-0">
                                     {player.name.substring(0, 2).toUpperCase()}
                                 </div>
                             </div>
-                            <div>
-                                <div className="font-bold text-white text-base group-hover:text-gold transition-colors">{player.name}</div>
-                                <div className="text-xs text-zinc-500">Games: {player.gamesPlayed}</div>
+                            <div className="min-w-0">
+                                <div className="font-bold text-white text-sm md:text-base group-hover:text-gold transition-colors truncate">{player.name}</div>
+                                <div className="text-[10px] md:text-xs text-zinc-500">Games: {player.gamesPlayed}</div>
                             </div>
                         </div>
 
-                        <div className="col-span-2 text-center font-mono text-lg font-bold text-white">
+                        <div className="col-span-2 text-center font-mono text-base md:text-lg font-bold text-white">
                             {player.points}
                         </div>
 
-                        <div className="col-span-2 text-center font-mono text-zinc-300">
+                        <div className="hidden md:block col-span-2 text-center font-mono text-zinc-300">
                             £{player.winnings}
                         </div>
 
-                        <div className="col-span-2 text-center">
+                        <div className="hidden md:flex col-span-2 justify-center">
                             <span className="inline-flex items-center justify-center px-2 py-1 rounded bg-ept-red/10 text-ept-red text-xs font-bold border border-ept-red/20">
                                 {player.knockOuts} ☠️
                             </span>
                         </div>
 
                         <div className={clsx(
-                            "col-span-1 text-center font-mono font-bold text-xs",
+                            "hidden md:block col-span-1 text-center font-mono font-bold text-xs",
                             player.profit > 0 ? "text-green-500" : player.profit < 0 ? "text-ept-red" : "text-zinc-500"
                         )}>
                             {player.profit > 0 ? '+' : ''}{player.profit}
