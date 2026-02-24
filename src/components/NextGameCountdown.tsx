@@ -69,8 +69,8 @@ export default function NextGameCountdown() {
                     <span className="text-gold font-bold uppercase tracking-[0.2em] text-sm md:text-base">Next Game Countdown</span>
                 </div>
 
-                <h1 className="text-4xl md:text-7xl font-black text-white mb-16 uppercase tracking-wider drop-shadow-2xl font-mono">
-                    E.P.T. Standard Book
+                <h1 className="text-5xl md:text-7xl font-black mb-16 uppercase tracking-widest drop-shadow-[0_0_20px_rgba(212,175,55,0.4)] bg-gradient-to-r from-[#cfb53b] via-white to-[#cfb53b] bg-clip-text text-transparent" style={{ fontFamily: 'serif' }}>
+                    The E.P.T. Ledger of Legends
                 </h1>
 
                 {/* The Clock Grid */}
