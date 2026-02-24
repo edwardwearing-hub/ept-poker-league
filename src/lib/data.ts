@@ -8,9 +8,7 @@ async function getSheetsClient() {
 
     // Check if we are running in Vercel/Production with ENV variables injected via Base64 to avoid string escaping issues
     if (process.env.GOOGLE_CREDENTIALS_BASE64) {
-        console.log("Base64 Env Variable Found: YES");
         const credentialsJson = JSON.parse(Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf-8'));
-        console.log("Decoded Client Email:", credentialsJson.client_email);
 
         auth = new google.auth.GoogleAuth({
             credentials: {
