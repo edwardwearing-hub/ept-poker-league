@@ -122,8 +122,8 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
             return parseFloat(val.toString().replace(/[^0-9.-]+/g, "")) || 0;
         };
 
-        // Main sheet data starts at Row 8 (index 7) based on the new API response
-        for (let i = 7; i < jsonData.length; i++) {
+        // Main sheet data starts at index 6 in the new API response
+        for (let i = 6; i < jsonData.length; i++) {
             const row = jsonData[i];
 
             // Reached the end (No Of Players row)
