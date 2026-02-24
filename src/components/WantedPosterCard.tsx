@@ -4,6 +4,7 @@ import { PlayerStats } from "@/lib/data";
 import { clsx } from 'clsx';
 import { Skull, Target } from 'lucide-react';
 import Link from 'next/link';
+import WantedVideo from './WantedVideo';
 
 interface Props {
     player: PlayerStats;
@@ -30,6 +31,7 @@ export default function WantedPosterCard({ player, isTarget }: Props) {
                         </div>
 
                         <div className="w-48 h-48 bg-zinc-900 mb-3 border-2 border-[#3e3221] flex items-center justify-center overflow-hidden relative z-10 group-hover:grayscale-0 transition-all duration-500 grayscale contrast-125">
+                            <WantedVideo playerName={player.name} />
                             <img
                                 src={player.avatarUrl || "/avatars/avatar_hoodie.png"}
                                 alt={player.name}
