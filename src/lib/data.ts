@@ -122,9 +122,13 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
             return parseFloat(val.toString().replace(/[^0-9.-]+/g, "")) || 0;
         };
 
-        // Main sheet data starts at Row 7 (index 6)
-        for (let i = 6; i < jsonData.length; i++) {
+        // Main sheet data starts at Row 8 (index 7) based on the new API response
+        for (let i = 7; i < jsonData.length; i++) {
             const row = jsonData[i];
+
+            // Reached the end (No Of Players row)
+            if (row[0] === "No Of Players") break;
+
             if (!row || !row[0]) continue;
 
             const rawName = row[0].toString().trim();
@@ -134,8 +138,13 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
             if (seenPlayers.has(matchedName)) continue;
             seenPlayers.add(matchedName);
 
-            // Games played at index 1
-            const gamesPlayed = parseInt(row[1]) || 0;
+            // Calculate Games Played based on how many "Place" columns have numbers
+            let gamesPlayed = 0;
+            for (let cal = 1; cal < row.length; cal += 3) {
+                if (row[cal] && row[cal].trim() !== "") {
+                    gamesPlayed++;
+                }
+            }
 
             let rival = "N/A";
             let bullied = "N/A";
@@ -179,15 +188,15 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
                 nickname: nicknames[matchedName] || "The Unknown",
                 avatarUrl: avatars[matchedName] || defaults[0],
                 gamesPlayed: gamesPlayed,
-                wins: parseInt(row[3]) || 0,
-                points: parseInt(row[5]) || 0,
-                rebuys: parseInt(row[7]) || 0,
-                addOns: parseInt(row[9]) || 0,
-                cashPaid: parseMoney(row[11]),
-                winnings: parseMoney(row[13]),
-                profit: parseMoney(row[15]),
-                bonusChips: parseInt(row[17]) || 0,
-                knockOuts: parseInt(row[19]) || 0,
+                wins: parseInt(row[2]) || 0,
+                points: parseInt(row[3]) || 0,
+                rebuys: parseInt(row[4]) || 0,
+                addOns: parseInt(row[5]) || 0,
+                cashPaid: parseMoney(row[6]),
+                winnings: parseMoney(row[7]),
+                profit: parseMoney(row[8]),
+                bonusChips: parseInt(row[9]) || 0,
+                knockOuts: parseInt(row[10]) || 0,
                 // Advanced
                 rivalPlayer: rival,
                 bulliedPlayer: bullied,
