@@ -75,3 +75,38 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-gold-dim);
 }
+
+/* 8-Bit Pixel Character Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Add a slight offset for secondary characters so they don't bob in perfect unison */
+.animate-float-delayed {
+  animation: float 3s ease-in-out infinite 1.5s;
+}
+
+@keyframes attack {
+  0%, 100% {
+    transform: translateX(0) scale(1);
+  }
+  25% {
+    transform: translateX(5px) scale(1.05) rotate(5deg);
+  }
+  75% {
+    transform: translateX(-5px) scale(1.05) rotate(-5deg);
+  }
+}
+
+.animate-attack {
+  animation: attack 0.5s ease-in-out infinite;
+}

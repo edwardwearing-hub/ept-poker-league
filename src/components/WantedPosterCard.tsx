@@ -129,7 +129,7 @@ export default function WantedPosterCard({ player, isTarget }: Props) {
                                     <img
                                         src={`/avatars/${getAvatarFilename(hijackerName)}`}
                                         alt={hijackerName}
-                                        className="w-24 h-24 object-contain filter drop-shadow-[0_0_15px_rgba(220,38,38,0.8)] border-b-4 border-ept-red bg-black/80 rounded-full z-40 relative mt-4"
+                                        className="w-24 h-24 object-contain filter drop-shadow-[0_0_15px_rgba(220,38,38,0.8)] border-b-4 border-ept-red bg-black/80 rounded-full z-40 relative mt-4 animate-float"
                                     />
                                 </div>
                             )}

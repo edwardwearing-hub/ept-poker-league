@@ -272,7 +272,7 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
                                         key={idx}
                                         src={`/avatars/${getAvatarFilename(enemy.name)}`}
                                         alt={enemy.name}
-                                        className={`w-32 h-32 md:w-40 md:h-40 object-contain filter drop-shadow-[0_0_15px_rgba(220,38,38,0.8)] ${enemy.isNemesis ? 'animate-pulse' : ''} border-b-4 border-ept-red bg-black/80 rounded-full`}
+                                        className={`w-32 h-32 md:w-40 md:h-40 object-contain filter drop-shadow-[0_0_15px_rgba(220,38,38,0.8)] ${enemy.isNemesis ? 'animate-pulse' : ''} border-b-4 border-ept-red bg-black/80 rounded-full ${idx % 2 === 0 ? 'animate-float' : 'animate-float-delayed'}`}
                                         style={{ zIndex: 10 - idx }}
                                     />
                                 ))}
@@ -320,7 +320,7 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
                 {/* Header Avatars */}
                 <div className="flex justify-between items-center p-4 border-b-4 border-zinc-900 bg-black">
                     <div className="text-center">
-                        <img src={`/avatars/${getAvatarFilename(playerName)}`} alt="Player" className="w-16 h-16 object-contain filter drop-shadow-[0_0_5px_rgba(34,197,94,0.3)]" />
+                        <img src={`/avatars/${getAvatarFilename(playerName)}`} alt="Player" className={`w-16 h-16 object-contain filter drop-shadow-[0_0_5px_rgba(34,197,94,0.3)] ${gameState === 'animating' ? 'animate-attack' : 'animate-float'}`} />
                         <span className="text-[10px] text-green-500 font-bold uppercase block mt-1">Player</span>
                     </div>
 
@@ -336,7 +336,7 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
                     </div>
 
                     <div className="text-center">
-                        <img src={`/avatars/${getAvatarFilename(currentEnemy.name)}`} alt={currentEnemy.name} className={`w-16 h-16 object-contain ${currentEnemy.isNemesis ? 'filter drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]' : ''} ${gameState === 'next_enemy' ? 'opacity-0' : 'opacity-100'}`} />
+                        <img src={`/avatars/${getAvatarFilename(currentEnemy.name)}`} alt={currentEnemy.name} className={`w-16 h-16 object-contain ${currentEnemy.isNemesis ? 'filter drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]' : ''} ${gameState === 'next_enemy' ? 'opacity-0' : 'opacity-100'} ${gameState === 'animating' ? 'animate-attack' : 'animate-float-delayed'}`} />
                         <span className={`text-[10px] ${currentEnemy.isNemesis ? 'text-ept-red animate-pulse' : 'text-zinc-400'} font-bold uppercase block mt-1`}>
                             {currentEnemy.isNemesis ? 'Nemesis Boss' : 'Hijacker'}
                         </span>
@@ -410,14 +410,16 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
                     <div className="flex justify-between items-end px-8 pb-4 relative z-20">
                         {/* Player */}
                         <div className="flex flex-col items-center">
-                            <img src={`/avatars/${getAvatarFilename(playerName)}`} alt="Player" className="w-24 h-24 md:w-32 md:h-32 object-contain filter drop-shadow-[0_0_15px_rgba(34,197,94,0.6)] transform scale-x-[-1]" />
+                            <div className="transform scale-x-[-1]">
+                                <img src={`/avatars/${getAvatarFilename(playerName)}`} alt="Player" className={`w-24 h-24 md:w-32 md:h-32 object-contain filter drop-shadow-[0_0_15px_rgba(34,197,94,0.6)] ${gameState === 'animating' ? 'animate-attack' : 'animate-float'}`} />
+                            </div>
                         </div>
 
                         <div className="text-3xl md:text-4xl font-black text-white italic absolute left-1/2 -translate-x-1/2 bottom-12 opacity-50">VS</div>
 
                         {/* Enemy */}
                         <div className="flex flex-col items-center">
-                            <img src={`/avatars/${getAvatarFilename(currentEnemy.name)}`} alt={currentEnemy.name} className={`w-28 h-28 md:w-36 md:h-36 object-contain filter ${currentEnemy.isNemesis ? 'drop-shadow-[0_0_20px_rgba(220,38,38,0.9)] animate-pulse' : 'drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]'}`} />
+                            <img src={`/avatars/${getAvatarFilename(currentEnemy.name)}`} alt={currentEnemy.name} className={`w-28 h-28 md:w-36 md:h-36 object-contain filter ${currentEnemy.isNemesis ? 'drop-shadow-[0_0_20px_rgba(220,38,38,0.9)] animate-pulse' : 'drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]'} ${gameState === 'animating' ? 'animate-attack' : 'animate-float-delayed'}`} />
                         </div>
                     </div>
                 )}
