@@ -7,6 +7,26 @@ import { Skull, Target, Lock } from 'lucide-react';
 import Link from 'next/link';
 import WantedVideo from './WantedVideo';
 
+const AVATAR_MAP: Record<string, string> = {
+    'edward wearing': 'avatar_edward_wearing_1772222877224.png',
+    'georgina wearing': 'avatar_georgina_wearing_1772223035422.png',
+    'luke daly': 'avatar_luke_daly_1772223102669.png',
+    'daniel horne': 'avatar_daniel_horne_1772222954376.png',
+    'darren daly': 'avatar_darren_daly_1772222979758.png',
+    'chris daly': 'avatar_chris_daly_1772222942062.png',
+    'stephen flood': 'avatar_stephen_flood_1772223088474.png',
+    'phil landsberger': 'avatar_hoodie.png',
+    'liam duxbury': 'avatar_liam_duxbury_1772223048076.png',
+    'nathen benson': 'avatar_nathen_benson_1772223077518.png',
+    'dave taylor': 'avatar_dave_taylor_1772223007740.png',
+    'unknown hacker': 'avatar_bounty.png'
+};
+
+const getAvatarFilename = (name: string) => {
+    const key = name.toLowerCase().trim();
+    return AVATAR_MAP[key] || 'avatar_hoodie.png';
+};
+
 interface Props {
     player: PlayerStats;
     isTarget?: boolean;
@@ -91,13 +111,32 @@ export default function WantedPosterCard({ player, isTarget }: Props) {
                                 className="w-full h-full object-cover"
                             />
                             {/* Rank Stamped on Image */}
-                            <div className="absolute bottom-0 right-0 bg-[#3e3221] text-[#e4dccb] px-2 py-1 text-xs font-bold uppercase">
+                            <div className="absolute bottom-0 right-0 bg-[#3e3221] text-[#e4dccb] px-2 py-1 text-xs font-bold uppercase z-20">
                                 Rank #{player.rank}
                             </div>
 
+                            {/* Hijack Graffiti & Avatar Overlay */}
+                            {(isHijacked || isLockedOut) && (
+                                <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+                                    {/* Semi-transparent dark overlay */}
+                                    <div className="absolute inset-0 bg-black/40" />
+
+                                    {/* Spray Paint */}
+                                    <div className="absolute top-2 left-2 w-24 h-24 bg-ept-red/30 rounded-full blur-[20px]" />
+                                    <div className="absolute bottom-2 right-2 w-24 h-24 bg-green-500/30 rounded-full blur-[20px]" />
+
+                                    {/* Hijacker Avatar */}
+                                    <img
+                                        src={`/avatars/${getAvatarFilename(hijackerName)}`}
+                                        alt={hijackerName}
+                                        className="w-24 h-24 object-contain filter drop-shadow-[0_0_15px_rgba(220,38,38,0.8)] border-b-4 border-ept-red bg-black/80 rounded-full z-40 relative mt-4"
+                                    />
+                                </div>
+                            )}
+
                             {/* Locked Out Stamp */}
                             {isLockedOut && (
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/60">
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/60 z-40">
                                 </div>
                             )}
                         </div>
