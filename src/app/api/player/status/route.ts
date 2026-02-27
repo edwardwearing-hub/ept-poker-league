@@ -23,7 +23,8 @@ export async function GET(request: Request) {
             name: player.name,
             isHijacked: player.isHijacked,
             hackTokens: player.hackTokens,
-            hijackerQueue: player.hijackerQueue
+            hijackerQueue: player.hijackerQueue,
+            secretPin: player.secretPin || '0000'
         });
     } catch (error) {
         console.error('Error fetching player status:', error);
