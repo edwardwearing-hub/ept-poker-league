@@ -53,9 +53,24 @@ export default function AttackButton({ targetName, isTargetHijacked, onAttackSuc
         }
     };
 
-    const shareToFacebook = () => {
-        const url = `https://ept-poker.vercel.app/scouting/${encodeURIComponent(targetName)}`;
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+    const handleShare = async () => {
+        const url = `${window.location.origin}/scouting/${encodeURIComponent(targetName)}`;
+        const shareData = {
+            title: 'EPT HIJACK SUCCESSFUL',
+            text: `🚨 HIJACK SUCCESSFUL: I have compromised ${targetName}'s Poker Profile! View their locked stats here:`,
+            url: url
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.error('Error sharing:', err);
+            }
+        } else {
+            // Fallback to standard FB sharer if Web Share API is not supported (Desktop)
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+        }
     };
 
     const copyLink = () => {
@@ -181,10 +196,10 @@ export default function AttackButton({ targetName, isTargetHijacked, onAttackSuc
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                     <button
-                                        onClick={shareToFacebook}
-                                        className="flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#166fe5] text-white py-3 font-bold uppercase text-[10px] sm:text-xs transition-all"
+                                        onClick={handleShare}
+                                        className="flex items-center justify-center gap-2 bg-[#0084FF] hover:bg-[#0073e6] text-white py-3 font-bold uppercase text-[10px] sm:text-xs transition-all shadow-[0_4px_15px_rgba(0,132,255,0.3)]"
                                     >
-                                        <Facebook className="w-4 h-4" /> Share to Facebook
+                                        <Share2 className="w-4 h-4" /> Share to Messenger
                                     </button>
                                     <button
                                         onClick={copyLink}
@@ -193,6 +208,7 @@ export default function AttackButton({ targetName, isTargetHijacked, onAttackSuc
                                         <LinkIcon className="w-4 h-4" /> Copy Link
                                     </button>
                                 </div>
+
 
                                 <div className="text-center mt-6">
                                     <button
