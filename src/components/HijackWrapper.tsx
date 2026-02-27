@@ -35,13 +35,7 @@ export default function HijackWrapper({ playerName, enemyQueue, children }: Prop
 
     if (!isLoaded) return null; // Prevent hydration flash
 
-    if (isHijacked) {
-        return (
-            <div className="fixed inset-0 z-[100] bg-black overflow-y-auto">
-                <ProfileRedemption playerName={playerName} enemyQueue={enemyQueue} onSuccess={handleRedemptionSuccess} />
-            </div>
-        );
-    }
+
 
     return (
         <div className="relative">
@@ -56,7 +50,13 @@ export default function HijackWrapper({ playerName, enemyQueue, children }: Prop
                     <span className="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">INITIATE HIJACK</span>
                 </button>
             </div>
-            {children}
+            {isHijacked && (
+                <ProfileRedemption playerName={playerName} enemyQueue={enemyQueue} onSuccess={handleRedemptionSuccess} />
+            )}
+
+            <div className={isHijacked ? "pointer-events-none select-none blur-[2px]" : ""}>
+                {children}
+            </div>
         </div>
     );
 }

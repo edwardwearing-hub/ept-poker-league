@@ -1,8 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { PlayerStats } from "@/lib/data";
 import { clsx } from 'clsx';
-import { Skull, Target } from 'lucide-react';
+import { Skull, Target, Lock } from 'lucide-react';
 import Link from 'next/link';
 import WantedVideo from './WantedVideo';
 
@@ -12,10 +13,50 @@ interface Props {
 }
 
 export default function WantedPosterCard({ player, isTarget }: Props) {
+    const [isHijacked, setIsHijacked] = useState(false);
+    const [lockoutTime, setLockoutTime] = useState<number | null>(null);
+    const [timeLeft, setTimeLeft] = useState<string>('');
+
+    useEffect(() => {
+        const hijacked = localStorage.getItem(`hijack_active_${player.name}`) === 'true';
+        setIsHijacked(hijacked);
+
+        const lockout = localStorage.getItem(`hijack_lockout_${player.name}`);
+        if (lockout) {
+            setLockoutTime(parseInt(lockout, 10));
+        }
+    }, [player.name]);
+
+    useEffect(() => {
+        if (!lockoutTime) return;
+
+        const tick = () => {
+            const now = Date.now();
+            if (now >= lockoutTime) {
+                setLockoutTime(null);
+                localStorage.removeItem(`hijack_lockout_${player.name}`);
+            } else {
+                const diff = lockoutTime - now;
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const secs = Math.floor((diff % (1000 * 60)) / 1000);
+                setTimeLeft(`${hours}h ${mins}m ${secs}s`);
+            }
+        };
+
+        tick();
+        const interval = setInterval(tick, 1000);
+        return () => clearInterval(interval);
+    }, [lockoutTime, player.name]);
+
+    const isLockedOut = lockoutTime !== null;
+    const hijackerName = player.enemyQueue && player.enemyQueue.length > 0 ? player.enemyQueue[0] : 'UNKNOWN HACKER';
+
     return (
         <div className={clsx(
             "relative group hover:-translate-y-2 transition-transform duration-300",
-            isTarget ? "z-10" : "z-0"
+            isTarget ? "z-10" : "z-0",
+            isLockedOut ? "grayscale opacity-80" : ""
         )}>
             {/* Poster Frame */}
             <Link href={`/scouting/${encodeURIComponent(player.name)}`} className="block relative z-10">
@@ -41,6 +82,15 @@ export default function WantedPosterCard({ player, isTarget }: Props) {
                             <div className="absolute bottom-0 right-0 bg-[#3e3221] text-[#e4dccb] px-2 py-1 text-xs font-bold uppercase">
                                 Rank #{player.rank}
                             </div>
+
+                            {/* Locked Out Stamp */}
+                            {isLockedOut && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/40">
+                                    <div className="border-[6px] border-ept-red px-2 py-1 transform -rotate-[20deg] bg-black/60 shadow-[0_0_15px_rgba(220,38,38,0.8)]">
+                                        <span className="text-3xl font-black text-ept-red tracking-tighter uppercase drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">HOSTAGE</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <h2 className="text-xl font-bold uppercase mb-0 text-center leading-none z-10">{player.name}</h2>
@@ -63,6 +113,21 @@ export default function WantedPosterCard({ player, isTarget }: Props) {
                                 </div>
                             )}
                         </div>
+
+                        {/* Status Banners */}
+                        {isLockedOut ? (
+                            <div className="absolute bottom-0 left-0 w-full bg-black border-t-2 border-[#3e3221] p-1 flex items-center justify-center gap-2 z-20">
+                                <Lock className="w-3 h-3 text-ept-red animate-pulse" />
+                                <span className="text-[10px] font-black font-mono text-ept-red uppercase tracking-widest">{timeLeft}</span>
+                            </div>
+                        ) : isHijacked ? (
+                            <div className="absolute bottom-0 left-0 w-full bg-green-500 border-t-2 border-green-700 p-1 flex items-center justify-center text-center z-20 overflow-hidden">
+                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/pixel-weave.png')] opacity-30 pointer-events-none" />
+                                <span className="text-[9px] font-black font-mono text-black uppercase tracking-widest relative z-10 w-full truncate px-1">
+                                    WANTED BY: {hijackerName}
+                                </span>
+                            </div>
+                        ) : null}
                     </div>
                 </div>
             </Link>

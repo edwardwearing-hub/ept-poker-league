@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calendar, Save, Trash2 } from 'lucide-react';
+import { Calendar, Save, Trash2, Unlock } from 'lucide-react';
 import MultiSelect from '@/components/MultiSelect';
 
 const PLAYERS = [
@@ -23,6 +23,10 @@ export default function AdminUpdate() {
     const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
     const [reportWinner, setReportWinner] = useState('');
     const [reportContent, setReportContent] = useState('');
+
+    // Hijack Management State
+    const [selectedResetPlayer, setSelectedResetPlayer] = useState('');
+    const [resetMessage, setResetMessage] = useState('');
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [passwordInput, setPasswordInput] = useState('');
@@ -138,6 +142,15 @@ export default function AdminUpdate() {
             console.error(err);
             setReportStatus('Failed to publish (Network error).');
         }
+    };
+
+    const handleResetHijack = () => {
+        if (!selectedResetPlayer) return;
+        localStorage.removeItem(`hijack_active_${selectedResetPlayer}`);
+        localStorage.removeItem(`hijack_lockout_${selectedResetPlayer}`);
+        localStorage.removeItem(`hijack_defeated_${selectedResetPlayer}`);
+        setResetMessage(`${selectedResetPlayer}'s hijack state has been completely reset.`);
+        setTimeout(() => setResetMessage(''), 4000);
     };
 
     return (
@@ -258,6 +271,43 @@ export default function AdminUpdate() {
                             </button>
                         </div>
                     </form>
+                </div>
+
+                {/* Player Hijack Management Section */}
+                <div className="bg-black/50 p-4 md:p-8 rounded-2xl border border-[#cfb53b]/30 relative overflow-hidden">
+                    <h2 className="text-xl md:text-2xl font-black text-white mb-4 md:mb-6 uppercase tracking-widest flex items-center gap-3">
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        Player Hijack Management
+                    </h2>
+
+                    {resetMessage && (
+                        <div className="mb-4 p-3 rounded bg-green-900/20 border border-green-500/50 text-green-400 font-bold text-sm">
+                            {resetMessage}
+                        </div>
+                    )}
+
+                    <div className="flex flex-col md:flex-row gap-4 items-end">
+                        <div className="flex-1 w-full">
+                            <label className="block text-sm text-gray-400 mb-2 font-bold uppercase tracking-wider">Select Player to Reset</label>
+                            <select
+                                value={selectedResetPlayer}
+                                onChange={e => setSelectedResetPlayer(e.target.value)}
+                                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-[#cfb53b] outline-none shadow-inner"
+                            >
+                                <option value="" disabled>Choose Player...</option>
+                                {PLAYERS.map((p: string) => (
+                                    <option key={p} value={p}>{p}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <button
+                            onClick={handleResetHijack}
+                            disabled={!selectedResetPlayer}
+                            className="w-full md:w-auto px-8 py-3 bg-gray-800 disabled:opacity-50 hover:bg-red-900/50 hover:text-white border border-gray-600 hover:border-ept-red text-ept-red font-bold uppercase tracking-widest rounded-lg transition shadow-md flex items-center justify-center gap-2"
+                        >
+                            <Unlock className="w-4 h-4" /> Reset Status
+                        </button>
+                    </div>
                 </div>
 
                 {/* Google Sheet Direct Embed */}

@@ -50,6 +50,11 @@ export interface PlayerStats {
     nickname?: string;
     avatarUrl?: string;
     enemyQueue?: string[];
+    // New Bounty Board Metrics (Phase 8)
+    totalHistoricalKOs?: number;        // The Executioner
+    totalTimesKnockedOut?: number;      // The Bullet Sponge
+    uniquePlayersHijacked?: string[];   // The Hijack King
+    koToGameRatio?: number;             // The Apex Predator
 }
 
 export async function getLeaderboardData(): Promise<PlayerStats[]> {
@@ -94,6 +99,9 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
 
         const players: PlayerStats[] = [];
         const seenPlayers = new Set<string>();
+
+        // Phase 8: Accumulate who killed who across all sheets for the Hijack King stat
+        const killerToVictimsMap: Record<string, Set<string>> = {};
 
         const nicknames: Record<string, string> = {
             "Edward Wearing": "The Bounty",
@@ -142,10 +150,15 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
             // Games played is explicitly listed in Column B (index 1)
             const gamesPlayed = parseInt(row[1]) || 0;
 
+            // Bounty Board Stats
             let rival = "N/A";
             let bullied = "N/A";
             let winPct = 0;
             let avgKo = 0;
+            let totalTimesKnockedOut = 0;
+            let uniquePlayersHijacked = new Set<string>();
+            let totalHistoricalKOs = 0;
+
             const cashFlow: { date: string; profit: number }[] = [];
             const enemyQueue: string[] = [];
 
@@ -189,14 +202,12 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
                 }
 
                 if (knockoutRowIdx !== -1) {
-                    // Find the furthest column (most recent game) that DOES NOT equal "Total"
-                    // The Date row is 20, but since the Knockout table lines up perfectly with the columns above it...
                     const dateRow = pData[20] || [];
                     let mostRecentColIdx = -1;
 
+                    // Phase 6: Find most recent game for the Gauntlet enemyQueue
                     for (let c = dateRow.length - 1; c >= 1; c--) {
                         if (dateRow[c] && dateRow[c].toString().trim() !== "Total" && dateRow[c].toString().trim() !== "") {
-                            // Check if they actually have a profit/loss logged here (meaning they played)
                             const profitVal = (pData[24] && pData[24][c]) ? String(pData[24][c]).trim() : "";
                             if (profitVal !== "") {
                                 mostRecentColIdx = c;
@@ -205,22 +216,46 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
                         }
                     }
 
-                    if (mostRecentColIdx !== -1) {
-                        // Iterate through the 11 opponents underneath the "Knocked Out By" label
-                        for (let r = knockoutRowIdx + 1; r <= knockoutRowIdx + 11; r++) {
-                            if (pData[r] && pData[r][0]) {
-                                const opponentName = pData[r][0].toString().trim();
-                                const koCountRaw = pData[r][mostRecentColIdx];
+                    // Phase 8: Iterate through ALL opponents and ALL columns to build Bounty Board stats
+                    for (let r = knockoutRowIdx + 1; r <= knockoutRowIdx + 11; r++) {
+                        if (pData[r] && pData[r][0]) {
+                            const opponentName = pData[r][0].toString().trim();
 
-                                const koCount = parseInt(koCountRaw) || 0;
-                                // If this opponent knocked them out > 0 times, push them to the queue!
-                                for (let times = 0; times < koCount; times++) {
+                            // 1. Process Most Recent Game for Gauntlet
+                            if (mostRecentColIdx !== -1) {
+                                const recentKoCountRaw = pData[r][mostRecentColIdx];
+                                const recentKoCount = parseInt(recentKoCountRaw) || 0;
+                                for (let times = 0; times < recentKoCount; times++) {
                                     enemyQueue.push(opponentName);
+                                }
+                            }
+
+                            // 2. Process ALL historical games for Bounty metrics (The Bullet Sponge)
+                            // We are looking at THIS player's sheet, so "Knocked Out By" means times THEY died.
+                            for (let c = 1; c < dateRow.length; c++) {
+                                if (dateRow[c] && dateRow[c].toString().trim() !== "Total") {
+                                    const koCountRaw = pData[r][c];
+                                    const koCount = parseInt(koCountRaw) || 0;
+                                    totalTimesKnockedOut += koCount;
+
+                                    // Phase 8: Log this killer's victim for the Hijack King calculation
+                                    if (koCount > 0) {
+                                        if (!killerToVictimsMap[opponentName]) {
+                                            killerToVictimsMap[opponentName] = new Set<string>();
+                                        }
+                                        killerToVictimsMap[opponentName].add(matchedName); // The killer hijacked this player
+                                    }
                                 }
                             }
                         }
                     }
                 }
+
+                // Phase 8: Calculate "The Executioner" and "Hijack King"
+                // To find who *they* knocked out, we actually need to look at the main sheet's total KO stat, 
+                // but to find UNIQUE hijack targets we check IF their name appears in other sheets.
+                // We will handle the inverse cross-referencing globally later, but for now we set totalHistoricalKOs from row 19
+                totalHistoricalKOs = parseInt(row[19]) || 0;
             }
 
             players.push({
@@ -244,12 +279,26 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
                 winPercentage: winPct,
                 avgKnockouts: avgKo,
                 cashFlowHistory: cashFlow,
-                enemyQueue: enemyQueue
+                enemyQueue: enemyQueue,
+                totalHistoricalKOs: totalHistoricalKOs,
+                totalTimesKnockedOut: totalTimesKnockedOut,
+                uniquePlayersHijacked: [], // Populated in cross-reference pass
+                koToGameRatio: gamesPlayed > 0 ? Number((totalHistoricalKOs / gamesPlayed).toFixed(2)) : 0
             });
         }
 
         // --- SOURCE OF TRUTH: EXCEL ONLY ---
         // Removed the dynamic CSV math overwrite. The Master E.P.T. 2026.xlsx file dictates all points and rivalries.
+
+        // Phase 8 cross-reference: apply the global unique hijack lists
+        players.forEach(p => {
+            const uniqueVictims = killerToVictimsMap[p.name];
+            if (uniqueVictims) {
+                p.uniquePlayersHijacked = Array.from(uniqueVictims);
+            } else {
+                p.uniquePlayersHijacked = [];
+            }
+        });
 
         // Sort by Points (descending) to determine rank precisely as defined by the Excel output
         players.sort((a, b) => b.points - a.points);

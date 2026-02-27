@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Users, BarChart2, Radio, Skull, Trophy, Table, GraduationCap, Gamepad2, Clock, Shield, History } from 'lucide-react';
+import { Home, Users, BarChart2, Radio, Skull, Trophy, Table, GraduationCap, Gamepad2, Clock, Shield, History, Target } from 'lucide-react';
 import { clsx } from 'clsx';
 import RiverReportPlayer from './RiverReportPlayer';
 import SidebarCountdown from './SidebarCountdown';
@@ -16,6 +16,7 @@ const navItems = [
     { name: 'Blinds Timer', href: '/timer', icon: Clock },
     { name: 'Scouting Reports', href: '/scouting', icon: Users },
     { name: 'Wanted Posters', href: '/wanted', icon: Skull },
+    { name: 'Bounty Board', href: '/bounties', icon: Target },
     { name: 'League Sheet', href: '/table', icon: Table },
     { name: 'Stat Corner', href: '/stats', icon: BarChart2 },
     { name: 'Admin Update', href: '/admin-update', icon: Shield },
