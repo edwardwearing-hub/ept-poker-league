@@ -304,25 +304,23 @@ export async function getGameHistory(): Promise<GameHistorySession[]> {
         // Row 20 (index 0) = Date
         // Row 21 (index 1) = Pot
         // Row 22 (index 2) = Side Pot
-        // Row 36 (index 16) = No Of Players (use to filter empty sets)
         // Rows 25-35 (index 5 to 15) = Player data
 
         for (let colStart = 1; colStart < rows[0].length; colStart += 3) {
-            // Check if this column group is valid by looking for "No Of Players" count
-            // Sometimes the array doesn't extend fully if empty, so use optional chaining
-            const noOfPlayers = rows[16]?.[colStart];
             const dateVal = rows[0]?.[colStart];
+            if (!dateVal) continue;
 
-            if (!noOfPlayers || noOfPlayers.toString().trim() === "" || noOfPlayers.toString().trim() === "0" || !dateVal) {
-                continue; // Skip blank or invalid game columns
-            }
+            const parsedPot = parseMoney(rows[1]?.[colStart]);
 
+            // We will build the session first and validate it by checking if anyone played
             const session: GameHistorySession = {
                 date: dateVal.toString().trim(),
-                prizePot: parseMoney(rows[1]?.[colStart]),
+                prizePot: parsedPot,
                 sidePot: parseMoney(rows[2]?.[colStart]),
                 results: []
             };
+
+            let totalPointsScoredThisGame = 0;
 
             // Player rows map to lines 25(idx 5) through 35(idx 15)
             // Column 1 = Place, Column 2 = Winnings, Column 3 = Points
@@ -334,24 +332,28 @@ export async function getGameHistory(): Promise<GameHistorySession[]> {
                 if (!playerName) continue;
 
                 const placeRaw = rowData[colStart]?.toString().trim() || "";
-                // Even if they didn't place (e.g. DNP or 0), if there is any data in Place or Points, we can log it.
-                // We will skip completely blank entries
                 const pointsObj = rowData[colStart + 2];
+                const pts = parseFloat(pointsObj?.toString() || "0") || 0;
 
                 // if points is empty and place is empty, they likely didn't play this game.
-                if (!placeRaw && (!pointsObj || pointsObj.toString().trim() === "")) {
+                if (!placeRaw && pts === 0) {
                     continue;
                 }
+
+                totalPointsScoredThisGame += pts;
 
                 session.results.push({
                     name: playerName.toString().trim(),
                     place: placeRaw,
                     winnings: parseMoney(rowData[colStart + 1]),
-                    points: parseFloat(pointsObj?.toString() || "0") || 0
+                    points: pts
                 });
             }
 
-            sessions.push(session);
+            // Only push the session if there's actually a pot OR someone scored points
+            if (session.prizePot > 0 || totalPointsScoredThisGame > 0) {
+                sessions.push(session);
+            }
         }
 
         return sessions;
