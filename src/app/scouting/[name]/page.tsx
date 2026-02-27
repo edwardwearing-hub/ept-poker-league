@@ -6,6 +6,7 @@ import CashFlowChart from "@/components/CashFlowChart";
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import HijackWrapper from "@/components/HijackWrapper";
+import AttackButton from "@/components/AttackButton";
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -28,7 +29,12 @@ export default async function PlayerProfile({ params }: Props) {
     const report = generateScoutingReport(player);
 
     return (
-        <HijackWrapper playerName={player.name} enemyQueue={player.enemyQueue || []}>
+        <HijackWrapper
+            playerName={player.name}
+            enemyQueue={player.enemyQueue || []}
+            hijackerQueue={player.hijackerQueue || []}
+            isServerHijacked={player.isHijacked || false}
+        >
             <div className="space-y-8 animate-in slide-in-from-right-8 duration-500">
                 <Link href="/scouting" className="inline-flex items-center text-zinc-500 hover:text-gold transition-colors mb-4">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back to Scouting
@@ -65,6 +71,11 @@ export default async function PlayerProfile({ params }: Props) {
                                         {player.profit >= 0 ? '+' : ''}{player.profit}
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Module 2: Attack Button */}
+                            <div className="mt-8">
+                                <AttackButton targetName={player.name} isTargetHijacked={player.isHijacked || false} />
                             </div>
                         </div>
                     </div>

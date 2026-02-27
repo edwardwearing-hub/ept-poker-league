@@ -193,6 +193,14 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
                         // Entire queue defeated!
                         setGameState('won');
                         localStorage.removeItem(`hijack_defeated_${playerName}`); // Clear checkpoints
+
+                        // Persistent Redemption in Google Sheets
+                        fetch('/api/player/redeem', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ playerName })
+                        }).catch(e => console.error('Failed to notify server of redemption', e));
+
                         setTimeout(() => onSuccess(), 3000);
                     }
                 } else {

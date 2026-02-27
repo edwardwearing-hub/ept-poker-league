@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Users, BarChart2, Radio, Skull, Trophy, Table, GraduationCap, Gamepad2, Clock, Shield, History, Target } from 'lucide-react';
+import { Home, Users, BarChart2, Radio, Skull, Trophy, Table, GraduationCap, Gamepad2, Clock, Shield, History, Target, Zap } from 'lucide-react';
 import { clsx } from 'clsx';
 import RiverReportPlayer from './RiverReportPlayer';
 import SidebarCountdown from './SidebarCountdown';
 import NextGameRSVP from './NextGameRSVP';
+import { usePlayerStatus } from '@/hooks/usePlayerStatus';
 
 const navItems = [
     { name: 'League Home', href: '/', icon: Home },
@@ -28,6 +29,8 @@ interface Props {
 }
 
 export default function SidebarContent({ stats, onLinkClick }: Props) {
+    const { status } = usePlayerStatus();
+
     return (
         <div className="flex flex-col h-full w-full">
             {/* Brand Header */}
@@ -36,6 +39,16 @@ export default function SidebarContent({ stats, onLinkClick }: Props) {
                     {/* Note: In a real app we might use Next/Image but img is fine for now */}
                     <img src="/ept-logo.jpg" alt="EPT Logo" className="w-full h-full object-cover" />
                 </div>
+
+                {/* Module 2: Hack Token Indicator */}
+                {status?.hackTokens > 0 && (
+                    <div className="flex items-center gap-2 mt-4 px-3 py-1.5 bg-ept-red/10 border border-ept-red/30 rounded-lg animate-pulse-slow">
+                        <Zap className="w-4 h-4 text-ept-red fill-current" />
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                            {status.hackTokens} Hack {status.hackTokens === 1 ? 'Token' : 'Tokens'} Ready
+                        </span>
+                    </div>
+                )}
             </div>
 
             {/* Scrollable Content */}

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Zap } from 'lucide-react';
 import SidebarContent from './SidebarContent';
 import { clsx } from 'clsx';
+import { usePlayerStatus } from '@/hooks/usePlayerStatus';
 
 interface Props {
     stats: { totalPot: number; totalSidePot?: number; nextGameDate: string };
@@ -11,6 +12,7 @@ interface Props {
 
 export default function MobileNav({ stats }: Props) {
     const [isOpen, setIsOpen] = useState(false);
+    const { status } = usePlayerStatus();
 
     return (
         <div className="md:hidden fixed top-0 left-0 right-0 z-[60]">
@@ -20,12 +22,21 @@ export default function MobileNav({ stats }: Props) {
                     <img src="/ept-logo.jpg" alt="Logo" className="w-8 h-8 rounded border border-white/20" />
                     <span className="text-sm">E.P.T. 2026</span>
                 </div>
-                <button
-                    onClick={() => setIsOpen(true)}
-                    className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
-                >
-                    <Menu className="w-6 h-6" />
-                </button>
+
+                <div className="flex items-center gap-3">
+                    {status?.hackTokens > 0 && (
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-ept-red/20 border border-ept-red/40 rounded text-[9px] font-black text-ept-red animate-pulse">
+                            <Zap className="w-3 h-3 fill-current" />
+                            {status.hackTokens}
+                        </div>
+                    )}
+                    <button
+                        onClick={() => setIsOpen(true)}
+                        className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                        <Menu className="w-6 h-6" />
+                    </button>
+                </div>
             </div>
 
             {/* Backdrop */}

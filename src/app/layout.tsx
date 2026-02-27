@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import SidebarContent from "@/components/SidebarContent";
 import MobileNav from "@/components/MobileNav";
+import AuthGuard from "@/components/auth/AuthGuard";
 import { getGlobalStats } from '@/lib/data';
 
 const outfit = Outfit({
@@ -41,11 +42,13 @@ export default async function RootLayout({
 
         {/* Main Content Area */}
         {/* Added top padding for mobile to account for fixed header */}
-        <main className="md:ml-72 min-h-screen p-4 pt-20 md:p-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-charcoal-light to-charcoal">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
+        <AuthGuard>
+          <main className="md:ml-72 min-h-screen p-4 pt-20 md:p-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-charcoal-light to-charcoal">
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
+          </main>
+        </AuthGuard>
       </body>
     </html>
   );

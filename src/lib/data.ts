@@ -55,6 +55,11 @@ export interface PlayerStats {
     totalTimesKnockedOut?: number;      // The Bullet Sponge
     uniquePlayersHijacked?: string[];   // The Hijack King
     koToGameRatio?: number;             // The Apex Predator
+    // Module 1-4: PvP Ecosystem Metrics
+    secretPin?: string;                 // 4-digit PIN (stored as string to preserve leading zeros)
+    hackTokens?: number;                // Offensive currency
+    isHijacked?: boolean;               // Current status
+    hijackerQueue?: string[];           // List of attackers
 }
 
 export async function getLeaderboardData(): Promise<PlayerStats[]> {
@@ -283,7 +288,12 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
                 totalHistoricalKOs: totalHistoricalKOs,
                 totalTimesKnockedOut: totalTimesKnockedOut,
                 uniquePlayersHijacked: [], // Populated in cross-reference pass
-                koToGameRatio: gamesPlayed > 0 ? Number((totalHistoricalKOs / gamesPlayed).toFixed(2)) : 0
+                koToGameRatio: gamesPlayed > 0 ? Number((totalHistoricalKOs / gamesPlayed).toFixed(2)) : 0,
+                // PvP Ecosystem
+                secretPin: row[20]?.toString() || "0000",
+                hackTokens: parseInt(row[21]) || 0,
+                isHijacked: row[22]?.toString().toUpperCase() === 'TRUE',
+                hijackerQueue: row[23] ? JSON.parse(row[23]) : []
             });
         }
 

@@ -6,22 +6,27 @@ import { Skull } from 'lucide-react';
 
 interface Props {
     playerName: string;
-    enemyQueue: string[];
+    enemyQueue: string[]; // This is the Gauntlet queue (from KOs)
+    hijackerQueue?: string[]; // This is the PvP attack queue
+    isServerHijacked?: boolean;
     children: React.ReactNode;
 }
 
-export default function HijackWrapper({ playerName, enemyQueue, children }: Props) {
+export default function HijackWrapper({ playerName, enemyQueue, hijackerQueue = [], isServerHijacked = false, children }: Props) {
     const [isHijacked, setIsHijacked] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
 
+    // Merge queues: hijackers first, then gauntlet opponents
+    const mergedQueue = [...hijackerQueue, ...enemyQueue];
+
     useEffect(() => {
-        // Check if currently hijacked
+        // Check if currently hijacked (Server truth takes priority, localStorage as fallback for local testing)
         const savedState = localStorage.getItem(`hijack_active_${playerName}`);
-        if (savedState === 'true') {
+        if (isServerHijacked || savedState === 'true') {
             setIsHijacked(true);
         }
         setIsLoaded(true);
-    }, [playerName]);
+    }, [playerName, isServerHijacked]);
 
     const handleTriggerHijack = () => {
         localStorage.setItem(`hijack_active_${playerName}`, 'true');
@@ -51,7 +56,7 @@ export default function HijackWrapper({ playerName, enemyQueue, children }: Prop
                 </button>
             </div>
             {isHijacked && (
-                <ProfileRedemption playerName={playerName} enemyQueue={enemyQueue} onSuccess={handleRedemptionSuccess} />
+                <ProfileRedemption playerName={playerName} enemyQueue={mergedQueue} onSuccess={handleRedemptionSuccess} />
             )}
 
             <div className={isHijacked ? "pointer-events-none select-none blur-[2px]" : ""}>
