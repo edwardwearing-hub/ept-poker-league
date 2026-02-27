@@ -56,11 +56,23 @@ export default function WantedPosterCard({ player, isTarget }: Props) {
         <div className={clsx(
             "relative group hover:-translate-y-2 transition-transform duration-300",
             isTarget ? "z-10" : "z-0",
-            isLockedOut ? "grayscale opacity-80" : ""
+            isLockedOut ? "opacity-90" : ""
         )}>
+            {/* Massive Locked Scrawl (Outside Grayscale) */}
+            {isLockedOut && (
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-[150%] flex justify-center transform -rotate-[20deg] pointer-events-none z-50 opacity-60 select-none">
+                    <span className="text-[80px] leading-none font-black text-ept-red uppercase tracking-tighter drop-shadow-[0_0_20px_rgba(220,38,38,1)] whitespace-nowrap">
+                        LOCKED
+                    </span>
+                </div>
+            )}
+
             {/* Poster Frame */}
             <Link href={`/scouting/${encodeURIComponent(player.name)}`} className="block relative z-10">
-                <div className="bg-[#e4dccb] text-[#3e3221] p-1 rounded-sm shadow-xl transform rotate-1 group-hover:rotate-0 transition-transform duration-300">
+                <div className={clsx(
+                    "bg-[#e4dccb] text-[#3e3221] p-1 rounded-sm shadow-xl transform rotate-1 group-hover:rotate-0 transition-transform duration-300",
+                    isLockedOut ? "grayscale" : ""
+                )}>
                     <div className="border-[3px] border-[#3e3221] p-4 flex flex-col items-center relative overflow-hidden">
 
                         {/* Texture Overlay */}
@@ -85,10 +97,7 @@ export default function WantedPosterCard({ player, isTarget }: Props) {
 
                             {/* Locked Out Stamp */}
                             {isLockedOut && (
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/40">
-                                    <div className="border-[6px] border-ept-red px-2 py-1 transform -rotate-[20deg] bg-black/60 shadow-[0_0_15px_rgba(220,38,38,0.8)]">
-                                        <span className="text-3xl font-black text-ept-red tracking-tighter uppercase drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">HOSTAGE</span>
-                                    </div>
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/60">
                                 </div>
                             )}
                         </div>
