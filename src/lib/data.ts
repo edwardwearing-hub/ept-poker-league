@@ -77,7 +77,7 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
         const sheetNames = meta.data.sheets?.map(s => s.properties?.title || "") || [];
 
         // 2. We want to pull Sheet1, and every individual player sheet if they exist
-        const ranges = ['Sheet1!A1:Z30', 'PVP_SYSTEM!A1:E30'];
+        const ranges = ['Sheet1!A1:Z30', 'PVP_SYSTEM!B1:F30'];
         const allowedPlayers = [
             "Edward Wearing", "Georgina Wearing", "Luke Daly", "Daniel Horne",
             "Darren Daly", "Chris Daly", "Stephen Flood", "Phil Landsberger",

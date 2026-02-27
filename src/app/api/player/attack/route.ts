@@ -12,10 +12,10 @@ export async function POST(request: Request) {
 
         const sheets = await getSheetsClient();
 
-        // 1. Fetch current PVP_SYSTEM data
+        // 1. Fetch current PVP_SYSTEM data (Starting from Column B)
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: 'PVP_SYSTEM!A1:E30',
+            range: 'PVP_SYSTEM!B1:F30',
         });
         const rows = response.data.values || [];
 
@@ -35,8 +35,8 @@ export async function POST(request: Request) {
         const attackerData = rows[attackerRow - 1];
         const targetData = rows[targetRow - 1];
 
-        const attackerTokens = parseInt(attackerData[2]) || 0;
-        const targetIsHijacked = targetData[3]?.toString().toUpperCase() === 'TRUE';
+        const attackerTokens = parseInt(attackerData[2]) || 0; // Col D (Index 2 rel to B)
+        const targetIsHijacked = targetData[3]?.toString().toUpperCase() === 'TRUE'; // Col E (Index 3 rel to B)
 
         if (attackerTokens <= 0) {
             return NextResponse.json({ error: 'No Hack Tokens available' }, { status: 403 });
@@ -47,24 +47,24 @@ export async function POST(request: Request) {
         }
 
         // 2. Perform updates in PVP_SYSTEM tab
-        // Attacker: Deduct 1 Token (Column C)
+        // Attacker: Deduct 1 Token (Column D)
         await sheets.spreadsheets.values.update({
             spreadsheetId,
-            range: `PVP_SYSTEM!C${attackerRow}`,
+            range: `PVP_SYSTEM!D${attackerRow}`,
             valueInputOption: 'RAW',
             requestBody: { values: [[attackerTokens - 1]] }
         });
 
-        // Target: Set Profile_Hijacked = TRUE (Column D), Update Queue (Column E)
+        // Target: Set Profile_Hijacked = TRUE (Column E), Update Queue (Column F)
         let currentQueue: string[] = [];
         try {
-            currentQueue = JSON.parse(targetData[4] || '[]');
+            currentQueue = JSON.parse(targetData[4] || '[]'); // Col F
         } catch (e) { }
         currentQueue.push(attacker);
 
         await sheets.spreadsheets.values.update({
             spreadsheetId,
-            range: `PVP_SYSTEM!D${targetRow}:E${targetRow}`,
+            range: `PVP_SYSTEM!E${targetRow}:F${targetRow}`,
             valueInputOption: 'RAW',
             requestBody: { values: [['TRUE', JSON.stringify(currentQueue)]] }
         });

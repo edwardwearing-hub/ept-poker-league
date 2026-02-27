@@ -12,10 +12,10 @@ export async function POST(request: Request) {
 
         const sheets = await getSheetsClient();
 
-        // 1. Fetch current PVP_SYSTEM data
+        // 1. Fetch current PVP_SYSTEM data (Starting from Column B)
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: 'PVP_SYSTEM!A1:E30',
+            range: 'PVP_SYSTEM!B1:F30',
         });
         const rows = response.data.values || [];
 
@@ -31,13 +31,13 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Player not found in PVP_SYSTEM' }, { status: 404 });
         }
 
-        const currentTokens = parseInt(rows[playerRow - 1][2]) || 0;
+        const currentTokens = parseInt(rows[playerRow - 1][2]) || 0; // Col D (index 2 relative to B)
 
         // 2. Perform updates
-        // Set Profile_Hijacked = FALSE (Col D), Clear Queue (Col E), Increment Tokens (Col C)
+        // Set Profile_Hijacked = FALSE (Col E), Clear Queue (Col F), Increment Tokens (Col D)
         await sheets.spreadsheets.values.update({
             spreadsheetId,
-            range: `PVP_SYSTEM!C${playerRow}:E${playerRow}`,
+            range: `PVP_SYSTEM!D${playerRow}:F${playerRow}`,
             valueInputOption: 'RAW',
             requestBody: {
                 values: [[
