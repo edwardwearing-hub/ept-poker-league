@@ -2,13 +2,15 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Skull, Target, Zap, Shield, ChevronRight, X } from 'lucide-react';
+import { Skull, Target, Zap, Shield, ChevronRight, X, Swords } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface Props {
     onClose: () => void;
 }
 
 export default function PvPRulesModal({ onClose }: Props) {
+    const router = useRouter();
     const rules = [
         {
             icon: Target,
@@ -30,23 +32,36 @@ export default function PvPRulesModal({ onClose }: Props) {
         }
     ];
 
+    const handleBattleground = () => {
+        localStorage.setItem('ept_pvp_onboarded', 'true');
+        onClose();
+        router.push('/wanted');
+    };
+
+    const handleAcknowledge = () => {
+        localStorage.setItem('ept_pvp_onboarded', 'true');
+        onClose();
+    };
+
     return (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/95 backdrop-blur-lg">
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-zinc-900 border-4 border-zinc-800 max-w-2xl w-full relative overflow-hidden"
+                className="bg-zinc-900 border-4 border-zinc-800 max-w-2xl w-full relative overflow-hidden shadow-[0_0_100px_rgba(220,38,38,0.3)]"
             >
-                {/* 8-bit Header */}
-                <div className="bg-black p-6 border-b-4 border-zinc-800 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Skull className="w-6 h-6 text-ept-red" />
-                        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Welcome to the PvP Arena</h2>
-                    </div>
+                {/* Title Graphic */}
+                <div className="relative aspect-video w-full bg-black border-b-4 border-zinc-800 overflow-hidden">
+                    <img
+                        src="/images/hijack-hustle-title.png"
+                        alt="The Hijack Hustle"
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent opacity-60" />
                 </div>
 
                 <div className="p-8 space-y-8">
-                    <p className="text-zinc-400 font-medium leading-relaxed">
+                    <p className="text-zinc-400 font-medium leading-relaxed text-sm">
                         The E.P.T. Poker League is no longer just a tracker. It's a battlefield. Read the rules of the new PvP ecosystem below to stay ahead.
                     </p>
 
@@ -56,31 +71,28 @@ export default function PvPRulesModal({ onClose }: Props) {
                                 <div className={`mb-4 w-10 h-10 flex items-center justify-center bg-zinc-800/50 rounded-lg group-hover:scale-110 transition-transform ${rule.color}`}>
                                     <rule.icon className="w-5 h-5" />
                                 </div>
-                                <h3 className="text-sm font-black text-white uppercase mb-2">{rule.title}</h3>
+                                <h3 className="text-xs font-black text-white uppercase mb-2 tracking-tighter">{rule.title}</h3>
                                 <p className="text-[11px] text-zinc-500 leading-tight">{rule.desc}</p>
                             </div>
                         ))}
                     </div>
 
-                    <div className="bg-ept-red/10 border border-ept-red/30 p-4 flex gap-4 items-center">
-                        <div className="w-12 h-12 flex-shrink-0 bg-ept-red rounded flex items-center justify-center">
-                            <Zap className="w-6 h-6 text-white animate-pulse" />
-                        </div>
-                        <div>
-                            <div className="text-[10px] font-black text-ept-red uppercase tracking-widest">Secret Hack</div>
-                            <div className="text-white text-xs font-bold italic">"Sharing your hijacks to the group chat increases your social dominance by 200%."</div>
-                        </div>
-                    </div>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <button
+                            onClick={handleBattleground}
+                            className="flex-1 bg-ept-red text-white hover:bg-white hover:text-ept-red py-4 font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 group border-2 border-transparent hover:border-ept-red"
+                        >
+                            <Swords className="w-5 h-5 animate-bounce" />
+                            Take me to the Battle ground
+                        </button>
 
-                    <button
-                        onClick={() => {
-                            localStorage.setItem('ept_pvp_onboarded', 'true');
-                            onClose();
-                        }}
-                        className="w-full bg-white text-black hover:bg-gold hover:text-white py-4 font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 group"
-                    >
-                        I'm Ready to Fight <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
+                        <button
+                            onClick={handleAcknowledge}
+                            className="flex-1 bg-white text-black hover:bg-zinc-200 py-4 font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                        >
+                            I'm Ready to Fight <ChevronRight className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Scanline Deco */}
