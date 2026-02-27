@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import LockerPINModal from './LockerPINModal';
 import PvPRulesModal from './PvPRulesModal';
+import SetPINModal from './SetPINModal';
 import { Skull, AlertOctagon, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -12,6 +13,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const [isLoaded, setIsLoaded] = useState(false);
     const [showSiren, setShowSiren] = useState(false);
     const [showRules, setShowRules] = useState(false);
+    const [showSetPin, setShowSetPin] = useState(false);
     const [playerStatus, setPlayerStatus] = useState<any>(null);
 
     useEffect(() => {
@@ -34,6 +36,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             if (res.ok) {
                 const status = await res.json();
                 setPlayerStatus(status);
+
+                // If PIN is default, force setup
+                if (status.secretPin === "0000") {
+                    setShowSetPin(true);
+                }
+
                 if (status.isHijacked) {
                     setShowSiren(true);
                     playAlarm();
@@ -72,6 +80,16 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             <AnimatePresence>
                 {showRules && (
                     <PvPRulesModal onClose={() => setShowRules(false)} />
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showSetPin && activePlayer && (
+                    <SetPINModal
+                        playerName={activePlayer}
+                        isMandatory={true}
+                        onSuccess={() => setShowSetPin(false)}
+                    />
                 )}
             </AnimatePresence>
 
