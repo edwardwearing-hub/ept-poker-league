@@ -77,7 +77,7 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
         const sheetNames = meta.data.sheets?.map(s => s.properties?.title || "") || [];
 
         // 2. We want to pull Sheet1, and every individual player sheet if they exist
-        const ranges = ['Sheet1!A1:Z30'];
+        const ranges = ['Sheet1!A1:Z30', 'PVP_SYSTEM!A1:E30'];
         const allowedPlayers = [
             "Edward Wearing", "Georgina Wearing", "Luke Daly", "Daniel Horne",
             "Darren Daly", "Chris Daly", "Stephen Flood", "Phil Landsberger",
@@ -288,14 +288,22 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
                 totalHistoricalKOs: totalHistoricalKOs,
                 totalTimesKnockedOut: totalTimesKnockedOut,
                 uniquePlayersHijacked: [], // Populated in cross-reference pass
-                koToGameRatio: gamesPlayed > 0 ? Number((totalHistoricalKOs / gamesPlayed).toFixed(2)) : 0,
-                // PvP Ecosystem
-                secretPin: row[20]?.toString() || "0000",
-                hackTokens: parseInt(row[21]) || 0,
-                isHijacked: row[22]?.toString().toUpperCase() === 'TRUE',
-                hijackerQueue: row[23] ? JSON.parse(row[23]) : []
+                koToGameRatio: gamesPlayed > 0 ? Number((totalHistoricalKOs / gamesPlayed).toFixed(2)) : 0
             });
         }
+
+        // --- PVP SYSTEM MERGE ---
+        const pvpData = (response.data.valueRanges?.[1].values as any[][]) || [];
+        players.forEach(player => {
+            const pvpRow = pvpData.find(row => row[0]?.toString().trim() === player.name);
+            if (pvpRow) {
+                player.secretPin = pvpRow[1]?.toString() || "0000";
+                player.hackTokens = parseInt(pvpRow[2]) || 0;
+                player.isHijacked = pvpRow[3]?.toString().toUpperCase() === 'TRUE';
+                player.hijackerQueue = pvpRow[4] ? JSON.parse(pvpRow[4]) : [];
+            }
+        });
+        // ------------------------
 
         // --- SOURCE OF TRUTH: EXCEL ONLY ---
         // Removed the dynamic CSV math overwrite. The Master E.P.T. 2026.xlsx file dictates all points and rivalries.

@@ -12,34 +12,32 @@ export async function POST(request: Request) {
 
         const sheets = await getSheetsClient();
 
-        // 1. Fetch current Sheet1 data
+        // 1. Fetch current PVP_SYSTEM data
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: 'Sheet1!A1:V30',
+            range: 'PVP_SYSTEM!A1:E30',
         });
         const rows = response.data.values || [];
 
         let playerRow = -1;
         for (let i = 0; i < rows.length; i++) {
-            if (rows[i][0]?.toString().trim().toLowerCase() === playerName.toLowerCase()) {
+            if (rows[i][0]?.toString().trim() === playerName) {
                 playerRow = i + 1;
                 break;
             }
         }
 
         if (playerRow === -1) {
-            return NextResponse.json({ error: 'Player not found' }, { status: 404 });
+            return NextResponse.json({ error: 'Player not found in PVP_SYSTEM' }, { status: 404 });
         }
 
-        const currentTokens = parseInt(rows[playerRow - 1][21]) || 0;
+        const currentTokens = parseInt(rows[playerRow - 1][2]) || 0;
 
         // 2. Perform updates
-        // Set Profile_Hijacked = FALSE (Column W / Index 22)
-        // Clear Hijacker_Queue (Column X / Index 23)
-        // Increment Hack_Tokens (Column V / Index 21)
+        // Set Profile_Hijacked = FALSE (Col D), Clear Queue (Col E), Increment Tokens (Col C)
         await sheets.spreadsheets.values.update({
             spreadsheetId,
-            range: `Sheet1!V${playerRow}:X${playerRow}`,
+            range: `PVP_SYSTEM!C${playerRow}:E${playerRow}`,
             valueInputOption: 'RAW',
             requestBody: {
                 values: [[
