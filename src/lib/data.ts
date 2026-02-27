@@ -49,6 +49,7 @@ export interface PlayerStats {
     cashFlowHistory?: { date: string; profit: number }[];
     nickname?: string;
     avatarUrl?: string;
+    enemyQueue?: string[];
 }
 
 export async function getLeaderboardData(): Promise<PlayerStats[]> {
@@ -146,6 +147,7 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
             let winPct = 0;
             let avgKo = 0;
             const cashFlow: { date: string; profit: number }[] = [];
+            const enemyQueue: string[] = [];
 
             // Check the batched responses for this player's specific sheet
             const pRange = valueRanges.find(r => r.range?.toLowerCase().includes(matchedName.toLowerCase()));
@@ -175,6 +177,50 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
                         }
                     }
                 }
+
+                // Phase 6: Locate "Knocked Out By" table (approx row 29/30) and build the enemyQueue from the most recent game column.
+                // We search dynamically to account for varying height charts above it.
+                let knockoutRowIdx = -1;
+                for (let r = 20; r < pData.length; r++) {
+                    if (pData[r] && pData[r][0] && pData[r][0].toString().trim() === "Knocked Out By") {
+                        knockoutRowIdx = r;
+                        break;
+                    }
+                }
+
+                if (knockoutRowIdx !== -1) {
+                    // Find the furthest column (most recent game) that DOES NOT equal "Total"
+                    // The Date row is 20, but since the Knockout table lines up perfectly with the columns above it...
+                    const dateRow = pData[20] || [];
+                    let mostRecentColIdx = -1;
+
+                    for (let c = dateRow.length - 1; c >= 1; c--) {
+                        if (dateRow[c] && dateRow[c].toString().trim() !== "Total" && dateRow[c].toString().trim() !== "") {
+                            // Check if they actually have a profit/loss logged here (meaning they played)
+                            const profitVal = (pData[24] && pData[24][c]) ? String(pData[24][c]).trim() : "";
+                            if (profitVal !== "") {
+                                mostRecentColIdx = c;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (mostRecentColIdx !== -1) {
+                        // Iterate through the 11 opponents underneath the "Knocked Out By" label
+                        for (let r = knockoutRowIdx + 1; r <= knockoutRowIdx + 11; r++) {
+                            if (pData[r] && pData[r][0]) {
+                                const opponentName = pData[r][0].toString().trim();
+                                const koCountRaw = pData[r][mostRecentColIdx];
+
+                                const koCount = parseInt(koCountRaw) || 0;
+                                // If this opponent knocked them out > 0 times, push them to the queue!
+                                for (let times = 0; times < koCount; times++) {
+                                    enemyQueue.push(opponentName);
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             players.push({
@@ -197,7 +243,8 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
                 bulliedPlayer: bullied,
                 winPercentage: winPct,
                 avgKnockouts: avgKo,
-                cashFlowHistory: cashFlow
+                cashFlowHistory: cashFlow,
+                enemyQueue: enemyQueue
             });
         }
 

@@ -5,19 +5,49 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
     playerName: string;
+    enemyQueue: string[];
     onSuccess: () => void;
 }
 
 // Ensure the name matches the generated filename logic
 const getAvatarFilename = (name: string) => `avatar_${name.toLowerCase().replace(' ', '_')}.png`;
 
-export default function ProfileRedemption({ playerName, onSuccess }: Props) {
+export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }: Props) {
     // Game States
-    const [gameState, setGameState] = useState<'intro' | 'playing' | 'animating' | 'won' | 'lost' | 'locked'>('intro');
+    const [gameState, setGameState] = useState<'intro' | 'playing' | 'animating' | 'next_enemy' | 'won' | 'lost' | 'locked'>('intro');
     const [score, setScore] = useState(0);
     const [currentCard, setCurrentCard] = useState(generateCard());
     const [nextCard, setNextCard] = useState<{ value: number, suit: string, label: string, isRed: boolean } | null>(null);
     const [lockoutTimer, setLockoutTimer] = useState<string>('');
+
+    // Gauntlet State
+    const [parsedQueue, setParsedQueue] = useState<{ name: string, isNemesis: boolean, requiredWins: number }[]>([]);
+    const [currentEnemyIndex, setCurrentEnemyIndex] = useState(0);
+
+    // Initial Queue Parsing
+    useEffect(() => {
+        if (!enemyQueue || enemyQueue.length === 0) {
+            // Fallback default enemy if queue is empty (e.g. they didn't get knocked out)
+            setParsedQueue([{ name: "Unknown Hacker", isNemesis: false, requiredWins: 3 }]);
+            return;
+        }
+
+        const counts: Record<string, number> = {};
+        enemyQueue.forEach(e => counts[e] = (counts[e] || 0) + 1);
+
+        const newQueue: { name: string, isNemesis: boolean, requiredWins: number }[] = [];
+        Object.entries(counts).forEach(([name, count]) => {
+            if (count > 1) {
+                newQueue.push({ name, isNemesis: true, requiredWins: 6 });
+            } else {
+                newQueue.push({ name, isNemesis: false, requiredWins: 3 });
+            }
+        });
+
+        // Randomize the queue order for variation
+        newQueue.sort(() => Math.random() - 0.5);
+        setParsedQueue(newQueue);
+    }, [enemyQueue]);
 
     // Load LocalStorage state on mount
     useEffect(() => {
@@ -82,9 +112,23 @@ export default function ProfileRedemption({ playerName, onSuccess }: Props) {
                 setCurrentCard(newCard);
                 setNextCard(null);
 
-                if (newScore >= 3) {
-                    setGameState('won');
-                    setTimeout(() => onSuccess(), 3000); // Trigger success callback after 3s
+                const targetWins = parsedQueue[currentEnemyIndex]?.requiredWins || 3;
+
+                if (newScore >= targetWins) {
+                    // Defeated this enemy!
+                    if (currentEnemyIndex + 1 < parsedQueue.length) {
+                        // More enemies left in queue
+                        setGameState('next_enemy');
+                        setTimeout(() => {
+                            setCurrentEnemyIndex(prev => prev + 1);
+                            setScore(0);
+                            setGameState('playing');
+                        }, 2500);
+                    } else {
+                        // Entire queue defeated!
+                        setGameState('won');
+                        setTimeout(() => onSuccess(), 3000);
+                    }
                 } else {
                     setGameState('playing');
                 }
@@ -119,23 +163,36 @@ export default function ProfileRedemption({ playerName, onSuccess }: Props) {
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/pixel-weave.png')] opacity-20 pointer-events-none" />
                     <div className="text-center relative z-10">
                         <h1 className="text-3xl text-green-500 font-black uppercase mb-2">Profile Hijacked</h1>
-                        <p className="text-white text-xs mb-8">Execute override command to recover data.</p>
+                        <p className="text-white text-xs mb-8">Defeat the Gauntlet to recover your data.</p>
 
-                        <div className="flex justify-center mb-8">
-                            <img src={`/avatars/${getAvatarFilename(playerName)}`} alt={playerName} className="w-32 h-32 object-contain filter drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+                        <div className="flex justify-center mb-8 relative">
+                            <img src={`/avatars/${getAvatarFilename(playerName)}`} alt={playerName} className="w-32 h-32 object-contain filter drop-shadow-[0_0_10px_rgba(34,197,94,0.5)] z-10 relative" />
+                        </div>
+
+                        <div className="bg-zinc-900 border-2 border-zinc-800 p-4 mb-8">
+                            <h3 className="text-zinc-500 text-xs font-bold mb-2 uppercase tracking-widest">Enemy Queue Detected</h3>
+                            <div className="text-white text-sm font-black flex items-center justify-center gap-2 flex-wrap">
+                                {parsedQueue.map((q, idx) => (
+                                    <span key={idx} className={`${q.isNemesis ? 'text-ept-red animate-pulse' : 'text-zinc-300'}`}>
+                                        [{q.isNemesis ? 'NEMESIS: ' : ''}{q.name}]
+                                    </span>
+                                ))}
+                            </div>
                         </div>
 
                         <button
                             onClick={() => setGameState('playing')}
                             className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 uppercase border-b-4 border-green-700 active:border-b-0 active:mt-1 transition-all"
                         >
-                            Start Override
+                            Enter Gauntlet
                         </button>
                     </div>
                 </div>
             </div>
         );
     }
+
+    const currentEnemy = parsedQueue[currentEnemyIndex] || { name: 'Unknown', isNemesis: false, requiredWins: 3 };
 
     return (
         // Enforce Mobile Aspect Ratio constraints (max-w-md mx-auto)
@@ -146,20 +203,26 @@ export default function ProfileRedemption({ playerName, onSuccess }: Props) {
                 {/* Header Avatars */}
                 <div className="flex justify-between items-center p-4 border-b-4 border-zinc-900 bg-black">
                     <div className="text-center">
-                        <img src={`/avatars/${getAvatarFilename(playerName)}`} alt="Player" className="w-16 h-16 object-contain" />
+                        <img src={`/avatars/${getAvatarFilename(playerName)}`} alt="Player" className="w-16 h-16 object-contain filter drop-shadow-[0_0_5px_rgba(34,197,94,0.3)]" />
                         <span className="text-[10px] text-green-500 font-bold uppercase block mt-1">Player</span>
                     </div>
 
-                    <div className="flex space-x-2">
-                        {[0, 1, 2].map((i) => (
-                            <div key={i} className={`w-4 h-4 border-2 ${i < score ? 'bg-green-500 border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.8)]' : 'bg-black border-zinc-700'}`} />
-                        ))}
+                    <div className="flex flex-col items-center">
+                        <span className="text-zinc-600 text-[10px] font-black uppercase tracking-widest mb-1">
+                            Gauntlet: {currentEnemyIndex + 1} / {parsedQueue.length}
+                        </span>
+                        <div className="flex space-x-1">
+                            {Array.from({ length: currentEnemy.requiredWins }).map((_, i) => (
+                                <div key={i} className={`w-3 h-3 md:w-4 md:h-4 border-2 ${i < score ? 'bg-green-500 border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.8)]' : 'bg-black border-zinc-700'}`} />
+                            ))}
+                        </div>
                     </div>
 
                     <div className="text-center">
-                        {/* Generic skull/hacker icon for hijacker */}
-                        <div className="w-16 h-16 flex items-center justify-center text-4xl text-ept-red font-black">?</div>
-                        <span className="text-[10px] text-ept-red font-bold uppercase block mt-1">Hijacker</span>
+                        <img src={`/avatars/${getAvatarFilename(currentEnemy.name)}`} alt={currentEnemy.name} className={`w-16 h-16 object-contain ${currentEnemy.isNemesis ? 'filter drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]' : ''} ${gameState === 'next_enemy' ? 'opacity-0' : 'opacity-100'}`} />
+                        <span className={`text-[10px] ${currentEnemy.isNemesis ? 'text-ept-red animate-pulse' : 'text-zinc-400'} font-bold uppercase block mt-1`}>
+                            {currentEnemy.isNemesis ? 'Nemesis Boss' : 'Hijacker'}
+                        </span>
                     </div>
                 </div>
 
@@ -183,6 +246,17 @@ export default function ProfileRedemption({ playerName, onSuccess }: Props) {
                             >
                                 <h2 className="text-6xl text-ept-red font-black uppercase mb-4 drop-shadow-[0_0_15px_rgba(220,38,38,0.8)]">Game<br />Over</h2>
                                 <p className="text-zinc-500 text-sm">Lockout protocols engaged.</p>
+                            </motion.div>
+                        ) : gameState === 'next_enemy' ? (
+                            <motion.div
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="text-center"
+                            >
+                                <h2 className="text-3xl text-gold font-black uppercase mb-4 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)] animate-pulse">
+                                    Target<br />Destroyed
+                                </h2>
+                                <p className="text-white text-sm">Loading next opponent...</p>
                             </motion.div>
                         ) : (
                             <div className="relative w-full aspect-[2.5/3.5] max-w-[280px]">

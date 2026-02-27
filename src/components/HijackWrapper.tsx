@@ -6,10 +6,11 @@ import { Skull } from 'lucide-react';
 
 interface Props {
     playerName: string;
+    enemyQueue: string[];
     children: React.ReactNode;
 }
 
-export default function HijackWrapper({ playerName, children }: Props) {
+export default function HijackWrapper({ playerName, enemyQueue, children }: Props) {
     const [isHijacked, setIsHijacked] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
 
@@ -37,7 +38,7 @@ export default function HijackWrapper({ playerName, children }: Props) {
     if (isHijacked) {
         return (
             <div className="fixed inset-0 z-[100] bg-black overflow-y-auto">
-                <ProfileRedemption playerName={playerName} onSuccess={handleRedemptionSuccess} />
+                <ProfileRedemption playerName={playerName} enemyQueue={enemyQueue} onSuccess={handleRedemptionSuccess} />
             </div>
         );
     }

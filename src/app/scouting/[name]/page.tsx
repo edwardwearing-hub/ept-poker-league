@@ -28,7 +28,7 @@ export default async function PlayerProfile({ params }: Props) {
     const report = generateScoutingReport(player);
 
     return (
-        <HijackWrapper playerName={player.name}>
+        <HijackWrapper playerName={player.name} enemyQueue={player.enemyQueue || []}>
             <div className="space-y-8 animate-in slide-in-from-right-8 duration-500">
                 <Link href="/scouting" className="inline-flex items-center text-zinc-500 hover:text-gold transition-colors mb-4">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back to Scouting
