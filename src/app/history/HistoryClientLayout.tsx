@@ -104,10 +104,11 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                                     >
                                         <div className="px-6 py-4">
                                             {/* Table Headers */}
-                                            <div className="grid grid-cols-4 md:grid-cols-12 gap-4 pb-3 border-b border-white/10 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                                            <div className="grid grid-cols-5 md:grid-cols-12 gap-4 pb-3 border-b border-white/10 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
                                                 <div className="col-span-1 text-center">Rnk</div>
-                                                <div className="col-span-2 md:col-span-5">Player</div>
-                                                <div className="col-span-1 md:col-span-3 text-right md:text-center">Points</div>
+                                                <div className="col-span-2 md:col-span-4">Player</div>
+                                                <div className="col-span-1 md:col-span-2 text-center">KOs</div>
+                                                <div className="col-span-1 md:col-span-2 text-center">Points</div>
                                                 <div className="hidden md:block col-span-3 text-right">Winnings</div>
                                             </div>
 
@@ -117,17 +118,20 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                                                     const isWinner = idx === 0;
                                                     return (
                                                         <div key={idx} className={clsx(
-                                                            "grid grid-cols-4 md:grid-cols-12 gap-4 py-3 items-center rounded-lg px-2 transition-colors",
+                                                            "grid grid-cols-5 md:grid-cols-12 gap-4 py-3 items-center rounded-lg px-2 transition-colors",
                                                             isWinner ? "bg-gold/10 border border-gold/20" : "hover:bg-white/5 border border-transparent"
                                                         )}>
                                                             <div className={clsx("col-span-1 font-black font-mono text-center", isWinner ? "text-gold" : "text-white")}>
                                                                 #{idx + 1}
                                                             </div>
-                                                            <div className="col-span-2 md:col-span-5 font-bold uppercase tracking-widest flex items-center gap-2">
+                                                            <div className="col-span-2 md:col-span-4 font-bold uppercase tracking-widest flex items-center gap-2">
                                                                 {isWinner && <Trophy className="w-3 h-3 text-gold" />}
                                                                 <span className={clsx("truncate", isWinner ? "text-white" : "text-zinc-300")}>{player.name}</span>
                                                             </div>
-                                                            <div className="col-span-1 md:col-span-3 font-mono text-right md:text-center text-zinc-400 font-bold">
+                                                            <div className="col-span-1 md:col-span-2 font-mono text-center text-zinc-400 font-bold">
+                                                                {player.kos !== undefined && player.kos > 0 ? player.kos : '-'}
+                                                            </div>
+                                                            <div className="col-span-1 md:col-span-2 font-mono text-center text-zinc-400 font-bold">
                                                                 {player.points}
                                                             </div>
                                                             <div className={clsx("hidden md:block col-span-3 font-mono text-right font-black", player.winnings > 0 ? "text-green-400" : "text-zinc-600")}>

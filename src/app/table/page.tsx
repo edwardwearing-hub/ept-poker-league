@@ -1,6 +1,7 @@
 import { getLeaderboardData } from '@/lib/data';
 import FullLeagueTable from '@/components/FullLeagueTable';
 import { Table } from 'lucide-react';
+import PointsKey from '@/components/PointsKey';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,7 +10,7 @@ export default async function TablePage() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex items-center gap-3 mb-8">
+            <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-gold/10 rounded-lg text-gold border border-gold/20">
                     <Table size={32} />
                 </div>
@@ -18,6 +19,8 @@ export default async function TablePage() {
                     <p className="text-zinc-400 text-sm">Raw data from Sheet 1</p>
                 </div>
             </div>
+
+            <PointsKey />
 
             <FullLeagueTable data={players} />
         </div>

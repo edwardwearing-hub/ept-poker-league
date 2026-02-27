@@ -267,6 +267,7 @@ export interface PlayerGameResult {
     place: string;
     winnings: number;
     points: number;
+    kos?: number;
 }
 
 export interface GameHistorySession {
@@ -286,7 +287,7 @@ export async function getGameHistory(): Promise<GameHistorySession[]> {
         const sheets = await getSheetsClient();
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: 'Sheet1!A20:ZZ36',
+            range: 'Sheet1!A20:ZZ60',
         });
 
         const rows = response.data.values;
@@ -349,13 +350,25 @@ export async function getGameHistory(): Promise<GameHistorySession[]> {
                     continue;
                 }
 
+                // Derive KOs based on the Points Key
+                const placeNum = parseInt(placeRaw);
+                let basePoints = 0;
+                if (placeNum === 1) basePoints = 10;
+                else if (placeNum === 2) basePoints = 6;
+                else if (placeNum === 3) basePoints = 4;
+                else if (placeNum === 4) basePoints = 3;
+                else if (placeNum === 5) basePoints = 2;
+
+                const derivedKOs = Math.max(0, pts - basePoints);
+
                 totalPointsScoredThisGame += pts;
 
                 session.results.push({
                     name: playerName.toString().trim(),
                     place: placeRaw,
                     winnings: parseMoney(rowData[colStart + 1]),
-                    points: pts
+                    points: pts,
+                    kos: derivedKOs
                 });
             }
 
