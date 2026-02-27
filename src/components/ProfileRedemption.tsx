@@ -316,9 +316,21 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
         <div className="min-h-screen bg-black flex flex-col font-mono select-none overflow-hidden relative">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/pixel-weave.png')] opacity-[0.15] pointer-events-none" />
 
-            <div className="max-w-md w-full mx-auto flex-1 flex flex-col border-x-4 border-zinc-900 bg-[#0a0a0a] relative z-10">
+            <div className="max-w-md w-full mx-auto flex-1 flex flex-col border-x-4 border-zinc-900 bg-[#0a0a0a] relative z-10 overflow-hidden">
+                {/* 8-bit City Skyline Background (Only during active gameplay) */}
+                {(gameState === 'playing' || gameState === 'animating' || gameState === 'next_enemy') && (
+                    <div
+                        className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-screen"
+                        style={{
+                            backgroundImage: `url('/backgrounds/8bit_night_skyline.png')`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'bottom'
+                        }}
+                    />
+                )}
+
                 {/* Header Avatars */}
-                <div className="flex justify-between items-center p-4 border-b-4 border-zinc-900 bg-black">
+                <div className="flex justify-between items-center p-4 border-b-4 border-zinc-900 bg-black relative z-10">
                     <div className="text-center">
                         <img src={`/avatars/${getAvatarFilename(playerName)}`} alt="Player" className={`w-16 h-16 object-contain filter drop-shadow-[0_0_5px_rgba(34,197,94,0.3)] ${gameState === 'animating' ? 'animate-attack' : 'animate-float'}`} />
                         <span className="text-[10px] text-green-500 font-bold uppercase block mt-1">Player</span>
@@ -425,7 +437,7 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
                 )}
 
                 {/* Chunky 8-bit Buttons */}
-                <div className="p-4 grid grid-cols-2 gap-4 border-t-4 border-zinc-900 bg-black">
+                <div className="p-4 grid grid-cols-2 gap-4 border-t-4 border-zinc-900 bg-black relative z-10">
                     <button
                         disabled={gameState !== 'playing'}
                         onClick={() => handleGuess('higher')}
