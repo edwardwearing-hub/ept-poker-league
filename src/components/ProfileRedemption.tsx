@@ -45,6 +45,10 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
     const [parsedQueue, setParsedQueue] = useState<{ name: string, isNemesis: boolean, requiredWins: number }[]>([]);
     const [currentEnemyIndex, setCurrentEnemyIndex] = useState(0);
 
+    // Animation states for puppeteering
+    const [playerAnim, setPlayerAnim] = useState<'idle' | 'attacking' | 'hit'>('idle');
+    const [enemyAnim, setEnemyAnim] = useState<'idle' | 'attacking' | 'hit' | 'dying'>('idle');
+
     // Initial Queue Parsing & Checkpoint Filtering
     useEffect(() => {
         // 1. Load Checkpoints (who have we already beaten?)
@@ -158,11 +162,13 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
                 setScore(newScore);
                 setCurrentCard(newCard);
                 setNextCard(null);
+                setEnemyAnim('hit'); // Enemy takes damage
 
                 const targetWins = parsedQueue[currentEnemyIndex]?.requiredWins || 3;
 
                 if (newScore >= targetWins) {
                     // Defeated this enemy!
+                    setEnemyAnim('dying');
 
                     // Save Checkpoint to LocalStorage
                     const enemyName = parsedQueue[currentEnemyIndex].name;
@@ -180,6 +186,7 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
                         setTimeout(() => {
                             setCurrentEnemyIndex(prev => prev + 1);
                             setScore(0);
+                            setEnemyAnim('idle');
                             setGameState('playing');
                         }, 2500);
                     } else {
@@ -190,9 +197,13 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
                     }
                 } else {
                     setGameState('playing');
+                    setTimeout(() => setEnemyAnim('idle'), 600);
                 }
             } else {
                 setGameState('lost');
+                setPlayerAnim('hit'); // Player takes damage
+                setEnemyAnim('attacking');
+
                 const unlockTime = Date.now() + (12 * 60 * 60 * 1000); // 12 hours from now
                 localStorage.setItem(`hijack_lockout_${playerName}`, unlockTime.toString());
             }
@@ -332,7 +343,12 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
                 {/* Header Avatars */}
                 <div className="flex justify-between items-center p-4 border-b-4 border-zinc-900 bg-black relative z-10">
                     <div className="text-center">
-                        <img src={`/avatars/${getAvatarFilename(playerName)}`} alt="Player" className={`w-16 h-16 object-contain filter drop-shadow-[0_0_5px_rgba(34,197,94,0.3)] ${gameState === 'animating' ? 'animate-attack' : 'animate-float'}`} />
+                        <img
+                            src={`/avatars/${getAvatarFilename(playerName)}`}
+                            alt="Player"
+                            className={`w-16 h-16 object-contain filter drop-shadow-[0_0_5px_rgba(34,197,94,0.3)] 
+                                ${gameState === 'animating' ? 'animate-attack' :
+                                    playerAnim === 'hit' ? 'animate-take-damage' : 'animate-breathe'}`} />
                         <span className="text-[10px] text-green-500 font-bold uppercase block mt-1">Player</span>
                     </div>
 
@@ -348,7 +364,15 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
                     </div>
 
                     <div className="text-center">
-                        <img src={`/avatars/${getAvatarFilename(currentEnemy.name)}`} alt={currentEnemy.name} className={`w-16 h-16 object-contain ${currentEnemy.isNemesis ? 'filter drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]' : ''} ${gameState === 'next_enemy' ? 'opacity-0' : 'opacity-100'} ${gameState === 'animating' ? 'animate-attack' : 'animate-float-delayed'}`} />
+                        <img
+                            src={`/avatars/${getAvatarFilename(currentEnemy.name)}`}
+                            alt={currentEnemy.name}
+                            className={`w-16 h-16 object-contain 
+                                ${currentEnemy.isNemesis ? 'filter drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]' : ''} 
+                                ${gameState === 'next_enemy' ? 'opacity-0' : 'opacity-100'} 
+                                ${gameState === 'animating' || enemyAnim === 'attacking' ? 'animate-attack' :
+                                    enemyAnim === 'hit' ? 'animate-take-damage' :
+                                        enemyAnim === 'dying' ? 'animate-die' : 'animate-breathe-delayed'}`} />
                         <span className={`text-[10px] ${currentEnemy.isNemesis ? 'text-ept-red animate-pulse' : 'text-zinc-400'} font-bold uppercase block mt-1`}>
                             {currentEnemy.isNemesis ? 'Nemesis Boss' : 'Hijacker'}
                         </span>
@@ -423,7 +447,12 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
                         {/* Player */}
                         <div className="flex flex-col items-center">
                             <div className="transform scale-x-[-1]">
-                                <img src={`/avatars/${getAvatarFilename(playerName)}`} alt="Player" className={`w-24 h-24 md:w-32 md:h-32 object-contain filter drop-shadow-[0_0_15px_rgba(34,197,94,0.6)] ${gameState === 'animating' ? 'animate-attack' : 'animate-float'}`} />
+                                <img
+                                    src={`/avatars/${getAvatarFilename(playerName)}`}
+                                    alt="Player"
+                                    className={`w-24 h-24 md:w-32 md:h-32 object-contain filter drop-shadow-[0_0_15px_rgba(34,197,94,0.6)] 
+                                        ${gameState === 'animating' ? 'animate-attack' :
+                                            playerAnim === 'hit' ? 'animate-take-damage' : 'animate-breathe'}`} />
                             </div>
                         </div>
 
@@ -431,7 +460,14 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
 
                         {/* Enemy */}
                         <div className="flex flex-col items-center">
-                            <img src={`/avatars/${getAvatarFilename(currentEnemy.name)}`} alt={currentEnemy.name} className={`w-28 h-28 md:w-36 md:h-36 object-contain filter ${currentEnemy.isNemesis ? 'drop-shadow-[0_0_20px_rgba(220,38,38,0.9)] animate-pulse' : 'drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]'} ${gameState === 'animating' ? 'animate-attack' : 'animate-float-delayed'}`} />
+                            <img
+                                src={`/avatars/${getAvatarFilename(currentEnemy.name)}`}
+                                alt={currentEnemy.name}
+                                className={`w-28 h-28 md:w-36 md:h-36 object-contain filter 
+                                    ${currentEnemy.isNemesis ? 'drop-shadow-[0_0_20px_rgba(220,38,38,0.9)] animate-pulse' : 'drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]'} 
+                                    ${gameState === 'animating' || enemyAnim === 'attacking' ? 'animate-attack' :
+                                        enemyAnim === 'hit' ? 'animate-take-damage' :
+                                            enemyAnim === 'dying' ? 'animate-die' : 'animate-breathe-delayed'}`} />
                         </div>
                     </div>
                 )}
