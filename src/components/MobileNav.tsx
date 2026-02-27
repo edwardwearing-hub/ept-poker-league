@@ -17,13 +17,13 @@ export default function MobileNav({ stats }: Props) {
     return (
         <div className="md:hidden fixed top-0 left-0 right-0 z-[60]">
             {/* Mobile Header Bar */}
-            <div className="bg-charcoal/90 backdrop-blur-md border-b border-white/10 p-4 flex items-center justify-between">
+            <div className="bg-charcoal/95 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between relative z-[70]">
                 <div className="font-bold text-white tracking-wider flex items-center gap-2">
                     <img src="/ept-logo.jpg" alt="Logo" className="w-8 h-8 rounded border border-white/20" />
                     <span className="text-sm">E.P.T. 2026</span>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                     {status?.hackTokens > 0 && (
                         <div className="flex items-center gap-1.5 px-2 py-1 bg-ept-red/20 border border-ept-red/40 rounded text-[9px] font-black text-ept-red animate-pulse">
                             <Zap className="w-3 h-3 fill-current" />
@@ -32,7 +32,8 @@ export default function MobileNav({ stats }: Props) {
                     )}
                     <button
                         onClick={() => setIsOpen(true)}
-                        className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                        className="p-2 text-gold bg-white/5 hover:bg-white/15 rounded-lg border border-gold/30 hover:border-gold/60 transition-all"
+                        aria-label="Open menu"
                     >
                         <Menu className="w-6 h-6" />
                     </button>
