@@ -48,12 +48,23 @@ interface Props {
     playerName?: string;
 }
 
-export default function SidebarContent({ stats, onLinkClick, playerName }: Props) {
+export default function SidebarContent({ stats, onLinkClick, playerName: initialPlayerName }: Props) {
     const { status } = usePlayerStatus();
     const [showSetPin, setShowSetPin] = useState(false);
+    const [playerName, setPlayerName] = useState<string | undefined>(initialPlayerName);
+
+    React.useEffect(() => {
+        if (!playerName) {
+            const savedPlayer = localStorage.getItem('ept_active_player');
+            if (savedPlayer) {
+                setPlayerName(savedPlayer);
+            }
+        }
+    }, [playerName]);
 
     const handleLogout = () => {
         localStorage.removeItem('ept_active_player');
+        localStorage.removeItem('ept_pvp_onboarded'); // Clear onboarding flag
         window.location.reload();
     };
 
