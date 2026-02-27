@@ -290,7 +290,7 @@ export async function getGameHistory(): Promise<GameHistorySession[]> {
         });
 
         const rows = response.data.values;
-        if (!rows || rows.length < 16) return []; // Make sure we have enough rows
+        if (!rows || rows.length < 5) return []; // Make sure we have at least a few rows
 
         const parseMoney = (val: string | number | undefined | null) => {
             if (!val) return 0;
@@ -298,33 +298,42 @@ export async function getGameHistory(): Promise<GameHistorySession[]> {
             return parseFloat(val.toString().replace(/[^0-9.-]+/g, "")) || 0;
         };
 
+        // Find the actual row index where the "Date" string exists in the first column
+        let dateRowIndex = -1;
+        for (let i = 0; i < rows.length; i++) {
+            if (rows[i] && rows[i][0] && rows[i][0].toString().trim().toLowerCase() === "date") {
+                dateRowIndex = i;
+                break;
+            }
+        }
+
+        if (dateRowIndex === -1) {
+            console.error("Critical: Could not find 'Date' row in Game History extraction. Grid might have changed.");
+            return [];
+        }
+
         const sessions: GameHistorySession[] = [];
 
         // The data starts at column B (index 1). Each game takes up 3 columns.
-        // Row 20 (index 0) = Date
-        // Row 21 (index 1) = Pot
-        // Row 22 (index 2) = Side Pot
-        // Rows 25-35 (index 5 to 15) = Player data
+        for (let colStart = 1; colStart < rows[dateRowIndex].length; colStart += 3) {
+            const dateVal = rows[dateRowIndex]?.[colStart];
+            if (!dateVal || dateVal.toString().trim() === "") continue;
 
-        for (let colStart = 1; colStart < rows[0].length; colStart += 3) {
-            const dateVal = rows[0]?.[colStart];
-            if (!dateVal) continue;
-
-            const parsedPot = parseMoney(rows[1]?.[colStart]);
+            const parsedPot = parseMoney(rows[dateRowIndex + 1]?.[colStart]);
 
             // We will build the session first and validate it by checking if anyone played
             const session: GameHistorySession = {
                 date: dateVal.toString().trim(),
                 prizePot: parsedPot,
-                sidePot: parseMoney(rows[2]?.[colStart]),
+                sidePot: parseMoney(rows[dateRowIndex + 2]?.[colStart]),
                 results: []
             };
 
             let totalPointsScoredThisGame = 0;
 
-            // Player rows map to lines 25(idx 5) through 35(idx 15)
+            // Player rows map to lines starting 5 rows after the Date row, exactly 11 players deep
             // Column 1 = Place, Column 2 = Winnings, Column 3 = Points
-            for (let r = 5; r <= 15; r++) {
+            for (let r = dateRowIndex + 5; r <= dateRowIndex + 15; r++) {
                 const rowData = rows[r];
                 if (!rowData) continue;
 
@@ -354,7 +363,7 @@ export async function getGameHistory(): Promise<GameHistorySession[]> {
             if (session.prizePot > 0 || totalPointsScoredThisGame > 0) {
                 sessions.push(session);
             }
-        }
+        } // End of colStart loop
 
         return sessions;
 
