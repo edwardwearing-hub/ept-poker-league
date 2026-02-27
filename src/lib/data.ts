@@ -261,3 +261,104 @@ export async function getGlobalStats() {
         nextGameDate
     };
 }
+
+export interface PlayerGameResult {
+    name: string;
+    place: string;
+    winnings: number;
+    points: number;
+}
+
+export interface GameHistorySession {
+    date: string;
+    prizePot: number;
+    sidePot: number;
+    results: PlayerGameResult[];
+}
+
+export async function getGameHistory(): Promise<GameHistorySession[]> {
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
+    if (!spreadsheetId) {
+        return [];
+    }
+
+    try {
+        const sheets = await getSheetsClient();
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Sheet1!A20:ZZ36',
+        });
+
+        const rows = response.data.values;
+        if (!rows || rows.length < 16) return []; // Make sure we have enough rows
+
+        const parseMoney = (val: string | number | undefined | null) => {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            return parseFloat(val.toString().replace(/[^0-9.-]+/g, "")) || 0;
+        };
+
+        const sessions: GameHistorySession[] = [];
+
+        // The data starts at column B (index 1). Each game takes up 3 columns.
+        // Row 20 (index 0) = Date
+        // Row 21 (index 1) = Pot
+        // Row 22 (index 2) = Side Pot
+        // Row 36 (index 16) = No Of Players (use to filter empty sets)
+        // Rows 25-35 (index 5 to 15) = Player data
+
+        for (let colStart = 1; colStart < rows[0].length; colStart += 3) {
+            // Check if this column group is valid by looking for "No Of Players" count
+            // Sometimes the array doesn't extend fully if empty, so use optional chaining
+            const noOfPlayers = rows[16]?.[colStart];
+            const dateVal = rows[0]?.[colStart];
+
+            if (!noOfPlayers || noOfPlayers.toString().trim() === "" || noOfPlayers.toString().trim() === "0" || !dateVal) {
+                continue; // Skip blank or invalid game columns
+            }
+
+            const session: GameHistorySession = {
+                date: dateVal.toString().trim(),
+                prizePot: parseMoney(rows[1]?.[colStart]),
+                sidePot: parseMoney(rows[2]?.[colStart]),
+                results: []
+            };
+
+            // Player rows map to lines 25(idx 5) through 35(idx 15)
+            // Column 1 = Place, Column 2 = Winnings, Column 3 = Points
+            for (let r = 5; r <= 15; r++) {
+                const rowData = rows[r];
+                if (!rowData) continue;
+
+                const playerName = rows[r][0]; // Column A (index 0) has the names
+                if (!playerName) continue;
+
+                const placeRaw = rowData[colStart]?.toString().trim() || "";
+                // Even if they didn't place (e.g. DNP or 0), if there is any data in Place or Points, we can log it.
+                // We will skip completely blank entries
+                const pointsObj = rowData[colStart + 2];
+
+                // if points is empty and place is empty, they likely didn't play this game.
+                if (!placeRaw && (!pointsObj || pointsObj.toString().trim() === "")) {
+                    continue;
+                }
+
+                session.results.push({
+                    name: playerName.toString().trim(),
+                    place: placeRaw,
+                    winnings: parseMoney(rowData[colStart + 1]),
+                    points: parseFloat(pointsObj?.toString() || "0") || 0
+                });
+            }
+
+            sessions.push(session);
+        }
+
+        return sessions;
+
+    } catch (e) {
+        console.error("Critical: Error fetching Game History from Google Sheets!");
+        console.error(e);
+        return [];
+    }
+}

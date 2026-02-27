@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Users, BarChart2, Radio, Skull, Trophy, Table, GraduationCap, Gamepad2, Clock, Shield } from 'lucide-react';
+import { Home, Users, BarChart2, Radio, Skull, Trophy, Table, GraduationCap, Gamepad2, Clock, Shield, History } from 'lucide-react';
 import { clsx } from 'clsx';
 import RiverReportPlayer from './RiverReportPlayer';
 import SidebarCountdown from './SidebarCountdown';
@@ -10,6 +10,7 @@ import NextGameRSVP from './NextGameRSVP';
 const navItems = [
     { name: 'League Home', href: '/', icon: Home },
     { name: 'Leaderboard', href: '/#leaderboard', icon: Trophy },
+    { name: 'Session Archive', href: '/history', icon: History },
     { name: 'The Academy', href: '/academy', icon: GraduationCap },
     { name: 'Poker Engine', href: '/game', icon: Gamepad2 },
     { name: 'Blinds Timer', href: '/timer', icon: Clock },
