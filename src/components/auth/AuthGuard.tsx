@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import LockerPINModal from './LockerPINModal';
+import PvPRulesModal from './PvPRulesModal';
 import { Skull, AlertOctagon, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -10,13 +11,19 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const [activePlayer, setActivePlayer] = useState<string | null>(null);
     const [isLoaded, setIsLoaded] = useState(false);
     const [showSiren, setShowSiren] = useState(false);
+    const [showRules, setShowRules] = useState(false);
     const [playerStatus, setPlayerStatus] = useState<any>(null);
 
     useEffect(() => {
         const savedPlayer = localStorage.getItem('ept_active_player');
+        const hasOnboarded = localStorage.getItem('ept_pvp_onboarded');
+
         if (savedPlayer) {
             setActivePlayer(savedPlayer);
             checkPlayerStatus(savedPlayer);
+            if (!hasOnboarded) {
+                setShowRules(true);
+            }
         }
         setIsLoaded(true);
     }, []);
@@ -46,6 +53,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const handleLoginSuccess = (name: string) => {
         setActivePlayer(name);
         checkPlayerStatus(name);
+        const hasOnboarded = localStorage.getItem('ept_pvp_onboarded');
+        if (!hasOnboarded) {
+            setShowRules(true);
+        }
     };
 
     if (!isLoaded) return null;
@@ -55,6 +66,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             <AnimatePresence>
                 {!activePlayer && (
                     <LockerPINModal onSuccess={handleLoginSuccess} />
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showRules && (
+                    <PvPRulesModal onClose={() => setShowRules(false)} />
                 )}
             </AnimatePresence>
 
