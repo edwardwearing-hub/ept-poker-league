@@ -201,19 +201,28 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
 
     if (gameState === 'locked') {
         return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 font-mono select-none">
-                <div className="border-4 border-ept-red bg-black p-8 text-center max-w-sm w-full mx-auto relative overflow-hidden">
+            <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center font-mono select-none overflow-hidden touch-none pointer-events-auto">
+                <div className="absolute inset-0 bg-black/80 backdrop-grayscale backdrop-blur-sm pointer-events-none" />
+
+                {/* Big Red Letters Scrawled Across */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-[150vw] flex justify-center transform -rotate-[15deg] pointer-events-none z-10 opacity-30 select-none">
+                    <span style={{ fontSize: 'clamp(150px, 25vw, 400px)' }} className="font-black text-ept-red uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(220,38,38,1)] whitespace-nowrap">
+                        LOCKED LOCKED
+                    </span>
+                </div>
+
+                <div className="relative z-30 border-4 border-ept-red bg-black/90 p-8 text-center max-w-sm w-full mx-auto shadow-[0_0_40px_rgba(220,38,38,0.5)] backdrop-blur-md">
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/pixel-weave.png')] opacity-20 pointer-events-none" />
-                    <h1 className="text-4xl text-ept-red font-black uppercase mb-4 animate-pulse">SYSTEM LOCKED</h1>
-                    <p className="text-white text-sm mb-6">Profile rescue operation failed. Security protocols active.</p>
-                    <div className="text-3xl font-black text-white bg-ept-red/20 border-2 border-ept-red py-4">
+                    <h1 className="text-4xl text-ept-red font-black uppercase mb-4 animate-pulse drop-shadow-[0_0_10px_rgba(220,38,38,1)]">SYSTEM LOCKED</h1>
+                    <p className="text-white text-sm mb-6 font-bold uppercase tracking-widest">Profile rescue failed.</p>
+                    <div className="text-3xl font-black text-white bg-ept-red/20 border-2 border-ept-red py-4 relative z-10">
                         {lockoutTimer}
                     </div>
-                    <p className="text-zinc-500 text-xs mt-4 mb-8 uppercase">Lockout Sequence Ending Soon</p>
+                    <p className="text-zinc-500 text-[10px] mt-4 mb-8 uppercase font-bold tracking-widest">Lockout Sequence Active</p>
 
                     <button
                         onClick={() => router.back()}
-                        className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-black py-4 uppercase border-b-4 border-zinc-900 active:border-b-0 active:mt-1 transition-all rounded-lg"
+                        className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-black py-4 uppercase border-b-4 border-black active:border-b-0 active:mt-1 transition-all rounded-lg relative z-10"
                     >
                         Retreat to Safety
                     </button>
