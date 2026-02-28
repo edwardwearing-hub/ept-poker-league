@@ -53,7 +53,7 @@ export default function LockerPINModal({ onSuccess }: Props) {
             });
 
             if (res.ok) {
-                localStorage.setItem('ept_active_player', selectedPlayer.name);
+                localStorage.setItem('ept_active_player_v2', selectedPlayer.name);
                 onSuccess(selectedPlayer.name);
             } else {
                 setError(true);

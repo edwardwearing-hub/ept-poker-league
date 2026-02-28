@@ -17,8 +17,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const [playerStatus, setPlayerStatus] = useState<any>(null);
 
     useEffect(() => {
-        const savedPlayer = localStorage.getItem('ept_active_player');
-        const hasOnboarded = localStorage.getItem('ept_pvp_onboarded');
+        const savedPlayer = localStorage.getItem('ept_active_player_v2');
+        const hasOnboarded = localStorage.getItem('ept_pvp_onboarded_v2');
 
         if (savedPlayer) {
             setActivePlayer(savedPlayer);
@@ -61,7 +61,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const handleLoginSuccess = (name: string) => {
         setActivePlayer(name);
         checkPlayerStatus(name);
-        const hasOnboarded = localStorage.getItem('ept_pvp_onboarded');
+        const hasOnboarded = localStorage.getItem('ept_pvp_onboarded_v2');
         if (!hasOnboarded) {
             setShowRules(true);
         }

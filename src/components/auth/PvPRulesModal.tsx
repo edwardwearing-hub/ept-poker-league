@@ -33,13 +33,13 @@ export default function PvPRulesModal({ onClose }: Props) {
     ];
 
     const handleBattleground = () => {
-        localStorage.setItem('ept_pvp_onboarded', 'true');
+        localStorage.setItem('ept_pvp_onboarded_v2', 'true');
         onClose();
         router.push('/wanted');
     };
 
     const handleAcknowledge = () => {
-        localStorage.setItem('ept_pvp_onboarded', 'true');
+        localStorage.setItem('ept_pvp_onboarded_v2', 'true');
         onClose();
     };
 

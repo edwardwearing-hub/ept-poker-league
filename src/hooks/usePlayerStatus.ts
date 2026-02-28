@@ -8,7 +8,7 @@ export function usePlayerStatus() {
 
     useEffect(() => {
         const fetchStatus = async () => {
-            const name = localStorage.getItem('ept_active_player');
+            const name = localStorage.getItem('ept_active_player_v2');
             if (!name) {
                 setLoading(false);
                 return;

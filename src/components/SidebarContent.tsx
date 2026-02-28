@@ -55,7 +55,7 @@ export default function SidebarContent({ stats, onLinkClick, playerName: initial
 
     React.useEffect(() => {
         if (!playerName) {
-            const savedPlayer = localStorage.getItem('ept_active_player');
+            const savedPlayer = localStorage.getItem('ept_active_player_v2');
             if (savedPlayer) {
                 setPlayerName(savedPlayer);
             }
@@ -63,8 +63,8 @@ export default function SidebarContent({ stats, onLinkClick, playerName: initial
     }, [playerName]);
 
     const handleLogout = () => {
-        localStorage.removeItem('ept_active_player');
-        localStorage.removeItem('ept_pvp_onboarded'); // Clear onboarding flag
+        localStorage.removeItem('ept_active_player_v2');
+        localStorage.removeItem('ept_pvp_onboarded_v2'); // Clear onboarding flag
         window.location.reload();
     };
 
