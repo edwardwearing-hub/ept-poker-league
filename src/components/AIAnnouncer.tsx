@@ -174,7 +174,7 @@ export default function AIAnnouncer({ text, title }: Props) {
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-2 relative z-10">
+            <div className="flex items-center gap-2 flex-wrap relative z-10">
                 {!isPlaying ? (
                     <button
                         onClick={handlePlay}

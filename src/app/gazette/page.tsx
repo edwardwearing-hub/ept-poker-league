@@ -50,16 +50,17 @@ function ReportCard({ report, index, isLatest }: { report: Report; index: number
         >
             {/* Latest badge */}
             {isLatest && (
-                <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 px-3 py-1 bg-gold/20 border border-gold/40 rounded-full">
+                <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2 py-1 bg-gold/20 border border-gold/40 rounded-full">
                     <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-                    <span className="text-[9px] font-black text-gold uppercase tracking-widest">Latest Issue</span>
+                    <span className="text-[9px] font-black text-gold uppercase tracking-widest hidden sm:inline">Latest Issue</span>
+                    <span className="text-[9px] font-black text-gold uppercase tracking-widest sm:hidden">New</span>
                 </div>
             )}
 
             {/* Card Header */}
             <button
                 onClick={() => setExpanded(e => !e)}
-                className="w-full text-left p-6 flex items-start gap-4 group"
+                className="w-full text-left p-4 sm:p-6 flex items-start gap-3 sm:gap-4 group"
             >
                 {/* Winner avatar */}
                 {report.winner && (
@@ -111,7 +112,7 @@ function ReportCard({ report, index, isLatest }: { report: Report; index: number
                         transition={{ duration: 0.3 }}
                         className="overflow-hidden"
                     >
-                        <div className="px-6 pb-6 space-y-4 border-t border-white/5 pt-4">
+                        <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4 border-t border-white/5 pt-4">
                             {/* AI Announcer */}
                             <AIAnnouncer
                                 text={report.content}
@@ -152,7 +153,7 @@ export default function GazettePage() {
     return (
         <div className="min-h-screen font-sans">
             {/* Page Header */}
-            <div className="relative overflow-hidden pb-12 pt-8 mb-10 border-b border-white/10">
+            <div className="relative overflow-hidden pb-8 md:pb-12 pt-4 md:pt-8 mb-6 md:mb-10 border-b border-white/10">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.08),transparent_60%)] pointer-events-none" />
                 <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
 

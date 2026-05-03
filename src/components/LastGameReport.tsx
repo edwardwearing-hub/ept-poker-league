@@ -27,7 +27,7 @@ export default function LastGameReport() {
     }, []);
 
     return (
-        <div className="glass-panel p-8 rounded-2xl border-l-4 border-gold relative overflow-hidden group">
+        <div className="glass-panel p-4 md:p-8 rounded-2xl border-l-4 border-gold relative overflow-hidden group">
 
             {/* Background Accent */}
             <div className="absolute -right-10 -top-10 w-64 h-64 bg-gold/5 rounded-full blur-3xl pointer-events-none group-hover:bg-gold/10 transition-colors duration-700" />
@@ -47,8 +47,8 @@ export default function LastGameReport() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                     <div className="lg:col-span-7 space-y-6">
-                        <h1 className="text-4xl font-black text-white italic tracking-tight uppercase leading-none">
-                            {report.title} <span className="text-zinc-600 block text-2xl mt-1">{report.episode}</span>
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white italic tracking-tight uppercase leading-none">
+                            {report.title} <span className="text-zinc-600 block text-lg sm:text-xl md:text-2xl mt-1">{report.episode}</span>
                         </h1>
 
                         <div className="prose prose-invert max-w-none text-zinc-300 leading-relaxed whitespace-pre-wrap">
