@@ -333,45 +333,43 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
 
 export async function getGlobalStats() {
     let totalPot = 0;
-    let nextGameDate = 'February 21, 2026';
+    let nextGameDate = 'TBD';
 
     const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
     if (!spreadsheetId) return { totalPot: 0, totalSidePot: 0, nextGameDate: 'TBD' };
 
     try {
         const sheets = await getSheetsClient();
-        const response = await sheets.spreadsheets.values.get({
+
+        // Fetch prize pot (AF25) and next game date (AH1) in a single batch call
+        const response = await sheets.spreadsheets.values.batchGet({
             spreadsheetId,
-            range: 'Sheet1!AF25', // User requested explicit mapping to AF25
+            ranges: ['Sheet1!AF25', 'Sheet1!AH1'],
         });
 
-        const jsonData = response.data.values;
+        const valueRanges = response.data.valueRanges || [];
 
-        if (jsonData && jsonData[0] && jsonData[0][0]) {
-            const rawPot = jsonData[0][0].toString().replace(/[^0-9.-]+/g, "");
+        // Prize pot
+        const potCell = valueRanges[0]?.values?.[0]?.[0];
+        if (potCell) {
+            const rawPot = potCell.toString().replace(/[^0-9.-]+/g, '');
             if (rawPot) totalPot = parseFloat(rawPot);
         }
 
+        // Next game date
+        const dateCell = valueRanges[1]?.values?.[0]?.[0];
+        if (dateCell) {
+            nextGameDate = dateCell.toString();
+        }
+
     } catch (e) {
-        console.error("Critical: Error fetching Global Stats from Google Sheets!");
-        console.error("Full Error Details:", JSON.stringify(e, null, 2));
-    }
-
-    // Removed the legacy CSV Pot logic. The Total Pot and Side Pot are now expected to be managed entirely via Google Sheets.
-    let totalSidePot = 0;
-
-    // Attempt to pull real Next Game date from API if the countdown API has it saved
-    const countdownFile = path.join(process.cwd(), 'data', 'countdown.json');
-    if (fs.existsSync(countdownFile)) {
-        try {
-            const cd = JSON.parse(fs.readFileSync(countdownFile, 'utf-8'));
-            if (cd.targetDate) nextGameDate = cd.targetDate;
-        } catch (e) { /* ignore */ }
+        console.error('Critical: Error fetching Global Stats from Google Sheets!');
+        console.error('Full Error Details:', JSON.stringify(e, null, 2));
     }
 
     return {
         totalPot,
-        totalSidePot,
+        totalSidePot: 0,
         nextGameDate
     };
 }
