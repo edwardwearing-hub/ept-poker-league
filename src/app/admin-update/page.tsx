@@ -16,6 +16,13 @@ export default function AdminUpdate() {
     const [scheduleStatus, setScheduleStatus] = useState('');
     const [nextGameDate, setNextGameDate] = useState('');
 
+    // Smart schedule state
+    const [scheduleSource, setScheduleSource] = useState<'auto' | 'override' | ''>('');
+    const [scheduledDates, setScheduledDates] = useState<{ raw: string; iso: string }[]>([]);
+    const [activeTargetDate, setActiveTargetDate] = useState('');
+    const [loadingSchedule, setLoadingSchedule] = useState(false);
+    const [clearingOverride, setClearingOverride] = useState(false);
+
     // Game Report State
     const [reportStatus, setReportStatus] = useState('');
     const [reportTitle, setReportTitle] = useState('"The Flop"');
@@ -106,7 +113,8 @@ export default function AdminUpdate() {
                 body: JSON.stringify({ targetDate: new Date(nextGameDate).toISOString() })
             });
             if (response.ok) {
-                setScheduleStatus('Countdown updated successfully!');
+                setScheduleStatus('Override set successfully! Refresh to confirm.');
+                loadSchedule();
             } else {
                 setScheduleStatus('Error updating countdown.');
             }
@@ -115,6 +123,48 @@ export default function AdminUpdate() {
             setScheduleStatus('Failed to update.');
         }
     };
+
+    const loadSchedule = async () => {
+        setLoadingSchedule(true);
+        try {
+            const res = await fetch('/api/admin/countdown');
+            const data = await res.json();
+            setActiveTargetDate(data.targetDate || '');
+            setScheduleSource(data.source === 'override' ? 'override' : 'auto');
+            setScheduledDates(data.allScheduledDates || []);
+        } catch (e) {
+            console.error('Failed to load schedule', e);
+        } finally {
+            setLoadingSchedule(false);
+        }
+    };
+
+    const handleClearOverride = async () => {
+        setClearingOverride(true);
+        try {
+            const res = await fetch('/api/admin/countdown', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ clear: true })
+            });
+            if (res.ok) {
+                setScheduleStatus('Override cleared — reverting to auto schedule.');
+                setNextGameDate('');
+                loadSchedule();
+            } else {
+                setScheduleStatus('Failed to clear override.');
+            }
+        } catch (e) {
+            setScheduleStatus('Network error.');
+        } finally {
+            setClearingOverride(false);
+        }
+    };
+
+    // Load schedule on mount (after login)
+    React.useEffect(() => {
+        if (isLoggedIn) loadSchedule();
+    }, [isLoggedIn]);
 
     const handleReportSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -198,21 +248,80 @@ export default function AdminUpdate() {
                         </div>
                     )}
 
-                    <form onSubmit={handleScheduleSubmit} className="flex flex-col md:flex-row gap-4 items-end">
-                        <div className="flex-1 w-full">
-                            <label className="block text-sm text-gray-400 mb-2 font-bold uppercase tracking-wider">Target Date & Time</label>
-                            <input
-                                type="datetime-local"
-                                value={nextGameDate}
-                                onChange={e => setNextGameDate(e.target.value)}
-                                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-[#cfb53b] outline-none shadow-inner"
-                                required
-                            />
+                    {/* Current active countdown */}
+                    {activeTargetDate && (
+                        <div className="mb-6 p-4 rounded-xl bg-gray-900 border border-[#cfb53b]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                                    {scheduleSource === 'override' ? '⚠ Manual Override Active' : '✓ Auto Schedule Active'}
+                                </div>
+                                <div className="text-[#ffd700] font-black text-lg">
+                                    {new Date(activeTargetDate).toLocaleString('en-GB', {
+                                        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+                                        hour: '2-digit', minute: '2-digit'
+                                    })}
+                                </div>
+                            </div>
+                            {scheduleSource === 'override' && (
+                                <button
+                                    onClick={handleClearOverride}
+                                    disabled={clearingOverride}
+                                    className="px-4 py-2 text-sm font-bold uppercase tracking-widest bg-gray-800 hover:bg-red-900/30 border border-gray-600 hover:border-red-500 text-gray-400 hover:text-red-400 rounded-lg transition"
+                                >
+                                    {clearingOverride ? 'Clearing...' : 'Clear Override → Auto'}
+                                </button>
+                            )}
                         </div>
-                        <button type="submit" className="w-full md:w-auto px-8 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-600 hover:border-[#cfb53b] text-[#ffd700] font-bold uppercase tracking-widest rounded-lg transition shadow-md">
-                            Update Countdown
-                        </button>
-                    </form>
+                    )}
+
+                    {/* Auto schedule preview */}
+                    {scheduledDates.length > 0 && (
+                        <div className="mb-6">
+                            <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-3">Remaining Games from Sheet (B22:AC22)</div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                {scheduledDates.map((d, i) => {
+                                    const isPast = new Date(d.iso) < new Date();
+                                    const isActive = d.iso === activeTargetDate;
+                                    return (
+                                        <div key={i} className={`p-2 rounded-lg text-center text-xs font-bold border ${
+                                            isActive ? 'border-[#cfb53b] bg-[#cfb53b]/10 text-[#ffd700]'
+                                            : isPast ? 'border-gray-800 bg-gray-900/30 text-gray-600 line-through'
+                                            : 'border-gray-700 bg-gray-900/50 text-gray-300'
+                                        }`}>
+                                            {new Date(d.iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
+                                            {isActive && <div className="text-[9px] text-[#ffd700] mt-0.5">▶ Next</div>}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {loadingSchedule && (
+                        <div className="text-gray-500 text-sm mb-4">Loading schedule from sheet...</div>
+                    )}
+
+                    {/* Override form */}
+                    <details className="group">
+                        <summary className="cursor-pointer text-sm font-bold text-gray-500 hover:text-[#ffd700] uppercase tracking-widest mb-4 transition list-none flex items-center gap-2">
+                            <span className="text-[#ffd700]">[+]</span> Set Manual Override Date
+                        </summary>
+                        <form onSubmit={handleScheduleSubmit} className="flex flex-col md:flex-row gap-4 items-end mt-4">
+                            <div className="flex-1 w-full">
+                                <label className="block text-sm text-gray-400 mb-2 font-bold uppercase tracking-wider">Override Date &amp; Time</label>
+                                <input
+                                    type="datetime-local"
+                                    value={nextGameDate}
+                                    onChange={e => setNextGameDate(e.target.value)}
+                                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-[#cfb53b] outline-none shadow-inner"
+                                    required
+                                />
+                            </div>
+                            <button type="submit" className="w-full md:w-auto px-8 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-600 hover:border-[#cfb53b] text-[#ffd700] font-bold uppercase tracking-widest rounded-lg transition shadow-md">
+                                Set Override
+                            </button>
+                        </form>
+                    </details>
                 </div>
 
                 {/* Game Report Editor Section */}
