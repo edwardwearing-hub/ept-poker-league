@@ -92,6 +92,17 @@ export default function SidebarContent({ stats, onLinkClick, playerName: initial
                     </span>
                 </div>
 
+                {/* Logout button — only shown when logged in */}
+                {playerName && (
+                    <button
+                        onClick={handleLogout}
+                        className="w-full mt-2 flex items-center justify-center gap-2 px-3 py-1.5 bg-transparent hover:bg-ept-red/10 border border-white/5 hover:border-ept-red/40 rounded-lg text-zinc-600 hover:text-ept-red transition-all group"
+                    >
+                        <LogOut className="w-3.5 h-3.5 group-hover:text-ept-red transition-colors" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Logout</span>
+                    </button>
+                )}
+
                 {/* Module 2: Hack Token Indicator */}
                 {status?.hackTokens > 0 && (
                     <div className="flex items-center gap-2 mt-4 px-3 py-1.5 bg-ept-red/10 border border-ept-red/30 rounded-lg animate-pulse-slow">
