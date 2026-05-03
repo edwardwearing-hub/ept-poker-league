@@ -28,6 +28,10 @@ export default function AdminUpdate() {
     const [selectedResetPlayer, setSelectedResetPlayer] = useState('');
     const [resetMessage, setResetMessage] = useState('');
 
+    // PIN Management State
+    const [selectedPinResetPlayer, setSelectedPinResetPlayer] = useState('');
+    const [pinResetMessage, setPinResetMessage] = useState('');
+
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [passwordInput, setPasswordInput] = useState('');
     const [loginError, setLoginError] = useState('');
@@ -151,6 +155,28 @@ export default function AdminUpdate() {
         localStorage.removeItem(`hijack_defeated_${selectedResetPlayer}`);
         setResetMessage(`${selectedResetPlayer}'s hijack state has been completely reset.`);
         setTimeout(() => setResetMessage(''), 4000);
+    };
+
+    const handleResetPin = async () => {
+        if (!selectedPinResetPlayer) return;
+        
+        try {
+            const res = await fetch('/api/auth/pin-update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ playerName: selectedPinResetPlayer, newPin: '0000' })
+            });
+            
+            if (res.ok) {
+                setPinResetMessage(`${selectedPinResetPlayer}'s PIN has been reset to 0000.`);
+            } else {
+                setPinResetMessage(`Failed to reset PIN for ${selectedPinResetPlayer}.`);
+            }
+        } catch (e) {
+            setPinResetMessage(`Error connecting to server.`);
+        }
+        
+        setTimeout(() => setPinResetMessage(''), 4000);
     };
 
     return (
@@ -306,6 +332,43 @@ export default function AdminUpdate() {
                             className="w-full md:w-auto px-8 py-3 bg-gray-800 disabled:opacity-50 hover:bg-red-900/50 hover:text-white border border-gray-600 hover:border-ept-red text-ept-red font-bold uppercase tracking-widest rounded-lg transition shadow-md flex items-center justify-center gap-2"
                         >
                             <Unlock className="w-4 h-4" /> Reset Status
+                        </button>
+                    </div>
+                </div>
+
+                {/* Player Security Management Section */}
+                <div className="bg-black/50 p-4 md:p-8 rounded-2xl border border-[#cfb53b]/30 relative overflow-hidden">
+                    <h2 className="text-xl md:text-2xl font-black text-white mb-4 md:mb-6 uppercase tracking-widest flex items-center gap-3">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                        Player Security Management
+                    </h2>
+
+                    {pinResetMessage && (
+                        <div className="mb-4 p-3 rounded bg-blue-900/20 border border-blue-500/50 text-blue-400 font-bold text-sm">
+                            {pinResetMessage}
+                        </div>
+                    )}
+
+                    <div className="flex flex-col md:flex-row gap-4 items-end">
+                        <div className="flex-1 w-full">
+                            <label className="block text-sm text-gray-400 mb-2 font-bold uppercase tracking-wider">Select Player to Reset PIN to 0000</label>
+                            <select
+                                value={selectedPinResetPlayer}
+                                onChange={e => setSelectedPinResetPlayer(e.target.value)}
+                                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-[#cfb53b] outline-none shadow-inner"
+                            >
+                                <option value="" disabled>Choose Player...</option>
+                                {PLAYERS.map((p: string) => (
+                                    <option key={p} value={p}>{p}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <button
+                            onClick={handleResetPin}
+                            disabled={!selectedPinResetPlayer}
+                            className="w-full md:w-auto px-8 py-3 bg-gray-800 disabled:opacity-50 hover:bg-blue-900/50 hover:text-white border border-gray-600 hover:border-blue-500 text-blue-400 font-bold uppercase tracking-widest rounded-lg transition shadow-md flex items-center justify-center gap-2"
+                        >
+                            <Unlock className="w-4 h-4" /> Reset PIN
                         </button>
                     </div>
                 </div>

@@ -1,8 +1,10 @@
 'use client';
 
-import { FileText, Calendar, Trophy } from 'lucide-react';
+import { FileText, Calendar, Trophy, BookOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import WantedVideo from './WantedVideo';
+import AIAnnouncer from './AIAnnouncer';
 
 export default function LastGameReport() {
     const [report, setReport] = useState({
@@ -53,12 +55,27 @@ export default function LastGameReport() {
                             {report.content}
                         </div>
 
-                        <div className="flex items-center gap-4 pt-4 border-t border-white/5">
+                        {/* AI Announcer */}
+                        {report.content && report.content !== 'Loading latest report...' && (
+                            <AIAnnouncer
+                                text={report.content}
+                                title={`${report.episode}: ${report.title}`}
+                            />
+                        )}
+
+                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
                             <div className="flex items-center gap-2">
                                 <Trophy className="text-gold w-4 h-4" />
                                 <span className="text-white font-bold text-sm">Winner:</span>
                                 <span className="text-gold font-mono font-bold">{report.winner}</span>
                             </div>
+                            <Link
+                                href="/gazette"
+                                className="flex items-center gap-1.5 text-[10px] font-black text-zinc-500 hover:text-gold uppercase tracking-widest transition-colors group"
+                            >
+                                <BookOpen className="w-3.5 h-3.5 group-hover:text-gold" />
+                                View Full Archive
+                            </Link>
                         </div>
                     </div>
 

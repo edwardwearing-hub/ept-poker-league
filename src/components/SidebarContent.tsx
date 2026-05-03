@@ -18,7 +18,8 @@ import {
     Target,
     Zap,
     Key,
-    LogOut
+    LogOut,
+    Newspaper
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import RiverReportPlayer from './RiverReportPlayer';
@@ -30,6 +31,7 @@ import SetPINModal from './auth/SetPINModal';
 const navItems = [
     { name: 'League Home', href: '/', icon: Home },
     { name: 'Leaderboard', href: '/#leaderboard', icon: Trophy },
+    { name: 'The Gazette', href: '/gazette', icon: Newspaper },
     { name: 'Session Archive', href: '/history', icon: History },
     { name: 'The Academy', href: '/academy', icon: GraduationCap },
     { name: 'Poker Engine', href: '/game', icon: Gamepad2 },
@@ -39,6 +41,7 @@ const navItems = [
     { name: 'Bounty Board', href: '/bounties', icon: Target },
     { name: 'League Sheet', href: '/table', icon: Table },
     { name: 'Stat Corner', href: '/stats', icon: BarChart2 },
+    { name: 'The Arcade', href: '/arcade', icon: Gamepad2 },
     { name: 'Admin Update', href: '/admin-update', icon: Shield },
 ];
 
@@ -74,6 +77,19 @@ export default function SidebarContent({ stats, onLinkClick, playerName: initial
             <div className="p-6 border-b border-white/5 flex flex-col items-center shrink-0">
                 <div className="w-full aspect-video relative rounded-lg overflow-hidden border border-white/10 shadow-2xl mb-2">
                     <img src="/ept-logo.jpg" alt="EPT Logo" className="w-full h-full object-cover" />
+                </div>
+
+                {/* Active Player Status */}
+                <div className="w-full flex items-center justify-between px-3 py-2 bg-black/40 border border-white/10 rounded-lg mt-2">
+                    <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${playerName ? 'bg-[#00FF41] shadow-[0_0_8px_rgba(0,255,65,0.8)]' : 'bg-zinc-600'}`} />
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
+                            Player
+                        </span>
+                    </div>
+                    <span className={`text-xs font-black uppercase tracking-tighter ${playerName ? 'text-white' : 'text-zinc-500'}`}>
+                        {playerName || 'Guest'}
+                    </span>
                 </div>
 
                 {/* Module 2: Hack Token Indicator */}

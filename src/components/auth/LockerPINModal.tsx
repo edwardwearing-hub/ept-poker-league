@@ -172,6 +172,12 @@ export default function LockerPINModal({ onSuccess }: Props) {
                                         </button>
                                     ))}
                                 </div>
+
+                                <div className="text-center mt-4">
+                                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest block">
+                                        Forgot PIN? Speak to Edward to reset your locker.
+                                    </span>
+                                </div>
                             </div>
                         </motion.div>
                     )}

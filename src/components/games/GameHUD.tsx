@@ -30,19 +30,30 @@ interface Props {
     targetScore: number;
     gauntletCurrent: number;
     gauntletTotal: number;
+    lives?: number;
 }
 
-export default function GameHUD({ playerName, enemyName, isNemesis, score, targetScore, gauntletCurrent, gauntletTotal }: Props) {
+export default function GameHUD({ playerName, enemyName, isNemesis, score, targetScore, gauntletCurrent, gauntletTotal, lives = 3 }: Props) {
     return (
-        <div className="flex justify-between items-center p-3 sm:p-4 border-b-4 border-zinc-900 bg-black relative z-10 shrink-0">
+        <div className="flex justify-between items-center p-3 sm:p-4 border-b border-gold/30 bg-black/80 backdrop-blur-md relative z-10 shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
             {/* Player */}
-            <div className="text-center">
+            <div className="text-center flex flex-col items-center">
                 <img
                     src={`/avatars/${getAvatarFilename(playerName)}`}
                     alt="Player"
                     className="w-12 h-12 sm:w-16 sm:h-16 object-contain filter drop-shadow-[0_0_5px_rgba(34,197,94,0.3)] animate-breathe"
                 />
                 <span className="text-[9px] sm:text-[10px] text-green-500 font-bold uppercase block mt-1">Player</span>
+                
+                {/* Lives Indicator */}
+                <div className="flex gap-1 mt-1">
+                    {[...Array(3)].map((_, i) => (
+                        <div 
+                            key={i} 
+                            className={`w-2 h-2 rounded-full border ${i < lives ? 'bg-ept-red border-red-400 shadow-[0_0_5px_rgba(239,68,68,0.8)]' : 'bg-transparent border-zinc-700'}`}
+                        />
+                    ))}
+                </div>
             </div>
 
             {/* Center: Gauntlet + Score */}

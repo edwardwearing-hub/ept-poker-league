@@ -198,3 +198,21 @@ body {
 .animate-die {
   animation: die 1s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
 }
+
+@keyframes marquee {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes marquee-reverse {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  animation: marquee 2s linear infinite;
+}
+
+.animate-marquee-reverse {
+  animation: marquee-reverse 2s linear infinite;
+}

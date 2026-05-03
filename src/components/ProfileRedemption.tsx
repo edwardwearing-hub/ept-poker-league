@@ -59,7 +59,7 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
 
         if (!enemyQueue || enemyQueue.length === 0) {
             if (!defeatedList.includes("Unknown Hacker")) {
-                setParsedQueue([{ name: "Unknown Hacker", isNemesis: false, requiredWins: 3 }]);
+                setParsedQueue([{ name: "Unknown Hacker", isNemesis: false, requiredWins: 1 }]);
             } else {
                 onSuccess();
             }
@@ -73,9 +73,9 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
         Object.entries(counts).forEach(([name, count]) => {
             if (!defeatedList.includes(name)) {
                 if (count > 1) {
-                    newQueue.push({ name, isNemesis: true, requiredWins: 6 });
+                    newQueue.push({ name, isNemesis: true, requiredWins: 3 });
                 } else {
-                    newQueue.push({ name, isNemesis: false, requiredWins: 3 });
+                    newQueue.push({ name, isNemesis: false, requiredWins: 1 });
                 }
             }
         });
@@ -155,7 +155,7 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
 
     const handleGameFail = () => {
         setGameState('lost');
-        const unlockTime = Date.now() + (12 * 60 * 60 * 1000);
+        const unlockTime = Date.now() + (1 * 60 * 60 * 1000);
         localStorage.setItem(`hijack_lockout_${playerName}`, unlockTime.toString());
     };
 
