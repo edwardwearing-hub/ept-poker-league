@@ -8,32 +8,52 @@ const OVERRIDE_RANGE = 'Sheet1!AH1';
 
 /**
  * Parse a date string from the Google Sheet into a JS Date.
- * Handles common formats: "23/05/2026", "23/05/2026 20:00", ISO strings.
- * Returns null if parsing fails.
+ * Handles:
+ *   - "Saturday, May 23, 2026"  (Google Sheets formatted date cell)
+ *   - "Saturday, May 23, 2026 20:00" (with time)
+ *   - "23/05/2026" or "23/05/2026 20:00"
+ *   - ISO strings
+ * Defaults to 20:00 UK time when no time is present (typical game night start).
  */
 function parseSheetDate(raw: string): Date | null {
     if (!raw || typeof raw !== 'string') return null;
     const trimmed = raw.trim();
     if (!trimmed) return null;
 
-    // ISO format (from our own writes)
-    if (trimmed.includes('T') || trimmed.match(/^\d{4}-\d{2}-\d{2}/)) {
+    // ISO format (from our own override writes)
+    if (trimmed.match(/^\d{4}-\d{2}-\d{2}T/)) {
         const d = new Date(trimmed);
         return isNaN(d.getTime()) ? null : d;
+    }
+
+    // "Saturday, May 23, 2026" or "Saturday, May 23, 2026 20:00"
+    // Strip optional leading day-of-week (e.g. "Saturday, ")
+    const withoutDayName = trimmed.replace(/^[A-Za-z]+,\s*/, '');
+    // withoutDayName is now "May 23, 2026" or "May 23, 2026 20:00"
+    const longDateMatch = withoutDayName.match(/^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if (longDateMatch) {
+        const [, month, day, year, hour, minute] = longDateMatch;
+        const dateStr = `${month} ${day}, ${year}`;
+        const base = new Date(dateStr);
+        if (!isNaN(base.getTime())) {
+            // Apply time — default to 20:00 local if not specified
+            base.setHours(parseInt(hour ?? '20'), parseInt(minute ?? '00'), 0, 0);
+            return base;
+        }
     }
 
     // DD/MM/YYYY or DD/MM/YYYY HH:MM
     const dmyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
     if (dmyMatch) {
-        const [, day, month, year, hour = '20', minute = '00'] = dmyMatch;
+        const [, day, month, year, hour, minute] = dmyMatch;
         const d = new Date(
             parseInt(year), parseInt(month) - 1, parseInt(day),
-            parseInt(hour), parseInt(minute)
+            parseInt(hour ?? '20'), parseInt(minute ?? '00'), 0
         );
         return isNaN(d.getTime()) ? null : d;
     }
 
-    // Try native parse as last resort
+    // Last resort: native JS parse
     const d = new Date(trimmed);
     return isNaN(d.getTime()) ? null : d;
 }
