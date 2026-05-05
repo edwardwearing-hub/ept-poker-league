@@ -331,36 +331,110 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
     }
 }
 
+/**
+ * Parse a date string from the Google Sheet into a JS Date.
+ * Handles:
+ *   - "Saturday, May 23, 2026"  (Google Sheets formatted date cell)
+ *   - "Saturday, May 23, 2026 20:00" (with time)
+ *   - "23/05/2026" or "23/05/2026 20:00"
+ *   - ISO strings
+ * Defaults to 20:00 UK time when no time is present.
+ */
+export function parseSheetDate(raw: string): Date | null {
+    if (!raw || typeof raw !== 'string') return null;
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+
+    if (trimmed.match(/^\d{4}-\d{2}-\d{2}T/)) {
+        const d = new Date(trimmed);
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    const withoutDayName = trimmed.replace(/^[A-Za-z]+,\s*/, '');
+    const longDateMatch = withoutDayName.match(/^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if (longDateMatch) {
+        const [, month, day, year, hour, minute] = longDateMatch;
+        const dateStr = `${month} ${day}, ${year}`;
+        const base = new Date(dateStr);
+        if (!isNaN(base.getTime())) {
+            base.setHours(parseInt(hour ?? '20'), parseInt(minute ?? '00'), 0, 0);
+            return base;
+        }
+    }
+
+    const dmyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if (dmyMatch) {
+        const [, day, month, year, hour, minute] = dmyMatch;
+        const d = new Date(
+            parseInt(year), parseInt(month) - 1, parseInt(day),
+            parseInt(hour ?? '20'), parseInt(minute ?? '00'), 0
+        );
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    const d = new Date(trimmed);
+    return isNaN(d.getTime()) ? null : d;
+}
+
 export async function getGlobalStats() {
     let totalPot = 0;
     let nextGameDate = 'TBD';
+    let futureDates: { raw: string; iso: string }[] = [];
 
     const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
-    if (!spreadsheetId) return { totalPot: 0, totalSidePot: 0, nextGameDate: 'TBD' };
+    if (!spreadsheetId) return { totalPot: 0, totalSidePot: 0, nextGameDate: 'TBD', futureDates: [] };
 
     try {
         const sheets = await getSheetsClient();
 
-        // Fetch prize pot (AF25) and next game date (AH1) in a single batch call
+        // Fetch prize pot (AF25), next game date override (AH1), and schedule (B22:AC22)
         const response = await sheets.spreadsheets.values.batchGet({
             spreadsheetId,
-            ranges: ['Sheet1!AF25', 'Sheet1!AH1'],
+            ranges: ['Sheet1!AF25', 'Sheet1!AH1', 'Sheet1!B22:AC22'],
         });
 
         const valueRanges = response.data.valueRanges || [];
 
-        // Prize pot
+        // 1. Prize pot
         const potCell = valueRanges[0]?.values?.[0]?.[0];
         if (potCell) {
             const rawPot = potCell.toString().replace(/[^0-9.-]+/g, '');
             if (rawPot) totalPot = parseFloat(rawPot);
         }
 
-        // Next game date
-        const dateCell = valueRanges[1]?.values?.[0]?.[0];
-        if (dateCell) {
-            nextGameDate = dateCell.toString();
+        // 2. Override Check
+        const overrideRaw = valueRanges[1]?.values?.[0]?.[0];
+        const overrideDate = overrideRaw ? parseSheetDate(overrideRaw) : null;
+        
+        // 3. Schedule Row
+        const scheduleRow = valueRanges[2]?.values?.[0] || [];
+        const now = new Date();
+        const allDates: { raw: string; date: Date }[] = [];
+
+        for (const cell of scheduleRow) {
+            if (cell && cell.trim()) {
+                const d = parseSheetDate(cell);
+                if (d) allDates.push({ raw: cell.trim(), date: d });
+            }
         }
+        allDates.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+        // Determine next game date
+        if (overrideDate && overrideDate > now) {
+            nextGameDate = overrideDate.toISOString();
+        } else {
+            const next = allDates.find(d => d.date > now);
+            if (next) {
+                nextGameDate = next.date.toISOString();
+            } else if (allDates.length > 0) {
+                nextGameDate = allDates[allDates.length - 1].date.toISOString();
+            }
+        }
+
+        // Collect all future dates for the slider
+        futureDates = allDates
+            .filter(d => d.date > now)
+            .map(d => ({ raw: d.raw, iso: d.date.toISOString() }));
 
     } catch (e) {
         console.error('Critical: Error fetching Global Stats from Google Sheets!');
@@ -370,7 +444,8 @@ export async function getGlobalStats() {
     return {
         totalPot,
         totalSidePot: 0,
-        nextGameDate
+        nextGameDate,
+        futureDates
     };
 }
 
