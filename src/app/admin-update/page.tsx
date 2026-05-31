@@ -506,14 +506,19 @@ export default function AdminUpdate() {
                         </div>
                     )}
 
-                    <div className="w-full h-[600px] md:h-[800px] rounded-lg overflow-x-auto border border-gray-700 mt-4 -mx-4 md:mx-0 px-4 md:px-0 scrollbar-hide">
-                        <iframe
-                            src="https://docs.google.com/spreadsheets/d/1YFGSRvFcdbwQKb_ZbfEV8aR_-w2uW1naDQbJNRqsXB0/edit?rm=minimal"
-                            width="100%"
-                            height="100%"
-                            frameBorder="0"
-                            className="bg-white min-w-[800px]"
-                        ></iframe>
+                    <div className="w-full flex flex-col md:flex-row items-center justify-center p-8 bg-gray-900 border border-gray-700 rounded-xl gap-6 mt-4">
+                        <div className="text-center md:text-left">
+                            <p className="text-gray-300 font-bold mb-2">Google restricts embedding the editor directly inside other sites.</p>
+                            <p className="text-gray-500 text-sm">Please open the database in a new tab to make direct manual edits.</p>
+                        </div>
+                        <a 
+                            href="https://docs.google.com/spreadsheets/d/1YFGSRvFcdbwQKb_ZbfEV8aR_-w2uW1naDQbJNRqsXB0/edit" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="px-6 py-3 bg-green-700 hover:bg-green-600 text-white font-black uppercase tracking-widest rounded shadow-lg transition whitespace-nowrap"
+                        >
+                            Open Google Sheet
+                        </a>
                     </div>
                 </div>
             </div>
