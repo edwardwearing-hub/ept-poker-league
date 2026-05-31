@@ -67,7 +67,7 @@ export async function POST(request: Request) {
                 try {
                     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
                     const systemInstruction = `You are the snarky, engaging sports journalist for "The E.P.T. Gazette" poker league. Write a fun, dramatic, 150-word newspaper-style report based EXACTLY on the raw bullet-point notes. Make it sound like a high-stakes casino recap. Reference the players' current leaderboard standings if relevant.${standingsContext}`;
-                    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction });
+                    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest", systemInstruction });
 
                     const result = await model.generateContent(`RAW GAME NOTES:\n${payload.content}`);
                     const aiReport = result.response.text();
