@@ -13,6 +13,7 @@ const AVATARS = [
     '/avatars/avatar_chris_daly_1772222942062.png',
     '/avatars/avatar_daniel_horne_1772222954376.png',
     '/avatars/avatar_darren_daly_1772222979758.png',
+    '/avatars/avatar_dave_blackburn_1787685845732.png',
     '/avatars/avatar_dave_taylor_1772223007740.png',
     '/avatars/avatar_edward_wearing_1772222877224.png',
     '/avatars/avatar_georgina_wearing_1772223035422.png',

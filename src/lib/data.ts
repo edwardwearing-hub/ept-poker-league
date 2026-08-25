@@ -126,6 +126,7 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
             "Edward Wearing": "/avatars/avatar_bounty.png",
             "Liam Duxbury": "/avatars/avatar_shark.png",
             "Luke Daly": "/avatars/avatar_duke.png",
+            "Dave Blackburn": "/avatars/avatar_dave_blackburn_1787685845732.png",
         };
 
         const defaults = ["/avatars/avatar_hoodie.png"];
