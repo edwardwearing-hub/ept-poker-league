@@ -9,7 +9,7 @@ const QUESTIONS = [
     },
     {
         question: "Which player holds the current record for highest winnings in a single game in the 2026 season?",
-        options: ["Luke Daly", "Edward Wearing", "Phil Landsberger", "Liam Duxbury"],
+        options: ["Luke Daly", "Edward Wearing", "Dave Blackburn", "Liam Duxbury"],
         answer: 1 // Example, assuming Edward based on context
     },
     {

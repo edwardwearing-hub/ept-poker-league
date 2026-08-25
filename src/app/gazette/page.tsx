@@ -23,7 +23,7 @@ const AVATAR_MAP: Record<string, string> = {
     'darren daly': 'avatar_darren_daly_1772222979758.png',
     'chris daly': 'avatar_chris_daly_1772222942062.png',
     'stephen flood': 'avatar_stephen_flood_1772223088474.png',
-    'phil landsberger': 'avatar_hoodie.png',
+    'dave blackburn': 'avatar_hoodie.png',
     'liam duxbury': 'avatar_liam_duxbury_1772223048076.png',
     'nathen benson': 'avatar_nathen_benson_1772223077518.png',
     'dave taylor': 'avatar_dave_taylor_1772223007740.png',

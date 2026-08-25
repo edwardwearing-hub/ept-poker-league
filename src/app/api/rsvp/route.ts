@@ -9,7 +9,7 @@ const DATA_FILE = path.join(process.cwd(), 'registrations.json');
 const PLAYERS = [
     "Edward Wearing", "Liam Duxbury", "Luke Daly", "Georgina Wearing",
     "Daniel Horne", "Darren Daly", "Chris Daly", "Stephen Flood",
-    "Phil Landsberger", "Nathen Benson", "Dave Taylor"
+    "Dave Blackburn", "Nathen Benson", "Dave Taylor"
 ];
 
 // Helper to read data

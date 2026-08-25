@@ -6,7 +6,7 @@ import MultiSelect from '@/components/MultiSelect';
 
 const PLAYERS = [
     "Edward Wearing", "Georgina Wearing", "Luke Daly", "Daniel Horne",
-    "Darren Daly", "Chris Daly", "Stephen Flood", "Phil Landsberger",
+    "Darren Daly", "Chris Daly", "Stephen Flood", "Dave Blackburn",
     "Liam Duxbury", "Nathen Benson", "Dave Taylor"
 ];
 

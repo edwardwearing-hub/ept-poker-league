@@ -80,7 +80,7 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
         const ranges = ['Sheet1!A1:Z30', 'PVP_SYSTEM!B1:F30'];
         const allowedPlayers = [
             "Edward Wearing", "Georgina Wearing", "Luke Daly", "Daniel Horne",
-            "Darren Daly", "Chris Daly", "Stephen Flood", "Phil Landsberger",
+            "Darren Daly", "Chris Daly", "Stephen Flood", "Dave Blackburn",
             "Liam Duxbury", "Nathen Benson", "Dave Taylor"
         ];
 
@@ -117,7 +117,7 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
             "Darren Daly": "Double D",
             "Chris Daly": "The Wildcard",
             "Stephen Flood": "The Flash",
-            "Phil Landsberger": "The Professor",
+            "Dave Blackburn": "The Professor",
             "Nathen Benson": "Big Stack",
             "Dave Taylor": "The Ace"
         };
