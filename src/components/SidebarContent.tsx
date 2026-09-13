@@ -19,7 +19,8 @@ import {
     Zap,
     Key,
     LogOut,
-    Newspaper
+    Newspaper,
+    Flame
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import RiverReportPlayer from './RiverReportPlayer';
@@ -35,6 +36,7 @@ const navItems = [
     { name: 'Session Archive', href: '/history', icon: History },
     { name: 'The Academy', href: '/academy', icon: GraduationCap },
     { name: 'Poker Engine', href: '/game', icon: Gamepad2 },
+    { name: 'Casino Syndicate', href: '/syndicate', icon: Flame, badge: 'RPG' },
     { name: 'Blinds Timer', href: '/timer', icon: Clock },
     { name: 'Scouting Reports', href: '/scouting', icon: Users },
     { name: 'Wanted Posters', href: '/wanted', icon: Skull },
@@ -124,12 +126,21 @@ export default function SidebarContent({ stats, onLinkClick, playerName: initial
                             href={item.href}
                             onClick={onLinkClick}
                             className={clsx(
-                                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
-                                "hover:bg-white/5 hover:text-gold text-zinc-400"
+                                "flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group",
+                                item.href === '/syndicate'
+                                    ? "hover:bg-gold/10 text-gold-glow font-bold"
+                                    : "hover:bg-white/5 hover:text-gold text-zinc-400"
                             )}
                         >
-                            <item.icon className="w-5 h-5 group-hover:text-gold transition-colors" />
-                            <span className="font-medium">{item.name}</span>
+                            <div className="flex items-center gap-3">
+                                <item.icon className="w-5 h-5 group-hover:text-gold transition-colors" />
+                                <span className="font-medium">{item.name}</span>
+                            </div>
+                            {(item as any).badge && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-gold/20 text-gold-glow border border-gold/40 shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+                                    {(item as any).badge}
+                                </span>
+                            )}
                         </Link>
                     ))}
                 </nav>

@@ -4,6 +4,7 @@ import WantedPoster from "@/components/WantedPoster";
 import StatCorner from "@/components/StatCorner";
 import LastGameReport from "@/components/LastGameReport";
 import NextGameCountdown from "@/components/NextGameCountdown";
+import SyndicateAnnouncementModal from "@/components/SyndicateAnnouncementModal";
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,9 @@ export const dynamic = 'force-dynamic';
 export default function Home() {
   return (
     <div className="space-y-12 animate-in fade-in duration-500 font-sans">
+
+      {/* New Game Launch Popup Announcement */}
+      <SyndicateAnnouncementModal />
 
       {/* Next Game Countdown Section */}
       <NextGameCountdown />

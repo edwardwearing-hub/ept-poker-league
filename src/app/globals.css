@@ -13,6 +13,11 @@
   --color-ept-red: #E63946;
   --color-ept-red-dark: #B92B35;
 
+  --color-emerald: #22C55E;
+  --color-emerald-glow: #86EFAC;
+  --color-cyan: #06B6D4;
+  --color-purple: #A855F7;
+
   --background: var(--color-charcoal);
   --foreground: #ededed;
 }
@@ -32,6 +37,11 @@
   --color-ept-red: var(--color-ept-red);
   --color-ept-red-dark: var(--color-ept-red-dark);
 
+  --color-emerald: var(--color-emerald);
+  --color-emerald-glow: var(--color-emerald-glow);
+  --color-cyan: var(--color-cyan);
+  --color-purple: var(--color-purple);
+
   --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
 
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -41,6 +51,12 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a, input {
+  touch-action: manipulation;
 }
 
 /* Glassmorphism Utilities */
@@ -49,6 +65,66 @@ body {
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.glass-panel-gold {
+  background: rgba(30, 26, 18, 0.7);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(212, 175, 55, 0.08);
+}
+
+.glass-panel-red {
+  background: rgba(35, 15, 18, 0.7);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(230, 57, 70, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(230, 57, 70, 0.08);
+}
+
+.glass-panel-emerald {
+  background: rgba(15, 30, 20, 0.7);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(34, 197, 94, 0.08);
+}
+
+/* Tabs visible gold scrollbar */
+.tabs-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.4) rgba(10, 10, 10, 0.8);
+}
+
+.tabs-scrollbar::-webkit-scrollbar {
+  height: 5px;
+}
+
+.tabs-scrollbar::-webkit-scrollbar-track {
+  background: rgba(10, 10, 10, 0.8);
+  border-radius: 9999px;
+}
+
+.tabs-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #D4AF37, #FFE578);
+  border-radius: 9999px;
+}
+
+.tabs-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #FFE578, #D4AF37);
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px) scale(1.15);
+  }
+}
+
+.animate-float-up {
+  animation: float-up 1s ease-out forwards;
 }
 
 .glass-header {

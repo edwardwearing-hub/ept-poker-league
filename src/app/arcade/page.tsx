@@ -11,7 +11,8 @@ import {
     Activity, 
     Dices, 
     Zap,
-    MousePointer2
+    MousePointer2,
+    Flame
 } from 'lucide-react';
 import MiniGameEngine from '@/components/games/MiniGameEngine';
 
@@ -140,6 +141,53 @@ export default function ArcadePage() {
                     <p className="text-zinc-500 max-w-sm text-sm font-bold leading-relaxed uppercase">
                         Practice the Hustle. No tokens required. No consequences for failure. Just pure skill.
                     </p>
+                </div>
+
+                {/* Featured Major Game: Casino Syndicate */}
+                <Link
+                    href="/syndicate"
+                    className="block relative rounded-3xl overflow-hidden border-2 border-gold/40 hover:border-gold shadow-[0_0_40px_rgba(212,175,55,0.25)] mb-10 group transition-all"
+                >
+                    <div className="relative w-full h-56 sm:h-64 overflow-hidden">
+                        <img 
+                            src="/images/vegas_strip_resort.jpg" 
+                            alt="Casino Syndicate Empire" 
+                            className="w-full h-full object-cover filter brightness-90 group-hover:scale-105 transition-transform duration-700" 
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                        
+                        <div className="absolute top-4 left-4 flex items-center gap-2">
+                            <span className="px-3 py-1 rounded-full bg-gold/20 text-gold-glow border border-gold/40 text-xs font-black uppercase tracking-widest backdrop-blur-md flex items-center gap-1.5">
+                                <Flame className="w-3.5 h-3.5 text-gold" />
+                                Flagship Underworld RPG
+                            </span>
+                            <span className="px-2.5 py-1 rounded-full bg-black/60 text-white border border-white/10 text-[10px] font-mono font-bold backdrop-blur-md">
+                                18 Tables • 8 Tournaments
+                            </span>
+                        </div>
+
+                        <div className="absolute bottom-4 left-4 right-4 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3">
+                            <div>
+                                <h2 className="text-2xl sm:text-4xl font-black uppercase tracking-tight text-white drop-shadow-md flex items-center gap-2">
+                                    E.P.T. Casino Syndicate
+                                </h2>
+                                <p className="text-xs sm:text-sm text-zinc-300 font-sans max-w-xl line-clamp-2 mt-1 drop-shadow">
+                                    Build your underground gambling empire from craps back-alleys to trillion-dollar orbital salons. Sponsor real EPT pros, launder dirty cash through front businesses, and pull off daring syndicate heists.
+                                </p>
+                            </div>
+
+                            <div className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-gold to-yellow-400 text-black font-black text-xs uppercase tracking-widest shadow-[0_0_20px_rgba(212,175,55,0.5)] group-hover:brightness-110 shrink-0 flex items-center gap-2">
+                                Play Syndicate Empire <ArrowLeft className="w-4 h-4 rotate-180" />
+                            </div>
+                        </div>
+                    </div>
+                </Link>
+
+                {/* Mini-Games Header */}
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="h-px flex-1 bg-white/10" />
+                    <span className="text-xs uppercase font-black tracking-widest text-zinc-500">Quick Skill Mini-Games</span>
+                    <div className="h-px flex-1 bg-white/10" />
                 </div>
 
                 {/* Game Selection Grid */}
