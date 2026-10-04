@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getLeaderboardData, getGlobalStats } from '@/lib/data';
 import path from 'path';
 import fs from 'fs';
@@ -61,6 +62,15 @@ export async function POST(request: Request) {
                 };
 
                 fs.writeFileSync(reportFilePath, JSON.stringify(savePayload, null, 2));
+
+                try {
+                    revalidatePath('/final');
+                    revalidatePath('/');
+                    revalidatePath('/presentation');
+                    revalidatePath('/gazette');
+                } catch (e) {
+                    console.warn("Webhook revalidate error:", e);
+                }
 
                 return NextResponse.json({ success: true, aiGenerated: true });
             }

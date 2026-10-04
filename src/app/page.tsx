@@ -17,6 +17,9 @@ export default async function Home() {
     getLeaderboardData()
   ]);
 
+  const gamesPlayedOverall = Math.max(...players.map(p => p.gamesPlayed || 0), 0);
+  const gamesRemaining = Math.max(0, 9 - gamesPlayedOverall);
+
   return (
     <div className="space-y-12 animate-in fade-in duration-500 font-sans">
 
@@ -30,6 +33,8 @@ export default async function Home() {
       <ChampionshipCountdownBanner 
         totalPot={stats.totalPot} 
         topContenders={players.slice(0, 4)} 
+        gamesPlayed={gamesPlayedOverall}
+        gamesRemaining={gamesRemaining}
       />
 
       {/* The Hype Section */}

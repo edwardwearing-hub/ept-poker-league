@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getLeaderboardData, getSheetsClient } from '@/lib/data';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { revalidatePath } from 'next/cache';
 
 export async function GET() {
     try {
@@ -100,6 +101,16 @@ export async function POST(request: Request) {
                     ]]
                 }
             });
+
+            // Automatically purge cache and re-sync the final hub and dashboard
+            try {
+                revalidatePath('/final');
+                revalidatePath('/');
+                revalidatePath('/gazette');
+                revalidatePath('/presentation');
+            } catch (e) {
+                console.warn("Revalidation warning:", e);
+            }
         } else {
             console.warn("No GOOGLE_SHEET_ID found, cannot save report.");
         }

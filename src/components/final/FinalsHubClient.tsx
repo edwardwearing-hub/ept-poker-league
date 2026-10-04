@@ -24,10 +24,12 @@ import {
     Ghost,
     DollarSign,
     Zap,
-    TrendingDown
+    TrendingDown,
+    RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { getAvatarFilename } from '@/lib/avatars';
 
 interface Player {
@@ -65,14 +67,33 @@ interface Player {
 interface Props {
     players: Player[];
     totalPot: number;
+    history?: any[];
 }
 
-export default function FinalsHubClient({ players, totalPot }: Props) {
+export default function FinalsHubClient({ players, totalPot, history = [] }: Props) {
+    const router = useRouter();
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [lastSyncTime, setLastSyncTime] = useState('Just now');
     const [activeTab, setActiveTab] = useState<'dossiers' | 'scenarios' | 'awards' | 'odds' | 'payouts'>('dossiers');
     const [filterCategory, setFilterCategory] = useState<'all' | 'contenders' | 'afraid'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [userVote, setUserVote] = useState<string | null>(null);
     const [voteCounts, setVoteCounts] = useState<Record<string, number>>({});
+
+    // Dynamic Season Progress tied directly to Google Sheets
+    const gamesPlayedOverall = Math.max(...players.map(p => p.gamesPlayed || 0), 0);
+    const totalRegularGames = 9;
+    const gamesRemaining = Math.max(0, totalRegularGames - gamesPlayedOverall);
+    const latestGame = history && history.length > 0 ? history[history.length - 1] : null;
+
+    const handleSync = () => {
+        setIsSyncing(true);
+        router.refresh();
+        setTimeout(() => {
+            setIsSyncing(false);
+            setLastSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        }, 1200);
+    };
 
     // Top seed points benchmark
     const leaderPoints = players[0]?.points || 0;
@@ -351,7 +372,13 @@ export default function FinalsHubClient({ players, totalPot }: Props) {
                     <div className="max-w-2xl space-y-4">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/40 text-ept-red text-xs font-black uppercase tracking-widest animate-pulse">
                             <Flame className="w-4 h-4 fill-current" />
-                            <span>2 Regular Games Remaining</span>
+                            <span>
+                                {gamesRemaining > 1
+                                    ? `Round ${gamesPlayedOverall} of ${totalRegularGames} Complete • ${gamesRemaining} Regular Games Remaining`
+                                    : gamesRemaining === 1
+                                    ? `Round ${gamesPlayedOverall} of ${totalRegularGames} Complete • 1 Final Regular Game Left — BUBBLE WEEK!`
+                                    : `Regular Season Concluded (${totalRegularGames}/${totalRegularGames}) • Grand Final Table Locked In!`}
+                            </span>
                             <span className="w-1 h-1 rounded-full bg-ept-red" />
                             <span className="text-gold font-mono">December Grand Final</span>
                         </div>
@@ -365,7 +392,7 @@ export default function FinalsHubClient({ players, totalPot }: Props) {
                             The 2026 season championship approaches. Deep-dive into official spreadsheet dossiers, player roasts, qualification scenarios, award superlatives, and Vegas championship odds.
                         </p>
 
-                        <div className="pt-2 flex flex-wrap items-center gap-4">
+                        <div className="pt-2 flex flex-wrap items-center gap-3">
                             <div className="flex items-center gap-3 px-4 py-2.5 bg-black/80 border border-gold/40 rounded-2xl shadow-[0_0_20px_rgba(212,175,55,0.15)]">
                                 <div className="p-2 bg-gold/15 rounded-xl text-gold border border-gold/30">
                                     <Coins className="w-5 h-5" />
@@ -375,6 +402,18 @@ export default function FinalsHubClient({ players, totalPot }: Props) {
                                     <span className="text-base font-black text-gold font-mono">£{effectivePot}</span>
                                 </div>
                             </div>
+
+                            <button
+                                onClick={handleSync}
+                                disabled={isSyncing}
+                                className="flex items-center gap-2 px-4 py-3 bg-black/80 hover:bg-zinc-900 border border-gold/40 hover:border-gold rounded-2xl text-xs font-black uppercase tracking-wider text-gold shadow-lg transition-all transform hover:scale-105"
+                                title="Fetch latest game records and calculations from Google Sheets"
+                            >
+                                <RefreshCw className={`w-4 h-4 text-gold ${isSyncing ? 'animate-spin' : ''}`} />
+                                <span>{isSyncing ? 'Syncing...' : 'Sync Live Sheet'}</span>
+                                <span className="text-[9px] font-mono text-zinc-400 font-normal">({lastSyncTime})</span>
+                            </button>
+
                             <Link
                                 href="/presentation"
                                 className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-zinc-900 to-zinc-800 hover:from-zinc-800 hover:to-zinc-700 border border-white/20 rounded-2xl text-xs font-black uppercase tracking-wider text-white shadow-lg transition-all hover:scale-105"
@@ -688,6 +727,30 @@ export default function FinalsHubClient({ players, totalPot }: Props) {
             {/* TAB 2: BUBBLE WATCH & SCENARIOS */}
             {activeTab === 'scenarios' && (
                 <div className="space-y-6">
+                    {/* Monthly Ledger Connection Banner */}
+                    <div className="p-4 bg-gradient-to-r from-blue-950/30 via-zinc-950 to-blue-950/30 border border-blue-500/30 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-500/10 rounded-xl text-blue-400 shrink-0">
+                                <Zap className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <div className="font-bold text-white uppercase flex items-center gap-2">
+                                    <span>Dynamically Linked to Google Sheets Ledger</span>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping" />
+                                </div>
+                                <p className="text-zinc-400 mt-0.5">
+                                    As each monthly session is recorded, all qualification points, podium bubble watch statuses, and mathematical eliminations instantly recalculate.
+                                </p>
+                            </div>
+                        </div>
+                        {latestGame && (
+                            <div className="px-3 py-1.5 bg-black/60 border border-white/10 rounded-xl shrink-0 text-left md:text-right">
+                                <span className="text-[10px] text-zinc-500 font-mono block">Last Session Recorded</span>
+                                <span className="text-xs font-black text-gold font-mono">{latestGame.date} • £{latestGame.prizePot} Pot</span>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-5 bg-zinc-950 border border-white/10 rounded-2xl">
                         <div>
                             <h3 className="text-lg font-black uppercase text-white flex items-center gap-2">
@@ -695,7 +758,9 @@ export default function FinalsHubClient({ players, totalPot }: Props) {
                                 2026 Qualification &amp; Playoff Scenarios
                             </h3>
                             <p className="text-xs text-zinc-400 mt-0.5">
-                                Live mathematical requirements with 2 games left before the championship table is locked.
+                                {gamesRemaining > 0 
+                                    ? `Live mathematical requirements with ${gamesRemaining} regular season game(s) remaining before table lockdown.`
+                                    : `Regular season complete! Final seeding is locked for the December Grand Final table.`}
                             </p>
                         </div>
                         <div className="flex items-center gap-3 text-[10px] font-mono font-bold uppercase">
@@ -716,31 +781,45 @@ export default function FinalsHubClient({ players, totalPot }: Props) {
                             const isLeader = rank === 1;
                             const isPodium = rank <= 3;
                             const isHunting = rank > 3 && rank <= 6;
+                            const maxPossiblePoints = player.points + (gamesRemaining * 10);
+                            const runnerUpMax = (players[1]?.points || 0) + (gamesRemaining * 10);
+                            const canReachFirst = maxPossiblePoints >= leaderPoints;
+                            const hasClenchedFirst = isLeader && gamesRemaining > 0 && player.points > runnerUpMax;
 
                             let statusText = 'Contender';
                             let statusColor = 'border-gold/40 bg-gold/5 text-gold';
-                            let scenario = 'Control your own destiny with 2 solid finishes.';
+                            let scenario = `Can score up to ${maxPossiblePoints} points. Control your own destiny.`;
 
                             if (player.gamesPlayed === 0) {
                                 statusText = 'Hiding in Bunker';
                                 statusColor = 'border-red-500 bg-red-950/40 text-red-400 animate-pulse';
-                                scenario = 'Too afraid to show up. Needs to attend a game before claiming mathematical qualification.';
+                                scenario = 'Too afraid to show up (0.0% attendance). Must attend a game before points can be awarded.';
+                            } else if (gamesRemaining === 0) {
+                                statusText = isLeader ? '🏆 Regular Season Champion' : isPodium ? `Podium Seed #${rank}` : `Final Table Qualifier #${rank}`;
+                                statusColor = isLeader ? 'border-gold bg-gold/20 text-gold shadow-[0_0_20px_rgba(212,175,55,0.4)]' : 'border-zinc-700 bg-zinc-900 text-zinc-300';
+                                scenario = 'Regular season complete! Final seeding is locked for the December Grand Final table.';
+                            } else if (hasClenchedFirst) {
+                                statusText = '🏆 CLINCHED #1 SEED';
+                                statusColor = 'border-gold bg-gold/20 text-gold shadow-[0_0_20px_rgba(212,175,55,0.4)]';
+                                scenario = `Mathematically untouchable! No player can overcome ${player.name}'s lead even with ${gamesRemaining} game(s) remaining.`;
                             } else if (isLeader) {
-                                statusText = 'Current #1 Seed';
+                                statusText = `Current #1 Seed (+${leaderPoints - (players[1]?.points || 0)} pts)`;
                                 statusColor = 'border-gold bg-gold/15 text-gold shadow-[0_0_15px_rgba(212,175,55,0.3)]';
-                                scenario = 'A single win or top-3 finish clinches the 2026 Regular Season Crown.';
-                            } else if (isPodium) {
+                                scenario = gamesRemaining === 1 
+                                    ? `One game left! Needs ${Math.max(1, (players[1]?.points || 0) + 11 - player.points)} points in Game 9 to mathematically clinch the 2026 Crown.`
+                                    : `Controls own destiny. A single win or top-3 finish over the remaining ${gamesRemaining} games locks in the crown.`;
+                            } else if (canReachFirst) {
                                 statusText = `Championship Contender (-${ptsBehind} pts)`;
                                 statusColor = 'border-amber-500/50 bg-amber-500/10 text-amber-300';
-                                scenario = `Needs to gain ${ptsBehind + 1} points over the remaining 2 games to claim #1.`;
-                            } else if (isHunting) {
-                                statusText = `In The Hunt (-${ptsBehind} pts)`;
+                                scenario = `Can reach a maximum of ${maxPossiblePoints} points. Needs to gain ${ptsBehind + 1} points over the remaining ${gamesRemaining} game(s) to claim #1.`;
+                            } else if (isPodium || isHunting) {
+                                statusText = `Podium Battle (-${ptsBehind} pts)`;
                                 statusColor = 'border-blue-500/50 bg-blue-500/10 text-blue-400';
-                                scenario = `Back-to-back final table cashes required to break into the Top 3 podium.`;
+                                scenario = `Mathematically eliminated from #1, but alive for Top 3 Podium cash and a favorable final table seat.`;
                             } else {
                                 statusText = `Spoiler Role (-${ptsBehind} pts)`;
                                 statusColor = 'border-zinc-800 bg-zinc-900/50 text-zinc-500';
-                                scenario = 'Play spoiler, hunt leader bounties, and secure bragging rights.';
+                                scenario = `Play spoiler over the final ${gamesRemaining} game(s), hunt leader bounties, and secure bragging rights.`;
                             }
 
                             return (

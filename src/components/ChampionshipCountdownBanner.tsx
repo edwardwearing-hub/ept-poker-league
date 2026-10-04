@@ -14,9 +14,16 @@ interface Contender {
 interface Props {
     totalPot?: number;
     topContenders?: Contender[];
+    gamesPlayed?: number;
+    gamesRemaining?: number;
 }
 
-export default function ChampionshipCountdownBanner({ totalPot = 0, topContenders = [] }: Props) {
+export default function ChampionshipCountdownBanner({ 
+    totalPot = 0, 
+    topContenders = [],
+    gamesPlayed = 7,
+    gamesRemaining = 2
+}: Props) {
     return (
         <div className="relative overflow-hidden rounded-3xl border-2 border-gold/50 bg-black shadow-[0_0_60px_rgba(212,175,55,0.25)] group">
             {/* Background championship image with atmospheric overlay */}
@@ -33,7 +40,13 @@ export default function ChampionshipCountdownBanner({ totalPot = 0, topContender
                 <div className="space-y-3 max-w-2xl">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/40 text-ept-red text-[11px] font-black uppercase tracking-widest animate-pulse">
                         <Flame className="w-3.5 h-3.5 fill-current" />
-                        <span>2 Regular Season Games Left</span>
+                        <span>
+                            {gamesRemaining > 1
+                                ? `Round ${gamesPlayed} of 9 Complete • ${gamesRemaining} Games Left`
+                                : gamesRemaining === 1
+                                ? `Round ${gamesPlayed} of 9 Complete • 1 Final Game Left!`
+                                : `Regular Season Complete • Table Locked!`}
+                        </span>
                         <span className="w-1 h-1 rounded-full bg-ept-red" />
                         <span className="text-gold font-mono">December Grand Final</span>
                     </div>
