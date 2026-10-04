@@ -20,7 +20,9 @@ import {
     Key,
     LogOut,
     Newspaper,
-    Flame
+    Flame,
+    Crown,
+    Tv
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import RiverReportPlayer from './RiverReportPlayer';
@@ -31,6 +33,8 @@ import SetPINModal from './auth/SetPINModal';
 
 const navItems = [
     { name: 'League Home', href: '/', icon: Home },
+    { name: 'December Final', href: '/final', icon: Crown, badge: 'FINAL' },
+    { name: 'TV Final Table', href: '/presentation', icon: Tv },
     { name: 'Leaderboard', href: '/#leaderboard', icon: Trophy },
     { name: 'The Gazette', href: '/gazette', icon: Newspaper },
     { name: 'Session Archive', href: '/history', icon: History },

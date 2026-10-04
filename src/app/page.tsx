@@ -5,11 +5,15 @@ import StatCorner from "@/components/StatCorner";
 import LastGameReport from "@/components/LastGameReport";
 import NextGameCountdown from "@/components/NextGameCountdown";
 import SyndicateAnnouncementModal from "@/components/SyndicateAnnouncementModal";
+import ChampionshipCountdownBanner from "@/components/ChampionshipCountdownBanner";
+import { getGlobalStats } from "@/lib/data";
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
-export default function Home() {
+export default async function Home() {
+  const stats = await getGlobalStats();
+
   return (
     <div className="space-y-12 animate-in fade-in duration-500 font-sans">
 
@@ -18,6 +22,9 @@ export default function Home() {
 
       {/* Next Game Countdown Section */}
       <NextGameCountdown />
+
+      {/* December Grand Final Road to Crown Banner */}
+      <ChampionshipCountdownBanner totalPot={stats.totalPot} />
 
       {/* The Hype Section */}
       <section className="space-y-6 pt-4 md:pt-6">
