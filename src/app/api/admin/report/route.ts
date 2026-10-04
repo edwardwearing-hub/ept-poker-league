@@ -9,7 +9,7 @@ export async function GET() {
             const sheets = await getSheetsClient();
             const response = await sheets.spreadsheets.values.get({
                 spreadsheetId,
-                range: 'Gazette!A2:E'
+                range: 'Gazette!A2:F'
             });
 
             const rows = response.data.values;
@@ -21,7 +21,8 @@ export async function GET() {
                     episode: lastRow[1] || 'Episode 1',
                     date: lastRow[2] || 'January 24, 2026',
                     winner: lastRow[3] || 'Liam Duxbury',
-                    content: lastRow[4] || 'The chips were flying...'
+                    content: lastRow[4] || 'The chips were flying...',
+                    imageUrl: lastRow[5] || null
                 });
             }
         }
@@ -32,7 +33,8 @@ export async function GET() {
             episode: 'Episode 1',
             date: 'January 24, 2026',
             winner: 'Liam Duxbury',
-            content: 'The chips were flying in Episode 4 as Liam Duxbury solidified his position at the top of the table.\n\nThe night saw intense action, with the "Bounty" Edward Wearing taking significant heat from his rivals.\n\nNotable plays included a massive river bluff that secured the pot leader position for Luke Daly, keeping him in close contention for the crown.'
+            content: 'The chips were flying in Episode 4 as Liam Duxbury solidified his position at the top of the table.\n\nThe night saw intense action, with the "Bounty" Edward Wearing taking significant heat from his rivals.\n\nNotable plays included a massive river bluff that secured the pot leader position for Luke Daly, keeping him in close contention for the crown.',
+            imageUrl: null
         });
     } catch (err) {
         console.error("Report read error:", err);
@@ -85,7 +87,7 @@ export async function POST(request: Request) {
             const sheets = await getSheetsClient();
             await sheets.spreadsheets.values.append({
                 spreadsheetId,
-                range: 'Gazette!A:E',
+                range: 'Gazette!A:F',
                 valueInputOption: 'USER_ENTERED',
                 requestBody: {
                     values: [[
@@ -93,7 +95,8 @@ export async function POST(request: Request) {
                         payload.episode || '',
                         payload.date || '',
                         payload.winner || '',
-                        payload.content || ''
+                        payload.content || '',
+                        payload.imageUrl || ''
                     ]]
                 }
             });

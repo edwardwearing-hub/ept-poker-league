@@ -7,12 +7,20 @@ import WantedVideo from './WantedVideo';
 import AIAnnouncer from './AIAnnouncer';
 
 export default function LastGameReport() {
-    const [report, setReport] = useState({
+    const [report, setReport] = useState<{
+        title: string;
+        episode: string;
+        date: string;
+        winner: string;
+        content: string;
+        imageUrl?: string | null;
+    }>({
         title: 'Loading...',
         episode: '',
         date: '',
         winner: 'Edward Wearing', // default for video
-        content: 'Loading latest report...'
+        content: 'Loading latest report...',
+        imageUrl: null
     });
 
     useEffect(() => {
@@ -79,21 +87,31 @@ export default function LastGameReport() {
                         </div>
                     </div>
 
-                    <div className="lg:col-span-5 w-full bg-black rounded-xl overflow-hidden border-2 border-gold/30 shadow-[0_0_30px_rgba(212,175,55,0.2)] relative group/video flex items-center justify-center min-h-[250px]">
-                        {/* Winner's Highlight Video */}
-                        <WantedVideo
-                            playerName={report.winner}
-                            className="w-full h-auto max-h-[500px] object-contain grayscale contrast-125 transition-opacity z-10"
-                        />
+                    <div className="lg:col-span-5 w-full bg-black rounded-xl overflow-hidden border-2 border-gold/30 shadow-[0_0_30px_rgba(212,175,55,0.2)] relative group/video flex items-center justify-center min-h-[250px] max-h-[500px]">
+                        {/* Custom Uploaded Picture OR Winner's Highlight Video */}
+                        {report.imageUrl ? (
+                            <img
+                                src={report.imageUrl}
+                                alt={report.title}
+                                className="w-full h-full object-cover max-h-[500px] transition-transform duration-500 group-hover/video:scale-105 z-10"
+                            />
+                        ) : (
+                            <WantedVideo
+                                playerName={report.winner}
+                                className="w-full h-auto max-h-[500px] object-contain grayscale contrast-125 transition-opacity z-10"
+                            />
+                        )}
 
                         {/* Dramatic Overlay */}
-                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" />
-                        <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1 bg-ept-red/90 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-lg backdrop-blur z-10">
+                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none z-20" />
+                        <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1 bg-ept-red/90 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-lg backdrop-blur z-20">
                             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                            Live Cam
+                            {report.imageUrl ? 'Gazette Photo' : 'Live Cam'}
                         </div>
-                        <div className="absolute bottom-4 left-4 right-4 text-center z-10 pointer-events-none">
-                            <span className="text-gold font-black uppercase text-2xl tracking-widest drop-shadow-[0_2px_10px_rgba(0,0,0,1)]">Champion</span>
+                        <div className="absolute bottom-4 left-4 right-4 text-center z-20 pointer-events-none">
+                            <span className="text-gold font-black uppercase text-2xl tracking-widest drop-shadow-[0_2px_10px_rgba(0,0,0,1)]">
+                                {report.imageUrl ? (report.winner || 'Champion') : 'Champion'}
+                            </span>
                         </div>
                     </div>
                 </div>

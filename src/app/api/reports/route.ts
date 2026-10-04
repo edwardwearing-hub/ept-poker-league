@@ -11,7 +11,7 @@ export async function GET() {
         const sheets = await getSheetsClient();
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: 'Gazette!A2:E',
+            range: 'Gazette!A2:F',
         });
 
         const rows = response.data.values;
@@ -28,6 +28,7 @@ export async function GET() {
                 date: row[2] || '',
                 winner: row[3] || '',
                 content: row[4] || '',
+                imageUrl: row[5] || null,
             }))
             .filter(r => r.title || r.content) // Skip empty rows
             .reverse(); // Newest first

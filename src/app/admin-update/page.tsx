@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calendar, Save, Trash2, Unlock } from 'lucide-react';
+import { Calendar, Save, Trash2, Unlock, Image as ImageIcon, Upload, X, Link as LinkIcon } from 'lucide-react';
 import MultiSelect from '@/components/MultiSelect';
 
 const PLAYERS = [
@@ -30,6 +30,11 @@ export default function AdminUpdate() {
     const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
     const [reportWinner, setReportWinner] = useState('');
     const [reportContent, setReportContent] = useState('');
+
+    // Picture State (Custom photo vs revert to Champion video)
+    const [reportImageUrl, setReportImageUrl] = useState('');
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [isCompressingImage, setIsCompressingImage] = useState(false);
 
     // Hijack Management State
     const [selectedResetPlayer, setSelectedResetPlayer] = useState('');
@@ -126,6 +131,54 @@ export default function AdminUpdate() {
         if (isLoggedIn) loadSchedule();
     }, [isLoggedIn]);
 
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsCompressingImage(true);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                // Fit within 600px width/height to keep base64 string lightweight (< 35KB)
+                const MAX_SIZE = 600;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_SIZE) {
+                        height = Math.round((height * MAX_SIZE) / width);
+                        width = MAX_SIZE;
+                    }
+                } else {
+                    if (height > MAX_SIZE) {
+                        width = Math.round((width * MAX_SIZE) / height);
+                        height = MAX_SIZE;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const base64 = canvas.toDataURL('image/jpeg', 0.65);
+                    setReportImageUrl(base64);
+                    setImagePreview(base64);
+                }
+                setIsCompressingImage(false);
+            };
+            img.src = event.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleClearImage = () => {
+        setReportImageUrl('');
+        setImagePreview(null);
+    };
+
     const handleReportSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setReportStatus('Publishing...');
@@ -138,7 +191,8 @@ export default function AdminUpdate() {
                     episode: reportEpisode,
                     date: reportDate,
                     winner: reportWinner,
-                    content: reportContent
+                    content: reportContent,
+                    imageUrl: reportImageUrl
                 })
             });
             const data = await response.json();
@@ -388,6 +442,93 @@ export default function AdminUpdate() {
                                     ))}
                                 </select>
                             </div>
+                        </div>
+
+                        {/* Gazette Feature Picture Section */}
+                        <div className="p-4 bg-gray-900/60 rounded-xl border border-gray-700/60 space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                <label className="text-sm text-gray-300 font-bold uppercase tracking-wider flex items-center gap-2">
+                                    <ImageIcon className="w-4 h-4 text-[#ffd700]" />
+                                    Gazette Feature Picture (Optional)
+                                </label>
+                                <span className="text-[10px] text-gray-500 font-mono">
+                                    {reportImageUrl ? '✓ Picture Attached' : 'Reverts to Champion Video if empty'}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Option A: Upload from computer/phone */}
+                                <div>
+                                    <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">
+                                        Upload From Device
+                                    </label>
+                                    <label className="flex items-center justify-center gap-2 p-3 bg-gray-800 hover:bg-gray-700 border border-dashed border-gray-600 hover:border-[#ffd700] rounded-lg cursor-pointer transition text-gray-300 hover:text-white text-xs font-bold">
+                                        <Upload className="w-4 h-4 text-[#ffd700]" />
+                                        <span>{isCompressingImage ? 'Optimizing Picture...' : 'Choose Picture File'}</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            className="hidden"
+                                            disabled={isCompressingImage}
+                                        />
+                                    </label>
+                                </div>
+
+                                {/* Option B: Paste direct URL */}
+                                <div>
+                                    <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">
+                                        Or Paste Direct Image Link
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="url"
+                                            value={reportImageUrl.startsWith('data:') ? '' : reportImageUrl}
+                                            onChange={e => {
+                                                const url = e.target.value.trim();
+                                                setReportImageUrl(url);
+                                                setImagePreview(url || null);
+                                            }}
+                                            placeholder="https://example.com/photo.jpg"
+                                            className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white text-xs focus:border-[#cfb53b] outline-none shadow-inner pr-8"
+                                        />
+                                        <LinkIcon className="w-4 h-4 text-gray-500 absolute right-3 top-3.5 pointer-events-none" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Live Preview & Revert Button */}
+                            {imagePreview && (
+                                <div className="mt-3 p-3 bg-black/60 rounded-lg border border-[#cfb53b]/40 flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-800 border border-white/10 shrink-0">
+                                            <img
+                                                src={imagePreview}
+                                                alt="Preview"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                                                Custom Picture Attached
+                                            </div>
+                                            <div className="text-[11px] text-gray-400 truncate max-w-xs mt-0.5">
+                                                Will display on home page &amp; Gazette issue
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleClearImage}
+                                        className="shrink-0 px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-700/50 text-red-300 hover:text-red-100 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                        <span>Remove (Revert)</span>
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <div>

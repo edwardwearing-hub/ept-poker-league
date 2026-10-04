@@ -13,6 +13,7 @@ interface Report {
     date: string;
     winner: string;
     content: string;
+    imageUrl?: string | null;
 }
 
 const AVATAR_MAP: Record<string, string> = {
@@ -113,6 +114,17 @@ function ReportCard({ report, index, isLatest }: { report: Report; index: number
                         className="overflow-hidden"
                     >
                         <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4 border-t border-white/5 pt-4">
+                            {/* Feature Picture if present */}
+                            {report.imageUrl && (
+                                <div className="rounded-xl overflow-hidden border border-gold/30 max-h-96 w-full mb-4 bg-black/60 shadow-lg">
+                                    <img
+                                        src={report.imageUrl}
+                                        alt={report.title}
+                                        className="w-full h-full object-cover max-h-96"
+                                    />
+                                </div>
+                            )}
+
                             {/* AI Announcer */}
                             <AIAnnouncer
                                 text={report.content}
