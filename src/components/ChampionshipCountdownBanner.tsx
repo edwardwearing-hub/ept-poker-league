@@ -2,51 +2,94 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Crown, Flame, ArrowRight, Trophy, Tv, Sparkles, Coins } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Crown, Flame, ArrowRight, Trophy, Tv, Coins } from 'lucide-react';
+import { getAvatarFilename } from '@/lib/avatars';
+
+interface Contender {
+    name: string;
+    points: number;
+    rank: number;
+}
 
 interface Props {
     totalPot?: number;
+    topContenders?: Contender[];
 }
 
-export default function ChampionshipCountdownBanner({ totalPot = 0 }: Props) {
+export default function ChampionshipCountdownBanner({ totalPot = 0, topContenders = [] }: Props) {
     return (
-        <div className="relative overflow-hidden rounded-2xl border-2 border-gold/40 bg-gradient-to-r from-black via-zinc-950 to-black p-4 sm:p-6 shadow-[0_0_50px_rgba(212,175,55,0.15)] group">
-            {/* Background animated shine */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/10 via-transparent to-transparent pointer-events-none" />
-            <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative overflow-hidden rounded-3xl border-2 border-gold/50 bg-black shadow-[0_0_60px_rgba(212,175,55,0.25)] group">
+            {/* Background championship image with atmospheric overlay */}
+            <div 
+                className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-luminosity group-hover:scale-105 group-hover:opacity-40 transition-all duration-700 pointer-events-none"
+                style={{ backgroundImage: `url('/images/final/championship_trophy.jpg')` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/75 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/15 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
+            <div className="relative z-10 p-5 sm:p-7 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                 
-                {/* Left: Hype Headline */}
-                <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-ept-red text-[10px] font-black uppercase tracking-widest animate-pulse">
+                {/* Left: Headline & Hype text */}
+                <div className="space-y-3 max-w-2xl">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/40 text-ept-red text-[11px] font-black uppercase tracking-widest animate-pulse">
                         <Flame className="w-3.5 h-3.5 fill-current" />
                         <span>2 Regular Season Games Left</span>
                         <span className="w-1 h-1 rounded-full bg-ept-red" />
                         <span className="text-gold font-mono">December Grand Final</span>
                     </div>
 
-                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase text-white tracking-tight italic flex items-center gap-2">
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase text-white tracking-tight italic flex items-center gap-3">
                         <span>The Road to the 2026 Crown</span>
-                        <Crown className="w-7 h-7 sm:w-8 sm:h-8 text-gold fill-gold/20 inline-block drop-shadow-[0_0_15px_rgba(255,215,0,0.6)]" />
+                        <Crown className="w-8 h-8 text-gold fill-gold/20 inline-block drop-shadow-[0_0_20px_rgba(255,215,0,0.8)]" />
                     </h2>
 
-                    <p className="text-zinc-400 text-xs sm:text-sm max-w-xl leading-relaxed">
-                        Points are locked in. The bubble is heating up. Check the qualification scenarios, cast your champion predictions, and view the end-of-season awards.
+                    <p className="text-zinc-300 text-xs sm:text-sm leading-relaxed">
+                        The regular season points race is nearing the finish line. Explore the qualification scenarios, award superlatives, Vegas odds, and community championship predictions.
                     </p>
+
+                    {/* Top Contenders 8-bit Avatar Lineup */}
+                    {topContenders.length > 0 && (
+                        <div className="pt-2 flex items-center gap-3 flex-wrap">
+                            <span className="text-[10px] uppercase font-mono font-bold text-zinc-400 tracking-wider">
+                                Title Race Leaders:
+                            </span>
+                            <div className="flex items-center -space-x-2 sm:space-x-2">
+                                {topContenders.slice(0, 4).map((c) => (
+                                    <div 
+                                        key={c.name}
+                                        className="flex items-center gap-1.5 bg-black/80 border border-gold/40 px-2 py-1 rounded-xl shadow-md"
+                                        title={`${c.name} (#${c.rank} • ${c.points} pts)`}
+                                    >
+                                        <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-gold/60 bg-zinc-900 shrink-0">
+                                            <img 
+                                                src={getAvatarFilename(c.name)} 
+                                                alt={c.name} 
+                                                className="w-full h-full object-cover" 
+                                            />
+                                            <span className="absolute bottom-0 right-0 bg-gold text-black text-[8px] font-black px-1 leading-none rounded-tl">
+                                                #{c.rank}
+                                            </span>
+                                        </div>
+                                        <span className="text-xs font-bold text-white uppercase hidden sm:inline truncate max-w-[80px]">
+                                            {c.name.split(' ')[0]}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right: Pot & Navigation Actions */}
-                <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full lg:w-auto shrink-0">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full xl:w-auto shrink-0">
                     {totalPot > 0 && (
-                        <div className="flex items-center gap-3 px-4 py-2.5 bg-black/60 border border-gold/30 rounded-xl">
-                            <div className="p-2 bg-gold/10 rounded-lg text-gold">
-                                <Coins className="w-5 h-5" />
+                        <div className="flex items-center gap-3 px-4 py-3 bg-black/80 border border-gold/40 rounded-2xl shadow-[0_0_20px_rgba(212,175,55,0.15)]">
+                            <div className="p-2.5 bg-gold/15 rounded-xl text-gold border border-gold/30">
+                                <Coins className="w-6 h-6" />
                             </div>
                             <div>
-                                <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest block">Season Vault</span>
-                                <span className="text-lg font-black text-gold font-mono">£{totalPot}</span>
+                                <span className="text-[10px] text-zinc-400 font-extrabold uppercase tracking-widest block">Season Vault</span>
+                                <span className="text-xl font-black text-gold font-mono tracking-tight">£{totalPot}</span>
                             </div>
                         </div>
                     )}
@@ -54,7 +97,7 @@ export default function ChampionshipCountdownBanner({ totalPot = 0 }: Props) {
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                         <Link
                             href="/final"
-                            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-gold via-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-black font-black uppercase tracking-wider text-xs rounded-xl shadow-[0_0_25px_rgba(212,175,55,0.4)] transition-all transform hover:scale-[1.02]"
+                            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-gold via-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-black font-black uppercase tracking-wider text-xs rounded-xl shadow-[0_0_30px_rgba(212,175,55,0.5)] transition-all transform hover:scale-[1.03]"
                         >
                             <Trophy className="w-4 h-4 fill-black" />
                             <span>Championship Hub</span>
@@ -64,7 +107,7 @@ export default function ChampionshipCountdownBanner({ totalPot = 0 }: Props) {
                         <Link
                             href="/presentation"
                             title="TV Presentation Mode for Game Night"
-                            className="flex items-center justify-center p-3 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/10 rounded-xl transition-colors"
+                            className="flex items-center justify-center p-3.5 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/20 rounded-xl transition-all hover:scale-105"
                         >
                             <Tv className="w-4 h-4" />
                         </Link>

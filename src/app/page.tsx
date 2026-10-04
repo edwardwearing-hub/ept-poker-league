@@ -6,13 +6,16 @@ import LastGameReport from "@/components/LastGameReport";
 import NextGameCountdown from "@/components/NextGameCountdown";
 import SyndicateAnnouncementModal from "@/components/SyndicateAnnouncementModal";
 import ChampionshipCountdownBanner from "@/components/ChampionshipCountdownBanner";
-import { getGlobalStats } from "@/lib/data";
+import { getGlobalStats, getLeaderboardData } from "@/lib/data";
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  const stats = await getGlobalStats();
+  const [stats, players] = await Promise.all([
+    getGlobalStats(),
+    getLeaderboardData()
+  ]);
 
   return (
     <div className="space-y-12 animate-in fade-in duration-500 font-sans">
@@ -24,7 +27,10 @@ export default async function Home() {
       <NextGameCountdown />
 
       {/* December Grand Final Road to Crown Banner */}
-      <ChampionshipCountdownBanner totalPot={stats.totalPot} />
+      <ChampionshipCountdownBanner 
+        totalPot={stats.totalPot} 
+        topContenders={players.slice(0, 4)} 
+      />
 
       {/* The Hype Section */}
       <section className="space-y-6 pt-4 md:pt-6">
