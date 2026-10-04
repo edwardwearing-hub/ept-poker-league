@@ -46,6 +46,11 @@ export interface PlayerStats {
     bulliedPlayer?: string;
     winPercentage?: number;
     avgKnockouts?: number;
+    avgFinishPosition?: number;
+    avgWinnings?: number;
+    avgPoints?: number;
+    bubbleFinishes?: number;
+    mostRebuysSingle?: number;
     cashFlowHistory?: { date: string; profit: number }[];
     nickname?: string;
     avatarUrl?: string;
@@ -161,6 +166,11 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
             let bullied = "N/A";
             let winPct = 0;
             let avgKo = 0;
+            let avgFinish = 0;
+            let avgWin = 0;
+            let avgPts = 0;
+            let bubbleFinishes = 0;
+            let mostRebuysSingle = 0;
             let totalTimesKnockedOut = 0;
             let uniquePlayersHijacked = new Set<string>();
             let totalHistoricalKOs = 0;
@@ -173,7 +183,18 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
             if (pRange && pRange.values) {
                 const pData = pRange.values;
                 if (pData[6]) winPct = parseMoney(pData[6][1]); // Win %
-                if (pData[12]) avgKo = parseMoney(pData[12][1]);
+                if (pData[9]) {
+                    avgFinish = parseMoney(pData[9][0]);
+                    avgWin = parseMoney(pData[9][1]);
+                }
+                if (pData[12]) {
+                    avgPts = parseMoney(pData[12][0]);
+                    avgKo = parseMoney(pData[12][1]);
+                }
+                if (pData[15]) {
+                    mostRebuysSingle = parseMoney(pData[15][0]);
+                    bubbleFinishes = parseInt(pData[15][1]) || 0;
+                }
                 if (pData[18]) {
                     rival = pData[18][0] as string || "None";
                     bullied = pData[18][1] as string || "None";
@@ -284,6 +305,11 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
                 bulliedPlayer: bullied,
                 winPercentage: winPct,
                 avgKnockouts: avgKo,
+                avgFinishPosition: avgFinish,
+                avgWinnings: avgWin,
+                avgPoints: avgPts,
+                bubbleFinishes: bubbleFinishes,
+                mostRebuysSingle: mostRebuysSingle,
                 cashFlowHistory: cashFlow,
                 enemyQueue: enemyQueue,
                 totalHistoricalKOs: totalHistoricalKOs,
