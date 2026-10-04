@@ -43,21 +43,95 @@ export async function GET() {
     }
 }
 
+const CANDIDATE_MODELS = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-8b',
+    'gemini-1.5-pro'
+];
+
+async function generateGazetteStoryWithFallback(apiKey: string, rawContent: string, standingsContext: string): Promise<{ text?: string; error?: string }> {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const systemInstruction = `You are the snarky, engaging sports journalist for "The E.P.T. Gazette" poker league. Write a fun, dramatic, 150-word newspaper-style report based EXACTLY on the raw bullet-point notes. Make it sound like a high-stakes casino recap. Reference the players' current leaderboard standings if relevant.${standingsContext}`;
+
+    let lastErrorMsg = '';
+
+    for (const modelName of CANDIDATE_MODELS) {
+        for (let attempt = 1; attempt <= 2; attempt++) {
+            try {
+                const model = genAI.getGenerativeModel({ model: modelName, systemInstruction });
+                const result = await model.generateContent(`RAW GAME NOTES:\n${rawContent}`);
+                const text = result.response.text();
+                if (text && text.trim().length > 0) {
+                    console.log(`[Gazette AI] Successfully generated story using model: ${modelName} (attempt ${attempt})`);
+                    return { text: text.trim() };
+                }
+            } catch (err: any) {
+                const msg = err?.message || String(err);
+                lastErrorMsg = msg;
+                console.warn(`[Gazette AI] Model ${modelName} (attempt ${attempt}) failed: ${msg}`);
+
+                // Check for high traffic, temporary 503, or rate limit 429
+                const isTransient = msg.includes('503') || msg.includes('429') || msg.includes('Service Unavailable') || msg.includes('high demand') || msg.includes('overloaded');
+                if (isTransient && attempt < 2) {
+                    // Brief pause before retry
+                    await new Promise(resolve => setTimeout(resolve, 1200));
+                } else {
+                    // Break out to next candidate model
+                    break;
+                }
+            }
+        }
+    }
+
+    return { error: lastErrorMsg || 'All candidate AI models were busy or unavailable.' };
+}
+
 export async function POST(request: Request) {
     try {
         const payload = await request.json();
 
+        // 1. Standalone AI Generation preview action
+        if (payload.action === 'generate') {
+            if (!payload.content || !payload.content.trim()) {
+                return NextResponse.json({ error: 'Please enter notes to generate a story.' }, { status: 400 });
+            }
+            if (!process.env.GEMINI_API_KEY) {
+                return NextResponse.json({ error: 'Missing GEMINI_API_KEY in environment variables.' }, { status: 400 });
+            }
+
+            let standingsContext = "";
+            try {
+                const standings = await getLeaderboardData();
+                standingsContext = "\n\nCURRENT LEAGUE STANDINGS (Rank - Name - Points - Profit):\n" +
+                    standings.map(p => `${p.rank}. ${p.name} - ${p.points}pts (£${p.profit}) - KOs: ${p.knockOuts}`).join('\n');
+            } catch (e) {
+                console.error("Failed to fetch standings for AI context", e);
+            }
+
+            const aiResult = await generateGazetteStoryWithFallback(process.env.GEMINI_API_KEY, payload.content, standingsContext);
+            if (aiResult.text) {
+                return NextResponse.json({ success: true, generatedText: aiResult.text });
+            } else {
+                return NextResponse.json({ 
+                    success: false, 
+                    error: `Google AI service is temporarily busy: ${aiResult.error}. Please try again shortly or write custom content.` 
+                }, { status: 503 });
+            }
+        }
+
         let aiFallbackMsg = '';
 
-        // If the user provided notes and we have an API key, generate a story
-        if (payload.content) {
+        // 2. Publish Gazette Report action:
+        // If content is provided and autoGenerate is not disabled
+        if (payload.content && payload.autoGenerate !== false) {
             if (!process.env.GEMINI_API_KEY) {
                 aiFallbackMsg = "Missing GEMINI_API_KEY in Vercel Environment Variables. Fell back to raw notes.";
                 console.warn(aiFallbackMsg);
             } else {
                 console.log("Generating AI Report from notes...");
 
-                // Inject the live leaderboard data so the AI knows who the players are and their current ranks
                 let standingsContext = "";
                 try {
                     const standings = await getLeaderboardData();
@@ -67,18 +141,12 @@ export async function POST(request: Request) {
                     console.error("Failed to fetch standings for AI context", e);
                 }
 
-                try {
-                    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-                    const systemInstruction = `You are the snarky, engaging sports journalist for "The E.P.T. Gazette" poker league. Write a fun, dramatic, 150-word newspaper-style report based EXACTLY on the raw bullet-point notes. Make it sound like a high-stakes casino recap. Reference the players' current leaderboard standings if relevant.${standingsContext}`;
-                    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest", systemInstruction });
-
-                    const result = await model.generateContent(`RAW GAME NOTES:\n${payload.content}`);
-                    const aiReport = result.response.text();
-                    payload.content = aiReport; // Replace the raw notes with the AI story
-                } catch (error: any) {
-                    aiFallbackMsg = `Gemini API Error: ${error.message}`;
-                    console.error("Gemini API Error:", error);
-                    // Fall back to raw notes if AI fails
+                const aiResult = await generateGazetteStoryWithFallback(process.env.GEMINI_API_KEY, payload.content, standingsContext);
+                if (aiResult.text) {
+                    payload.content = aiResult.text;
+                } else {
+                    aiFallbackMsg = `Google AI was temporarily busy (${aiResult.error}). Published using your raw notes.`;
+                    console.warn(aiFallbackMsg);
                 }
             }
         }
@@ -102,7 +170,7 @@ export async function POST(request: Request) {
                 }
             });
 
-            // Automatically purge cache and re-sync the final hub and dashboard
+            // Automatically purge cache and re-sync the final hub, homepage, gazette, and presentation
             try {
                 revalidatePath('/final');
                 revalidatePath('/');

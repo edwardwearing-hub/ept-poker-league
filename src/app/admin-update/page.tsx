@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calendar, Save, Trash2, Unlock, Image as ImageIcon, Upload, X, Link as LinkIcon } from 'lucide-react';
+import { Calendar, Save, Trash2, Unlock, Image as ImageIcon, Upload, X, Link as LinkIcon, Sparkles } from 'lucide-react';
 import MultiSelect from '@/components/MultiSelect';
 
 const PLAYERS = [
@@ -30,6 +30,8 @@ export default function AdminUpdate() {
     const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
     const [reportWinner, setReportWinner] = useState('');
     const [reportContent, setReportContent] = useState('');
+    const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+    const [isStoryAiRefined, setIsStoryAiRefined] = useState(false);
 
     // Picture State (Custom photo vs revert to Champion video)
     const [reportImageUrl, setReportImageUrl] = useState('');
@@ -179,6 +181,38 @@ export default function AdminUpdate() {
         setImagePreview(null);
     };
 
+    const handleGenerateAiStory = async () => {
+        if (!reportContent.trim()) {
+            setReportStatus('Please enter notes or bullet points first before generating with AI.');
+            return;
+        }
+        setIsGeneratingAi(true);
+        setReportStatus('Journalist AI is reviewing standings & drafting your recap...');
+        try {
+            const response = await fetch('/api/admin/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'generate',
+                    content: reportContent
+                })
+            });
+            const data = await response.json();
+            if (response.ok && data.generatedText) {
+                setReportContent(data.generatedText);
+                setIsStoryAiRefined(true);
+                setReportStatus('✨ AI story generated! Review, make tweaks if you like, then click Publish Report.');
+            } else {
+                setReportStatus(`AI Notice: ${data.error || 'Failed to generate story'}`);
+            }
+        } catch (err) {
+            console.error(err);
+            setReportStatus('Failed to generate story (Network error).');
+        } finally {
+            setIsGeneratingAi(false);
+        }
+    };
+
     const handleReportSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setReportStatus('Publishing...');
@@ -192,7 +226,8 @@ export default function AdminUpdate() {
                     date: reportDate,
                     winner: reportWinner,
                     content: reportContent,
-                    imageUrl: reportImageUrl
+                    imageUrl: reportImageUrl,
+                    autoGenerate: !isStoryAiRefined
                 })
             });
             const data = await response.json();
@@ -532,19 +567,41 @@ export default function AdminUpdate() {
                         </div>
 
                         <div>
-                            <label className="block text-sm text-gray-400 mb-2 font-bold uppercase tracking-wider">Gazette Content (Notes)</label>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                                <label className="block text-sm text-gray-400 font-bold uppercase tracking-wider">
+                                    Gazette Content (Notes or Story)
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateAiStory}
+                                    disabled={isGeneratingAi || !reportContent.trim()}
+                                    className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black text-xs font-black uppercase tracking-wider rounded-lg flex items-center justify-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_12px_rgba(245,158,11,0.3)] cursor-pointer"
+                                >
+                                    <Sparkles className={`w-3.5 h-3.5 ${isGeneratingAi ? 'animate-spin' : ''}`} />
+                                    <span>{isGeneratingAi ? 'Writing Story...' : '⚡ Generate Story with AI'}</span>
+                                </button>
+                            </div>
                             <textarea
                                 value={reportContent}
-                                onChange={e => setReportContent(e.target.value)}
-                                rows={6}
+                                onChange={e => {
+                                    setReportContent(e.target.value);
+                                    setIsStoryAiRefined(false);
+                                }}
+                                rows={7}
                                 className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-[#cfb53b] outline-none shadow-inner leading-relaxed"
-                                placeholder="Enter the dramatic retelling here... Newlines are respected."
+                                placeholder="Enter game bullet points (e.g. Luke won with river bluff, Edward went all-in on K3) or draft directly..."
                                 required
                             />
+                            {isStoryAiRefined && (
+                                <p className="text-xs text-green-400 mt-1.5 flex items-center gap-1.5 font-mono">
+                                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                                    AI story drafted. You can edit any sentences before publishing.
+                                </p>
+                            )}
                         </div>
 
                         <div className="flex justify-end">
-                            <button type="submit" className="px-8 py-3 bg-[#cfb53b] hover:bg-[#ffd700] text-black font-black uppercase tracking-widest rounded-lg transition shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+                            <button type="submit" className="px-8 py-3 bg-[#cfb53b] hover:bg-[#ffd700] text-black font-black uppercase tracking-widest rounded-lg transition shadow-[0_0_15px_rgba(212,175,55,0.4)] cursor-pointer">
                                 Publish Report
                             </button>
                         </div>
