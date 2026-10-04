@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Target, Skull, Share2, Facebook, Link as LinkIcon, Download } from 'lucide-react';
+import { Target, Skull, Share2, Facebook, Link as LinkIcon, Download, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStatus } from '@/hooks/usePlayerStatus';
 
@@ -82,6 +82,13 @@ export default function AttackButton({ targetName, isTargetHijacked, onAttackSuc
     return (
         <>
             <div className="relative">
+                {!attackerName && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-black/40 border border-white/10 rounded-lg text-zinc-500 text-xs">
+                        <Lock className="w-3.5 h-3.5 text-zinc-500" />
+                        <span>Guest Mode (Read-Only)</span>
+                    </div>
+                )}
+
                 {canAttack && (
                     <motion.button
                         whileHover={{ scale: 1.05 }}

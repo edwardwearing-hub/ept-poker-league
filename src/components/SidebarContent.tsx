@@ -59,18 +59,20 @@ export default function SidebarContent({ stats, onLinkClick, playerName: initial
     const [playerName, setPlayerName] = useState<string | undefined>(initialPlayerName);
 
     React.useEffect(() => {
-        if (!playerName) {
+        const updatePlayer = () => {
             const savedPlayer = localStorage.getItem('ept_active_player_v2');
-            if (savedPlayer) {
-                setPlayerName(savedPlayer);
-            }
-        }
-    }, [playerName]);
+            setPlayerName(savedPlayer || undefined);
+        };
+        updatePlayer();
+        window.addEventListener('storage', updatePlayer);
+        return () => window.removeEventListener('storage', updatePlayer);
+    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('ept_active_player_v2');
         localStorage.removeItem('ept_pvp_onboarded_v2'); // Clear onboarding flag
-        window.location.reload();
+        setPlayerName(undefined);
+        window.dispatchEvent(new Event('storage'));
     };
 
     return (
@@ -84,18 +86,31 @@ export default function SidebarContent({ stats, onLinkClick, playerName: initial
                 {/* Active Player Status */}
                 <div className="w-full flex items-center justify-between px-3 py-2 bg-black/40 border border-white/10 rounded-lg mt-2">
                     <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${playerName ? 'bg-[#00FF41] shadow-[0_0_8px_rgba(0,255,65,0.8)]' : 'bg-zinc-600'}`} />
+                        <div className={`w-2 h-2 rounded-full ${playerName ? 'bg-[#00FF41] shadow-[0_0_8px_rgba(0,255,65,0.8)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]'}`} />
                         <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
-                            Player
+                            {playerName ? 'Player' : 'Status'}
                         </span>
                     </div>
-                    <span className={`text-xs font-black uppercase tracking-tighter ${playerName ? 'text-white' : 'text-zinc-500'}`}>
-                        {playerName || 'Guest'}
+                    <span className={`text-xs font-black uppercase tracking-tighter ${playerName ? 'text-white' : 'text-amber-400'}`}>
+                        {playerName || 'Guest Mode'}
                     </span>
                 </div>
 
-                {/* Logout button — only shown when logged in */}
-                {playerName && (
+                {/* Action button: Player Login or Logout */}
+                {!playerName ? (
+                    <div className="w-full mt-2 space-y-1.5">
+                        <button
+                            onClick={() => window.dispatchEvent(new CustomEvent('ept_open_login'))}
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-gold/20 via-gold/10 to-gold/20 hover:from-gold/30 hover:to-gold/30 border border-gold/40 hover:border-gold rounded-lg text-gold transition-all group shadow-[0_0_15px_rgba(212,175,55,0.15)]"
+                        >
+                            <Key className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                            <span className="text-[11px] font-black uppercase tracking-wider">Player Login</span>
+                        </button>
+                        <p className="text-[9px] text-center text-zinc-500 font-mono">
+                            Browsing as Guest (Read-Only)
+                        </p>
+                    </div>
+                ) : (
                     <button
                         onClick={handleLogout}
                         className="w-full mt-2 flex items-center justify-center gap-2 px-3 py-1.5 bg-transparent hover:bg-ept-red/10 border border-white/5 hover:border-ept-red/40 rounded-lg text-zinc-600 hover:text-ept-red transition-all group"

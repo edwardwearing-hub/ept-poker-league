@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, X, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Lock, X, ChevronRight, AlertTriangle, Eye } from 'lucide-react';
 
 interface Player {
     name: string;
@@ -12,9 +12,10 @@ interface Player {
 
 interface Props {
     onSuccess: (name: string) => void;
+    onClose?: () => void;
 }
 
-export default function LockerPINModal({ onSuccess }: Props) {
+export default function LockerPINModal({ onSuccess, onClose }: Props) {
     const [players, setPlayers] = useState<Player[]>([]);
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
     const [pin, setPin] = useState('');
@@ -86,6 +87,15 @@ export default function LockerPINModal({ onSuccess }: Props) {
                         <Lock className="w-5 h-5 text-ept-red" />
                         <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">Locker Authentication</h2>
                     </div>
+                    {onClose && (
+                        <button
+                            onClick={onClose}
+                            className="text-zinc-500 hover:text-white p-1 rounded hover:bg-zinc-800 transition-colors"
+                            aria-label="Close"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    )}
                 </div>
 
                 <AnimatePresence mode="wait">
@@ -98,7 +108,7 @@ export default function LockerPINModal({ onSuccess }: Props) {
                             className="space-y-4"
                         >
                             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">IDENTIFY YOURSELF</label>
-                            <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                            <div className="grid grid-cols-1 gap-2 max-h-[260px] overflow-y-auto pr-2 custom-scrollbar">
                                 {players.map(player => (
                                     <button
                                         key={player.name}
@@ -116,6 +126,17 @@ export default function LockerPINModal({ onSuccess }: Props) {
                                         <ChevronRight className="w-4 h-4 ml-auto text-zinc-600 group-hover:text-ept-red" />
                                     </button>
                                 ))}
+                            </div>
+
+                            {/* Guest Mode Enter Option */}
+                            <div className="pt-2 border-t border-zinc-800">
+                                <button
+                                    onClick={() => onClose?.()}
+                                    className="w-full py-3 px-4 bg-zinc-800/80 hover:bg-zinc-700/80 text-amber-400 hover:text-amber-300 font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 border border-amber-500/20 hover:border-amber-500/40"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                    <span>Continue as Guest (Spectator Mode)</span>
+                                </button>
                             </div>
                         </motion.div>
                     ) : (

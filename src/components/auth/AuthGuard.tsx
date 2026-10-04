@@ -16,6 +16,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const [showSetPin, setShowSetPin] = useState(false);
     const [playerStatus, setPlayerStatus] = useState<any>(null);
 
+    const [showLoginModal, setShowLoginModal] = useState(false);
+
     useEffect(() => {
         const savedPlayer = localStorage.getItem('ept_active_player_v2');
         const hasOnboarded = localStorage.getItem('ept_pvp_onboarded_v2');
@@ -28,6 +30,20 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             }
         }
         setIsLoaded(true);
+
+        const handleOpenLogin = () => setShowLoginModal(true);
+        const handleStorage = () => {
+            const current = localStorage.getItem('ept_active_player_v2');
+            setActivePlayer(current || null);
+            if (current) checkPlayerStatus(current);
+        };
+
+        window.addEventListener('ept_open_login', handleOpenLogin);
+        window.addEventListener('storage', handleStorage);
+        return () => {
+            window.removeEventListener('ept_open_login', handleOpenLogin);
+            window.removeEventListener('storage', handleStorage);
+        };
     }, []);
 
     const checkPlayerStatus = async (name: string) => {
@@ -60,6 +76,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
     const handleLoginSuccess = (name: string) => {
         setActivePlayer(name);
+        setShowLoginModal(false);
         checkPlayerStatus(name);
         const hasOnboarded = localStorage.getItem('ept_pvp_onboarded_v2');
         if (!hasOnboarded) {
@@ -72,8 +89,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return (
         <>
             <AnimatePresence>
-                {!activePlayer && (
-                    <LockerPINModal onSuccess={handleLoginSuccess} />
+                {showLoginModal && (
+                    <LockerPINModal 
+                        onSuccess={handleLoginSuccess} 
+                        onClose={() => setShowLoginModal(false)}
+                    />
                 )}
             </AnimatePresence>
 
@@ -150,7 +170,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                 )}
             </AnimatePresence>
 
-            <div className={!activePlayer ? "hidden" : ""}>
+            <div>
                 {children}
             </div>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, X, Zap } from 'lucide-react';
+import { Menu, X, Zap, Key } from 'lucide-react';
 import SidebarContent from './SidebarContent';
 import { clsx } from 'clsx';
 import { usePlayerStatus } from '@/hooks/usePlayerStatus';
@@ -24,6 +24,15 @@ export default function MobileNav({ stats }: Props) {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {!status?.name && (
+                        <button
+                            onClick={() => window.dispatchEvent(new CustomEvent('ept_open_login'))}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gold/10 hover:bg-gold/20 border border-gold/30 rounded-lg text-[10px] font-black text-gold uppercase tracking-wider transition-colors"
+                        >
+                            <Key className="w-3 h-3" />
+                            <span>Login</span>
+                        </button>
+                    )}
                     {status?.hackTokens > 0 && (
                         <div className="flex items-center gap-1.5 px-2 py-1 bg-ept-red/20 border border-ept-red/40 rounded text-[9px] font-black text-ept-red animate-pulse">
                             <Zap className="w-3 h-3 fill-current" />

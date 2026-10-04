@@ -10,6 +10,8 @@ export default function NextGameRSVP() {
     const [registrations, setRegistrations] = useState<Registrations>({});
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState<string | null>(null);
+    const [activePlayer, setActivePlayer] = useState<string | null>(null);
+    const [guestNotice, setGuestNotice] = useState<string | null>(null);
 
     useEffect(() => {
         fetch('/api/rsvp')
@@ -18,9 +20,31 @@ export default function NextGameRSVP() {
                 setRegistrations(data);
                 setLoading(false);
             });
+
+        const updatePlayer = () => {
+            setActivePlayer(localStorage.getItem('ept_active_player_v2'));
+        };
+        updatePlayer();
+        window.addEventListener('storage', updatePlayer);
+        return () => window.removeEventListener('storage', updatePlayer);
     }, []);
 
     const toggleRSVP = async (player: string) => {
+        const savedPlayer = localStorage.getItem('ept_active_player_v2');
+        if (!savedPlayer) {
+            setGuestNotice("Guest Mode: Sign in to your locker to RSVP");
+            setTimeout(() => setGuestNotice(null), 3500);
+            return;
+        }
+
+        const isSelfOrAdmin = savedPlayer.toLowerCase().trim() === player.toLowerCase().trim() ||
+                              savedPlayer.toLowerCase().includes('edward');
+        if (!isSelfOrAdmin) {
+            setGuestNotice(`Only ${player} can change their attendance`);
+            setTimeout(() => setGuestNotice(null), 3500);
+            return;
+        }
+
         const newState = !registrations[player];
         setUpdating(player);
 
@@ -62,15 +86,31 @@ export default function NextGameRSVP() {
                 </span>
             </div>
 
+            {guestNotice && (
+                <div className="mb-2 p-2 bg-amber-500/10 border border-amber-500/30 rounded text-center animate-in fade-in duration-200">
+                    <p className="text-[10px] font-bold text-amber-400 leading-tight">{guestNotice}</p>
+                    {!activePlayer && (
+                        <button
+                            onClick={() => window.dispatchEvent(new CustomEvent('ept_open_login'))}
+                            className="mt-1 text-[9px] text-gold hover:text-white underline font-bold uppercase tracking-wider inline-block"
+                        >
+                            Open Player Login
+                        </button>
+                    )}
+                </div>
+            )}
+
             <div className="bg-black/20 rounded-lg border border-white/5 overflow-hidden max-h-60 overflow-y-auto custom-scrollbar">
                 {Object.keys(registrations).map((player) => (
                     <div
                         key={player}
                         onClick={() => toggleRSVP(player)}
                         className={clsx(
-                            "flex items-center justify-between px-3 py-2 border-b border-white/5 last:border-0 cursor-pointer transition-colors hover:bg-white/5",
+                            "flex items-center justify-between px-3 py-2 border-b border-white/5 last:border-0 transition-colors",
+                            activePlayer ? "cursor-pointer hover:bg-white/5" : "cursor-pointer hover:bg-white/5",
                             registrations[player] ? "bg-gold/5" : ""
                         )}
+                        title={!activePlayer ? "Guest Mode (Log in as player to change)" : `Toggle ${player}`}
                     >
                         <span className={clsx(
                             "text-xs font-medium truncate max-w-[140px]",
@@ -92,7 +132,19 @@ export default function NextGameRSVP() {
                 ))}
             </div>
             <div className="text-center mt-2">
-                <p className="text-[9px] text-zinc-600 italic">Click name to confirm attendance</p>
+                {activePlayer ? (
+                    <p className="text-[9px] text-zinc-500 italic">Click your name to confirm attendance</p>
+                ) : (
+                    <p className="text-[9px] text-zinc-500 italic">
+                        Guest View •{' '}
+                        <button
+                            onClick={() => window.dispatchEvent(new CustomEvent('ept_open_login'))}
+                            className="text-gold hover:text-white underline font-semibold"
+                        >
+                            Player Login to RSVP
+                        </button>
+                    </p>
+                )}
             </div>
         </div>
     );
