@@ -305,3 +305,123 @@ button, a, input {
   scrollbar-width: none;
   /* Firefox */
 }
+
+/* ==========================================
+   POKER TABLE & CARD / ACTION ANIMATIONS
+   ========================================== */
+
+@keyframes deal-card {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -55px, 0) scale(0.35) rotate(-18deg);
+  }
+  70% {
+    opacity: 1;
+    transform: translate3d(0, 4px, 0) scale(1.04) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+.animate-deal-card {
+  animation: deal-card 0.75s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes deal-community {
+  0% {
+    opacity: 0;
+    transform: translate3d(-35px, -45px, 0) scale(0.45) rotateY(85deg);
+  }
+  65% {
+    opacity: 1;
+    transform: translate3d(2px, 3px, 0) scale(1.05) rotateY(-5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotateY(0deg);
+  }
+}
+
+.animate-deal-community {
+  animation: deal-community 0.8s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes chip-toss {
+  0% {
+    opacity: 0;
+    transform: scale(0.35) translateY(20px);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.14) translateY(-3px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-chip-toss {
+  animation: chip-toss 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+@keyframes action-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(8px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.16) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-action-pop {
+  animation: action-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes check-ripple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.75);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(56, 189, 248, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+  }
+}
+
+.animate-check-ripple {
+  animation: check-ripple 1s ease-out;
+}
+
+/* 3D Leather Stadium Poker Table Rail */
+.poker-table-rail {
+  background: radial-gradient(
+    ellipse at center,
+    #4a2f21 0%,
+    #2d1b12 65%,
+    #180d08 100%
+  );
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.9),
+    inset 0 4px 10px rgba(255, 225, 180, 0.22),
+    inset 0 -8px 18px rgba(0, 0, 0, 0.85),
+    0 0 0 3px #120a06,
+    0 0 0 5px rgba(212, 175, 55, 0.28);
+}
+
+/* Inner Wood & Gold Racetrack Rim */
+.poker-table-rim {
+  box-shadow:
+    inset 0 12px 28px rgba(0, 0, 0, 0.85),
+    0 0 0 3px #5c3a24,
+    0 0 0 5px rgba(212, 175, 55, 0.35);
+}

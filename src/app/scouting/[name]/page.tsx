@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import HijackWrapper from "@/components/HijackWrapper";
 import AttackButton from "@/components/AttackButton";
+import PlayerAcademyCoachingProfile from "@/components/scouting/PlayerAcademyCoachingProfile";
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -130,6 +131,9 @@ export default async function PlayerProfile({ params }: Props) {
                     </div>
                 </div>
                 {/* End 2-col Grid */}
+
+                {/* AI Poker Academy & Personalized Game Improvement Plan */}
+                <PlayerAcademyCoachingProfile playerName={player.name} />
 
                 {/* Analyst Report */}
                 <div className="glass-panel p-8 rounded-2xl relative overflow-hidden">

@@ -67,7 +67,19 @@ export interface PlayerStats {
     hijackerQueue?: string[];           // List of attackers
 }
 
-export async function getLeaderboardData(): Promise<PlayerStats[]> {
+let leaderboardCache: { data: PlayerStats[]; expiresAt: number } | null = null;
+let globalStatsCache: {
+    data: { totalPot: number; totalSidePot: number; nextGameDate: string; futureDates: { raw: string; iso: string }[] };
+    expiresAt: number;
+} | null = null;
+
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds cache for instant page navigation
+
+export async function getLeaderboardData(forceRefresh = false): Promise<PlayerStats[]> {
+    if (!forceRefresh && leaderboardCache && Date.now() < leaderboardCache.expiresAt) {
+        return leaderboardCache.data;
+    }
+
     const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
     if (!spreadsheetId) {
         console.warn("No GOOGLE_SHEET_ID provided in .env.local");
@@ -349,12 +361,13 @@ export async function getLeaderboardData(): Promise<PlayerStats[]> {
         players.sort((a, b) => b.points - a.points);
         players.forEach((p, index) => p.rank = index + 1);
 
+        leaderboardCache = { data: players, expiresAt: Date.now() + CACHE_TTL_MS };
         return players;
 
     } catch (error) {
         console.error("Critical: Error fetching Leaderboard Data from Google Sheets!");
         console.error("Full Error Details:", JSON.stringify(error, null, 2));
-        return []; // Return empty array to prevent 500 errors on the frontend
+        return leaderboardCache?.data || []; // Return cached or empty array to prevent 500 errors
     }
 }
 
@@ -403,7 +416,11 @@ export function parseSheetDate(raw: string): Date | null {
     return isNaN(d.getTime()) ? null : d;
 }
 
-export async function getGlobalStats() {
+export async function getGlobalStats(forceRefresh = false) {
+    if (!forceRefresh && globalStatsCache && Date.now() < globalStatsCache.expiresAt) {
+        return globalStatsCache.data;
+    }
+
     let totalPot = 0;
     let nextGameDate = 'TBD';
     let futureDates: { raw: string; iso: string }[] = [];
@@ -466,14 +483,17 @@ export async function getGlobalStats() {
     } catch (e) {
         console.error('Critical: Error fetching Global Stats from Google Sheets!');
         console.error('Full Error Details:', JSON.stringify(e, null, 2));
+        if (globalStatsCache) return globalStatsCache.data;
     }
 
-    return {
+    const result = {
         totalPot,
         totalSidePot: 0,
         nextGameDate,
         futureDates
     };
+    globalStatsCache = { data: result, expiresAt: Date.now() + CACHE_TTL_MS };
+    return result;
 }
 
 export interface PlayerGameResult {
@@ -491,7 +511,14 @@ export interface GameHistorySession {
     results: PlayerGameResult[];
 }
 
-export async function getGameHistory(): Promise<GameHistorySession[]> {
+let gameHistoryCache: { data: GameHistorySession[]; expiresAt: number } | null = null;
+let gazetteCache: { data: GazetteReport[]; expiresAt: number } | null = null;
+
+export async function getGameHistory(forceRefresh = false): Promise<GameHistorySession[]> {
+    if (!forceRefresh && gameHistoryCache && Date.now() < gameHistoryCache.expiresAt) {
+        return gameHistoryCache.data;
+    }
+
     const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
     if (!spreadsheetId) {
         return [];
@@ -592,11 +619,67 @@ export async function getGameHistory(): Promise<GameHistorySession[]> {
             }
         } // End of colStart loop
 
+        gameHistoryCache = { data: sessions, expiresAt: Date.now() + CACHE_TTL_MS };
         return sessions;
 
     } catch (e) {
         console.error("Critical: Error fetching Game History from Google Sheets!");
         console.error(e);
-        return [];
+        return gameHistoryCache?.data || [];
     }
 }
+
+export interface GazetteReport {
+    id: number;
+    title: string;
+    episode: string;
+    date: string;
+    winner: string;
+    content: string;
+    imageUrl?: string | null;
+}
+
+export async function getGazetteReports(forceRefresh = false): Promise<GazetteReport[]> {
+    if (!forceRefresh && gazetteCache && Date.now() < gazetteCache.expiresAt) {
+        return gazetteCache.data;
+    }
+
+    try {
+        const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
+        if (!spreadsheetId) {
+            return [];
+        }
+
+        const sheets = await getSheetsClient();
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Gazette!A2:F',
+        });
+
+        const rows = response.data.values;
+        if (!rows || rows.length === 0) {
+            return [];
+        }
+
+        const reports: GazetteReport[] = rows
+            .map((row, index) => ({
+                id: index,
+                title: row[0] || '',
+                episode: row[1] || '',
+                date: row[2] || '',
+                winner: row[3] || '',
+                content: row[4] || '',
+                imageUrl: row[5] || null,
+            }))
+            .filter(r => (r.title && r.title.trim().length > 0) || (r.content && r.content.trim().length > 0))
+            .reverse();
+
+        gazetteCache = { data: reports, expiresAt: Date.now() + CACHE_TTL_MS };
+        return reports;
+    } catch (err) {
+        console.error('Failed to fetch gazette reports from Google Sheets:', err);
+        return gazetteCache?.data || [];
+    }
+}
+
+

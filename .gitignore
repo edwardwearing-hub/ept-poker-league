@@ -18,6 +18,7 @@
 /out/
 # google sheets auth
 google-credentials.json
+firebase-service-account.json
 
 # production
 /build

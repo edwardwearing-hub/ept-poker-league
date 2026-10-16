@@ -31,6 +31,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getAvatarFilename } from '@/lib/avatars';
+import PlayerGameMentions, { GazetteReport } from './PlayerGameMentions';
 
 interface Player {
     name: string;
@@ -68,12 +69,31 @@ interface Props {
     players: Player[];
     totalPot: number;
     history?: any[];
+    reports?: GazetteReport[];
 }
 
-export default function FinalsHubClient({ players, totalPot, history = [] }: Props) {
+export default function FinalsHubClient({ players, totalPot, history = [], reports = [] }: Props) {
     const router = useRouter();
+    const [allReports, setAllReports] = useState<GazetteReport[]>(reports);
+
+    useEffect(() => {
+        if (!reports || reports.length === 0) {
+            fetch('/api/reports')
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        setAllReports(data);
+                    }
+                })
+                .catch(console.error);
+        } else {
+            setAllReports(reports);
+        }
+    }, [reports]);
+
     const [isSyncing, setIsSyncing] = useState(false);
     const [lastSyncTime, setLastSyncTime] = useState('Just now');
+
     const [activeTab, setActiveTab] = useState<'dossiers' | 'scenarios' | 'awards' | 'odds' | 'payouts'>('dossiers');
     const [filterCategory, setFilterCategory] = useState<'all' | 'contenders' | 'afraid'>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -717,7 +737,14 @@ export default function FinalsHubClient({ players, totalPot, history = [] }: Pro
                                             {dossier.verdict}
                                         </p>
                                     </div>
+
+                                    {/* Game Reports & Field Intel Mentions */}
+                                    <PlayerGameMentions 
+                                        playerName={player.name} 
+                                        reports={allReports} 
+                                    />
                                 </div>
+
                             );
                         })}
                     </div>

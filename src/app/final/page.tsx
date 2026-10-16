@@ -1,4 +1,4 @@
-import { getLeaderboardData, getGlobalStats, getGameHistory } from "@/lib/data";
+import { getLeaderboardData, getGlobalStats, getGameHistory, getGazetteReports } from "@/lib/data";
 import FinalsHubClient from "@/components/final/FinalsHubClient";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -7,10 +7,11 @@ export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
 export default async function FinalPage() {
-    const [players, stats, history] = await Promise.all([
+    const [players, stats, history, reports] = await Promise.all([
         getLeaderboardData(),
         getGlobalStats(),
-        getGameHistory()
+        getGameHistory(),
+        getGazetteReports()
     ]);
 
     return (
@@ -26,6 +27,7 @@ export default async function FinalPage() {
                 players={players} 
                 totalPot={stats.totalPot || 0} 
                 history={history}
+                reports={reports}
             />
         </div>
     );
