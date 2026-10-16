@@ -513,7 +513,7 @@ export const VEGAS_GAMES_CATALOG: VegasGameTutorial[] = [
     appeal: 'The authentic British pub fruity experience! 3 mechanical stepper reels, single winline, 1-8 number trail with trail held, Hold After Nudge (HAN), and the top glass feature board with Skill Cash Stopper and Reel Roulette.',
     minBet: 0.25,
     maxBet: 2,
-    image: '/vegas/tables/pub-fruity.jpg',
+    image: '/vegas/tables/pub-fruity-v2.jpg?v=20261016_2',
     overview:
       'Unlike Vegas slots where bonuses are passive free spins, a classic UK pub fruit machine (Category C / MPU4) uses the bottom reels as an entry mechanism into the interactive top glass. Features a true compensated ledger engine, stepper recoil bounce, and 3 entry pathways.',
     howToPlay: [
