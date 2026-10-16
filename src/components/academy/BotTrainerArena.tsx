@@ -23,6 +23,7 @@ import {
   Crown,
   Skull,
   RotateCcw,
+  Palette,
 } from 'lucide-react';
 import {
   Card,
@@ -221,6 +222,17 @@ export default function BotTrainerArena({
   const [autoAdvanceCountdown, setAutoAdvanceCountdown] = useState<number | null>(null);
   const [isAutoPlayPaused, setIsAutoPlayPaused] = useState(false);
   const dealNewHandRef = useRef<() => void>(() => {});
+
+  // 4-Color Deck Preference for Accessibility (♠ Black, ♥ Red, ♦ Blue, ♣ Green)
+  const [fourColorDeck, setFourColorDeck] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ept_four_color_deck');
+      if (saved === 'true') {
+        setFourColorDeck(true);
+      }
+    }
+  }, []);
 
   const totalCareerChips = useMemo(
     () => computeTotalAcademyChips(trackerStats),
@@ -1874,14 +1886,21 @@ export default function BotTrainerArena({
       );
     }
 
-    const isRed = card.suit === '♥' || card.suit === '♦';
+    let suitTextColor = 'text-zinc-900';
+    if (fourColorDeck) {
+      if (card.suit === '♠') suitTextColor = 'text-zinc-900';
+      else if (card.suit === '♥') suitTextColor = 'text-red-600';
+      else if (card.suit === '♦') suitTextColor = 'text-blue-600';
+      else if (card.suit === '♣') suitTextColor = 'text-emerald-600';
+    } else {
+      suitTextColor = (card.suit === '♥' || card.suit === '♦') ? 'text-red-600' : 'text-zinc-900';
+    }
+
     return (
       <div
         key={`${handNumber}-${street}-${card.rank}${card.suit}-${delayMs}-face`}
         style={{ animationDelay: `${delayMs}ms` }}
-        className={`${dims} ${animClass} rounded-lg bg-white border-2 border-zinc-200 shadow-[0_8px_18px_rgba(0,0,0,0.65)] flex flex-col justify-between p-1.5 font-black select-none ${
-          isRed ? 'text-red-600' : 'text-zinc-900'
-        }`}
+        className={`${dims} ${animClass} rounded-lg bg-white border-2 border-zinc-200 shadow-[0_8px_18px_rgba(0,0,0,0.65)] flex flex-col justify-between p-1.5 font-black select-none ${suitTextColor}`}
       >
         <div className="leading-none text-left">
           <div className=" tracking-tighter">{card.rank}</div>
@@ -2286,6 +2305,26 @@ export default function BotTrainerArena({
             >
               <Sliders size={13} />
               <span>Table Settings</span>
+            </button>
+
+            {/* 4-Color Deck Accessibility Toggle */}
+            <button
+              onClick={() => {
+                const nextVal = !fourColorDeck;
+                setFourColorDeck(nextVal);
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('ept_four_color_deck', String(nextVal));
+                }
+              }}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition ${
+                fourColorDeck
+                  ? 'bg-blue-500/20 border-blue-500/60 text-blue-300 shadow-[0_0_10px_rgba(59,130,246,0.25)]'
+                  : 'bg-zinc-900 border-white/10 text-zinc-400 hover:text-white'
+              }`}
+              title="Toggle 4-Color Deck (♠ Black, ♥ Red, ♦ Blue, ♣ Green) for high-contrast accessibility"
+            >
+              <Palette size={13} />
+              <span>4-Color Deck: {fourColorDeck ? 'ON' : 'OFF'}</span>
             </button>
 
             {/* Eliminator Tournament Alive Badge */}
@@ -3705,15 +3744,21 @@ export default function BotTrainerArena({
                             {entry.cards && entry.cards.length > 0 && (
                               <div className="flex items-center gap-1">
                                 {entry.cards.map((c, i) => {
-                                  const isRed = c.suit === '♥' || c.suit === '♦';
+                                  let pillClass = 'bg-zinc-900 text-zinc-200 border-zinc-600';
+                                  if (fourColorDeck) {
+                                    if (c.suit === '♠') pillClass = 'bg-zinc-900 text-zinc-200 border-zinc-600';
+                                    else if (c.suit === '♥') pillClass = 'bg-red-950/60 text-red-300 border-red-500/40';
+                                    else if (c.suit === '♦') pillClass = 'bg-blue-950/60 text-blue-300 border-blue-500/40';
+                                    else if (c.suit === '♣') pillClass = 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40';
+                                  } else {
+                                    pillClass = (c.suit === '♥' || c.suit === '♦')
+                                      ? 'bg-red-950/60 text-red-300 border-red-500/40'
+                                      : 'bg-zinc-900 text-zinc-200 border-zinc-600';
+                                  }
                                   return (
                                     <span
                                       key={i}
-                                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black border ${
-                                        isRed
-                                          ? 'bg-red-950/60 text-red-300 border-red-500/40'
-                                          : 'bg-zinc-900 text-zinc-200 border-zinc-600'
-                                      }`}
+                                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black border ${pillClass}`}
                                     >
                                       {c.rank}{c.suit}
                                     </span>
@@ -3746,15 +3791,21 @@ export default function BotTrainerArena({
                               <div className="flex items-center gap-1 mt-1">
                                 <span className="text-[10px] text-zinc-400">Winning Hand:</span>
                                 {entry.cards.map((c, i) => {
-                                  const isRed = c.suit === '♥' || c.suit === '♦';
+                                  let pillClass = 'bg-zinc-900 text-zinc-200 border-zinc-600';
+                                  if (fourColorDeck) {
+                                    if (c.suit === '♠') pillClass = 'bg-zinc-900 text-zinc-200 border-zinc-600';
+                                    else if (c.suit === '♥') pillClass = 'bg-red-950/60 text-red-300 border-red-500/40';
+                                    else if (c.suit === '♦') pillClass = 'bg-blue-950/60 text-blue-300 border-blue-500/40';
+                                    else if (c.suit === '♣') pillClass = 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40';
+                                  } else {
+                                    pillClass = (c.suit === '♥' || c.suit === '♦')
+                                      ? 'bg-red-950/60 text-red-300 border-red-500/40'
+                                      : 'bg-zinc-900 text-zinc-200 border-zinc-600';
+                                  }
                                   return (
                                     <span
                                       key={i}
-                                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black border ${
-                                        isRed
-                                          ? 'bg-red-950/60 text-red-300 border-red-500/40'
-                                          : 'bg-zinc-900 text-zinc-200 border-zinc-600'
-                                      }`}
+                                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black border ${pillClass}`}
                                     >
                                       {c.rank}{c.suit}
                                     </span>

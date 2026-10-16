@@ -24,7 +24,7 @@ export async function GET(request: Request) {
             isHijacked: player.isHijacked,
             hackTokens: player.hackTokens,
             hijackerQueue: player.hijackerQueue,
-            secretPin: player.secretPin || '0000'
+            hasDefaultPin: !player.secretPin || player.secretPin === '0000'
         });
     } catch (error) {
         console.error('Error fetching player status:', error);

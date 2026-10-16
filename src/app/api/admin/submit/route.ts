@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { verifyAdminAuth } from '@/lib/adminAuth';
 import fs from 'fs';
 import path from 'path';
 
 export async function POST(request: Request) {
+    if (!verifyAdminAuth(request)) {
+        return NextResponse.json({ error: 'Unauthorized: Invalid Admin Password' }, { status: 401 });
+    }
+
     try {
         const data = await request.json();
         const { date, potTotal, sidePot, players } = data;

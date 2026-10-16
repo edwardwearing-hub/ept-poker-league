@@ -519,14 +519,26 @@ export default function CurriculumAndQuiz({ onLaunchPresetDrill }: Props) {
     <div className="space-y-10 animate-in fade-in duration-300">
       {/* 1. Interactive Masterclass Modules Grid */}
       <div>
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-5 p-5 bg-black/60 rounded-2xl border border-white/10">
           <div>
             <h2 className="text-2xl font-black text-white uppercase tracking-wider flex items-center gap-2">
               <BookOpen className="text-gold" size={22} /> E.P.T. Tactical Curriculum & Format Guides
             </h2>
-            <p className="text-sm text-zinc-400">
-              Study the math behind every game format, view visual table examples, or watch interactive hand replays.
+            <p className="text-sm text-zinc-400 mt-1">
+              Study the math behind every game format, view visual table examples, or watch interactive hand replays with the official E.P.T. 2026 signature deck.
             </p>
+          </div>
+          <div className="flex items-center gap-3 bg-zinc-950 p-2 rounded-xl border border-gold/30 shrink-0">
+            <img 
+              src="/assets/3d/cards/signature-card.jpg" 
+              alt="E.P.T. Official Signature Card Deck" 
+              className="w-14 h-20 object-cover rounded-lg border border-gold/50 shadow-md" 
+            />
+            <div className="text-left text-xs pr-2">
+              <div className="font-mono text-gold font-bold uppercase text-[10px]">Official Deck</div>
+              <div className="font-bold text-white">24k Gold Foil</div>
+              <div className="text-[10px] text-zinc-400">Linen Casino Finish</div>
+            </div>
           </div>
         </div>
 

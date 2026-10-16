@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getSheetsClient } from '@/lib/data';
+import { verifyAdminAuth } from '@/lib/adminAuth';
 
-export async function POST() {
+export async function POST(request: Request) {
+    if (!verifyAdminAuth(request)) {
+        return NextResponse.json({ error: 'Unauthorized: Invalid Admin Password' }, { status: 401 });
+    }
+
     try {
         const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
 

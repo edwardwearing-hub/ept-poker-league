@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getLeaderboardData } from '@/lib/data';
 import { getPlayerDoc, savePlayerDoc, PokerPlayerRecord } from '@/lib/firebase-admin';
 import { getInitialTrackerStats } from '@/lib/poker-trainer/tracker';
+import { constantTimeCompare, checkPinRateLimit, recordFailedPinAttempt, resetPinAttempts } from '@/lib/security';
 
 export const revalidate = 0;
 
@@ -39,6 +40,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'A 4-digit PIN is required' }, { status: 400 });
     }
 
+    // Rate-limiting check
+    const rateLimit = checkPinRateLimit(cleanName.toLowerCase());
+    if (!rateLimit.allowed) {
+      return NextResponse.json({
+        error: `Account temporarily locked due to failed PIN attempts. Try again in ${rateLimit.retryAfterSeconds} seconds.`
+      }, { status: 429 });
+    }
+
     // 2. Check if player is one of the 11 League Roster members from Google Sheets
     const sheetPlayers = await getLeaderboardData();
     const matchedSheetPlayer = sheetPlayers.find(
@@ -47,7 +56,8 @@ export async function POST(request: Request) {
 
     if (matchedSheetPlayer) {
       const expectedPin = matchedSheetPlayer.secretPin || '0000';
-      if (expectedPin === pinStr) {
+      if (constantTimeCompare(expectedPin, pinStr)) {
+        resetPinAttempts(cleanName.toLowerCase());
         // Sync or get existing Firestore doc for this league player
         let firestoreDoc = await getPlayerDoc(matchedSheetPlayer.name);
         if (!firestoreDoc) {
@@ -83,7 +93,11 @@ export async function POST(request: Request) {
           message: `Welcome back, ${matchedSheetPlayer.name}!`,
         });
       } else {
-        return NextResponse.json({ error: 'ACCESS DENIED: Incorrect 4-digit PIN.' }, { status: 401 });
+        const attempt = recordFailedPinAttempt(cleanName.toLowerCase());
+        const msg = attempt.locked
+          ? 'ACCESS DENIED: Account locked for 10 minutes due to 5 failed attempts.'
+          : `ACCESS DENIED: Incorrect 4-digit PIN (${attempt.remainingAttempts} attempts remaining).`;
+        return NextResponse.json({ error: msg }, { status: 401 });
       }
     }
 
@@ -92,7 +106,8 @@ export async function POST(request: Request) {
 
     if (existingDoc) {
       // Existing custom player -> verify PIN
-      if (existingDoc.pin === pinStr) {
+      if (constantTimeCompare(existingDoc.pin, pinStr)) {
+        resetPinAttempts(cleanName.toLowerCase());
         const totalChips =
           10000 +
           (existingDoc.stats.netChipsWon || 0) +
@@ -116,8 +131,12 @@ export async function POST(request: Request) {
           message: `Welcome back, ${existingDoc.name}!`,
         });
       } else {
+        const attempt = recordFailedPinAttempt(cleanName.toLowerCase());
+        const msg = attempt.locked
+          ? 'ACCESS DENIED: Account locked for 10 minutes due to 5 failed attempts.'
+          : `ACCESS DENIED: Incorrect 4-digit PIN for player "${existingDoc.name}" (${attempt.remainingAttempts} attempts remaining).`;
         return NextResponse.json(
-          { error: `ACCESS DENIED: Incorrect 4-digit PIN for player "${existingDoc.name}".` },
+          { error: msg },
           { status: 401 }
         );
       }

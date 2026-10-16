@@ -1,8 +1,7 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import React from 'react';
-import AcademyHub from '@/components/academy/AcademyHub';
+export const dynamic = 'force-dynamic';
 
-export default function GamePage() {
-  return <AcademyHub defaultTab="arena" />;
+export default function GameRedirectPage() {
+  redirect('/academy?tab=arena');
 }

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, X, ChevronRight, AlertTriangle, Eye, Sparkles, UserPlus, Users, Check, Shield } from 'lucide-react';
+import { Lock, X, ChevronRight, AlertTriangle, Eye, Sparkles, UserPlus, Users, Check, Shield, Music, Volume2 } from 'lucide-react';
+import { WALK_UP_THEMES, WalkUpTheme, playWalkUpAudio, savePlayerWalkUpTheme, getPlayerWalkUpTheme } from '@/lib/walkup-audio';
 
 interface Player {
     name: string;
@@ -38,6 +39,7 @@ export default function LockerPINModal({ onSuccess, onClose, initialTab = 'roste
     const [newPlayerName, setNewPlayerName] = useState('');
     const [newPlayerPin, setNewPlayerPin] = useState('');
     const [selectedAvatar, setSelectedAvatar] = useState('/avatars/avatar_shark.png');
+    const [selectedTheme, setSelectedTheme] = useState<WalkUpTheme>('gladiator');
 
     useEffect(() => {
         fetch('/api/players')
@@ -76,6 +78,7 @@ export default function LockerPINModal({ onSuccess, onClose, initialTab = 'roste
             const data = await res.json();
 
             if (res.ok && data.success) {
+                savePlayerWalkUpTheme(selectedPlayer.name, selectedTheme);
                 localStorage.setItem('ept_active_player_v2', selectedPlayer.name);
                 window.dispatchEvent(new Event('storage'));
                 onSuccess(selectedPlayer.name);
@@ -122,6 +125,7 @@ export default function LockerPINModal({ onSuccess, onClose, initialTab = 'roste
             const data = await res.json();
 
             if (res.ok && data.success) {
+                savePlayerWalkUpTheme(cleanName, selectedTheme);
                 localStorage.setItem('ept_active_player_v2', cleanName);
                 window.dispatchEvent(new Event('storage'));
                 onSuccess(cleanName);
@@ -262,6 +266,7 @@ export default function LockerPINModal({ onSuccess, onClose, initialTab = 'roste
                                                 key={player.name}
                                                 onClick={() => {
                                                     setSelectedPlayer(player);
+                                                    setSelectedTheme(getPlayerWalkUpTheme(player.name));
                                                     setStep('pin');
                                                     setPin('');
                                                     setErrorMsg(null);
@@ -323,6 +328,36 @@ export default function LockerPINModal({ onSuccess, onClose, initialTab = 'roste
                                             <div className="text-[10px] text-zinc-400 font-mono">
                                                 Enter your 4-digit PIN to unlock bankroll
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Final Table Walk-Up Anthem Quick Selector */}
+                                    <div className="p-2 bg-black/70 border border-white/10 flex items-center justify-between text-xs">
+                                        <div className="flex items-center gap-1.5 text-zinc-300">
+                                            <Music size={12} className="text-gold" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">Anthem:</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            {WALK_UP_THEMES.map(th => (
+                                                <button
+                                                    key={th.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedTheme(th.id);
+                                                        if (selectedPlayer) savePlayerWalkUpTheme(selectedPlayer.name, th.id);
+                                                        playWalkUpAudio(th.id);
+                                                    }}
+                                                    className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase transition flex items-center gap-1 ${
+                                                        selectedTheme === th.id
+                                                            ? 'bg-gold text-black shadow-sm'
+                                                            : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                                                    }`}
+                                                    title={`Entrance Theme: ${th.name} (${th.desc})`}
+                                                >
+                                                    <span>{th.icon}</span>
+                                                    <span>{th.name}</span>
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
 
@@ -440,6 +475,45 @@ export default function LockerPINModal({ onSuccess, onClose, initialTab = 'roste
                                 </div>
                             </div>
 
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                                        Choose Final Table Walk-Up Anthem
+                                    </label>
+                                    <span className="text-[9px] text-gold font-mono flex items-center gap-1">
+                                        <Volume2 size={10} /> Live Web Audio Hook
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {WALK_UP_THEMES.map((t) => (
+                                        <button
+                                            key={t.id}
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedTheme(t.id);
+                                                playWalkUpAudio(t.id);
+                                            }}
+                                            className={`p-2 border text-left flex items-start gap-2 transition ${
+                                                selectedTheme === t.id
+                                                    ? 'bg-gold/15 border-gold shadow-[0_0_10px_rgba(212,175,55,0.3)]'
+                                                    : 'bg-black border-white/10 hover:border-white/30'
+                                            }`}
+                                        >
+                                            <span className="text-base">{t.icon}</span>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="text-xs font-bold text-white flex items-center justify-between">
+                                                    <span>{t.name}</span>
+                                                    <Volume2 size={11} className="text-gold opacity-75" />
+                                                </div>
+                                                <div className="text-[9px] text-zinc-400 leading-tight truncate">
+                                                    {t.desc}
+                                                </div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <button
                                 type="submit"
                                 disabled={loading}
@@ -491,7 +565,17 @@ export default function LockerPINModal({ onSuccess, onClose, initialTab = 'roste
                         <Shield size={11} className="text-gold" />
                         <span>Firebase Cloud Sync Active</span>
                     </span>
-                    <span>Project: jabb-new</span>
+                    <div className="flex items-center gap-3">
+                        <a 
+                            href="/admin-update" 
+                            onClick={onClose}
+                            className="text-zinc-600 hover:text-gold transition uppercase font-bold tracking-wider"
+                        >
+                            Admin Console
+                        </a>
+                        <span>•</span>
+                        <span>Project: jabb-new</span>
+                    </div>
                 </div>
             </motion.div>
 

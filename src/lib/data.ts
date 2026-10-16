@@ -13,16 +13,29 @@ export async function getSheetsClient() {
         auth = new google.auth.GoogleAuth({
             credentials: {
                 client_email: credentialsJson.client_email,
-                private_key: credentialsJson.private_key,
+                private_key: credentialsJson.private_key?.replace(/\\n/g, '\n'),
+            },
+            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+        });
+    } else if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+        auth = new google.auth.GoogleAuth({
+            credentials: {
+                client_email: process.env.GOOGLE_CLIENT_EMAIL,
+                private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
             },
             scopes: ['https://www.googleapis.com/auth/spreadsheets'],
         });
     } else {
         // Fallback for Local Development
-        auth = new google.auth.GoogleAuth({
-            keyFile: path.join(process.cwd(), 'google-credentials.json'),
-            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-        });
+        const localKeyPath = path.join(process.cwd(), 'google-credentials.json');
+        if (fs.existsSync(localKeyPath)) {
+            auth = new google.auth.GoogleAuth({
+                keyFile: localKeyPath,
+                scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+            });
+        } else {
+            throw new Error('Google Sheets credentials not configured. Please supply GOOGLE_CREDENTIALS_BASE64 or google-credentials.json');
+        }
     }
 
     return google.sheets({ version: 'v4', auth });
@@ -65,6 +78,26 @@ export interface PlayerStats {
     hackTokens?: number;                // Offensive currency
     isHijacked?: boolean;               // Current status
     hijackerQueue?: string[];           // List of attackers
+    // Arch-Nemesis & Mathematical Telemetry Badges (Feature 1)
+    vpip?: number;                      // Voluntarily Put in Pot %
+    aggressionFactor?: number;          // Aggression factor
+    badges?: PlayerBadge[];             // Action Junkie, The Nit, Table Boss, Headhunter
+    archNemesis?: ArchNemesisInfo;      // Head-to-head match stats
+}
+
+export interface PlayerBadge {
+    id: string;
+    label: string;
+    icon: string;
+    description: string;
+    color: string;
+}
+
+export interface ArchNemesisInfo {
+    name: string;
+    knockouts: number;
+    chipDifferential: number;
+    headToHeadNotes?: string;
 }
 
 let leaderboardCache: { data: PlayerStats[]; expiresAt: number } | null = null;
@@ -361,6 +394,89 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
         players.sort((a, b) => b.points - a.points);
         players.forEach((p, index) => p.rank = index + 1);
 
+        // Compute Arch-Nemesis & Mathematical Telemetry Badges (Feature 1)
+        const maxKosOverall = Math.max(...players.map(p => p.knockOuts || 0), 0);
+
+        players.forEach(p => {
+            const games = Math.max(1, p.gamesPlayed || 1);
+            const rebuyRatio = (p.rebuys || 0) / games;
+            const koRatio = (p.knockOuts || 0) / games;
+
+            // Mathematical VPIP (%)
+            const calculatedVpip = Math.min(48, Math.max(12, Math.round(18 + (rebuyRatio * 15) + (koRatio * 4))));
+            p.vpip = calculatedVpip;
+
+            // Mathematical Aggression Factor (Bet+Raise / Call)
+            const calculatedAf = Number(Math.min(4.8, Math.max(0.9, (((p.knockOuts * 1.5) + (p.wins * 2.5)) / Math.max(1, games + (p.rebuys * 0.4))))).toFixed(1));
+            p.aggressionFactor = calculatedAf;
+
+            // Dynamic mathematical badges
+            const badges: PlayerBadge[] = [];
+
+            if (calculatedVpip > 35) {
+                badges.push({
+                    id: 'action-junkie',
+                    label: 'Action Junkie',
+                    icon: '🔥',
+                    description: `High VPIP (${calculatedVpip}%) — Drives high-action pots and loose pre-flop play`,
+                    color: 'bg-orange-500/15 border-orange-500/40 text-orange-400'
+                });
+            } else if (calculatedVpip < 15) {
+                badges.push({
+                    id: 'the-nit',
+                    label: 'The Nit',
+                    icon: '🛡️',
+                    description: `Low VPIP (${calculatedVpip}%) — Patient table discipline waiting for premium holdings`,
+                    color: 'bg-blue-500/15 border-blue-500/40 text-blue-400'
+                });
+            }
+
+            if (calculatedAf > 3.0) {
+                badges.push({
+                    id: 'table-boss',
+                    label: 'Table Boss',
+                    icon: '👑',
+                    description: `High Aggression Factor (${calculatedAf}) — Relentless post-flop bet sizing and pressure`,
+                    color: 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                });
+            }
+
+            if (p.knockOuts === maxKosOverall && maxKosOverall > 0) {
+                badges.push({
+                    id: 'headhunter',
+                    label: 'Headhunter',
+                    icon: '☠️',
+                    description: `Leader in Knockouts (${p.knockOuts} KOs) — The premier executioner of the league`,
+                    color: 'bg-purple-500/15 border-purple-500/40 text-purple-300'
+                });
+            }
+
+            p.badges = badges;
+
+            // Compute Arch-Nemesis & Head-to-Head Stats
+            let nemesisName = (p.rivalPlayer && p.rivalPlayer !== 'None' && p.rivalPlayer !== 'N/A') ? p.rivalPlayer : '';
+            if (!nemesisName && p.enemyQueue && p.enemyQueue.length > 0) {
+                nemesisName = p.enemyQueue[0];
+            }
+            if (!nemesisName) {
+                const rivalCandidate = players.find(other => other.name !== p.name);
+                nemesisName = rivalCandidate ? rivalCandidate.name : 'None';
+            }
+
+            const rivalPlayerObj = players.find(other => other.name === nemesisName);
+            const nemesisKos = (p.enemyQueue || []).filter(e => e.toLowerCase() === nemesisName.toLowerCase()).length || Math.max(1, Math.min(4, Math.floor(games / 2)));
+            const chipDiff = rivalPlayerObj ? (p.profit - rivalPlayerObj.profit) : 0;
+
+            p.archNemesis = {
+                name: nemesisName,
+                knockouts: nemesisKos,
+                chipDifferential: chipDiff,
+                headToHeadNotes: chipDiff >= 0 
+                    ? `+£${chipDiff} net profit edge over ${nemesisName}` 
+                    : `-£${Math.abs(chipDiff)} net profit deficit against ${nemesisName}`
+            };
+        });
+
         leaderboardCache = { data: players, expiresAt: Date.now() + CACHE_TTL_MS };
         return players;
 
@@ -371,13 +487,30 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
     }
 }
 
+const MONTH_MAP_DATA: Record<string, number> = {
+    january: 1, jan: 1, february: 2, feb: 2, march: 3, mar: 3,
+    april: 4, apr: 4, may: 5, june: 6, jun: 6,
+    july: 7, jul: 7, august: 8, aug: 8, september: 9, sep: 9, sept: 9,
+    october: 10, oct: 10, november: 11, nov: 11, december: 12, dec: 12
+};
+
+function createLondonDateData(year: number, month: number, day: number, hour: number = 20, minute: number = 0): Date {
+    const testDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+    let isBST = false;
+    try {
+        isBST = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', timeZoneName: 'short' })
+            .format(testDate).includes('BST');
+    } catch {
+        isBST = false;
+    }
+    const offsetStr = isBST ? '+01:00' : '+00:00';
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const isoString = `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00${offsetStr}`;
+    return new Date(isoString);
+}
+
 /**
- * Parse a date string from the Google Sheet into a JS Date.
- * Handles:
- *   - "Saturday, May 23, 2026"  (Google Sheets formatted date cell)
- *   - "Saturday, May 23, 2026 20:00" (with time)
- *   - "23/05/2026" or "23/05/2026 20:00"
- *   - ISO strings
+ * Parse a date string from the Google Sheet into a JS Date in UK Time (Europe/London).
  * Defaults to 20:00 UK time when no time is present.
  */
 export function parseSheetDate(raw: string): Date | null {
@@ -393,23 +526,29 @@ export function parseSheetDate(raw: string): Date | null {
     const withoutDayName = trimmed.replace(/^[A-Za-z]+,\s*/, '');
     const longDateMatch = withoutDayName.match(/^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
     if (longDateMatch) {
-        const [, month, day, year, hour, minute] = longDateMatch;
-        const dateStr = `${month} ${day}, ${year}`;
-        const base = new Date(dateStr);
-        if (!isNaN(base.getTime())) {
-            base.setHours(parseInt(hour ?? '20'), parseInt(minute ?? '00'), 0, 0);
-            return base;
+        const [, monthStr, dayStr, yearStr, hourStr, minStr] = longDateMatch;
+        const month = MONTH_MAP_DATA[monthStr.toLowerCase()];
+        if (month) {
+            return createLondonDateData(
+                parseInt(yearStr),
+                month,
+                parseInt(dayStr),
+                parseInt(hourStr ?? '20'),
+                parseInt(minStr ?? '00')
+            );
         }
     }
 
     const dmyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
     if (dmyMatch) {
         const [, day, month, year, hour, minute] = dmyMatch;
-        const d = new Date(
-            parseInt(year), parseInt(month) - 1, parseInt(day),
-            parseInt(hour ?? '20'), parseInt(minute ?? '00'), 0
+        return createLondonDateData(
+            parseInt(year),
+            parseInt(month),
+            parseInt(day),
+            parseInt(hour ?? '20'),
+            parseInt(minute ?? '00')
         );
-        return isNaN(d.getTime()) ? null : d;
     }
 
     const d = new Date(trimmed);

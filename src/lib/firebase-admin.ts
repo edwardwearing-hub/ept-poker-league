@@ -47,6 +47,9 @@ export function getFirestoreDb(): Firestore | null {
     }
 
     if (credentialsJson) {
+      if (credentialsJson.private_key && typeof credentialsJson.private_key === 'string') {
+        credentialsJson.private_key = credentialsJson.private_key.replace(/\\n/g, '\n');
+      }
       initializeApp({
         credential: cert(credentialsJson),
         projectId: credentialsJson.project_id || 'jabb-new',

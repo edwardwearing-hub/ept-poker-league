@@ -18,9 +18,12 @@ import {
     Sparkles,
     Target,
     Coins,
-    Users
+    Users,
+    Music,
+    X
 } from 'lucide-react';
 import Link from 'next/link';
+import { WalkUpTheme, playWalkUpAudio, savePlayerWalkUpTheme, getPlayerWalkUpTheme, DEFAULT_PLAYER_THEMES } from '@/lib/walkup-audio';
 import { getAvatarFilename } from '@/lib/avatars';
 
 interface Player {
@@ -56,6 +59,59 @@ export default function TVPresentationClient({ players, totalPot }: Props) {
     const [isRunning, setIsRunning] = useState(false);
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [eliminatedPlayers, setEliminatedPlayers] = useState<Record<string, boolean>>({});
+    const [ceremonyActive, setCeremonyActive] = useState(false);
+    const [ceremonyIndex, setCeremonyIndex] = useState(0);
+    const [playerThemes, setPlayerThemes] = useState<Record<string, WalkUpTheme>>(DEFAULT_PLAYER_THEMES);
+
+    useEffect(() => {
+        const loaded: Record<string, WalkUpTheme> = { ...DEFAULT_PLAYER_THEMES };
+        players.forEach(p => {
+            loaded[p.name] = getPlayerWalkUpTheme(p.name);
+        });
+        setPlayerThemes(loaded);
+    }, [players]);
+
+    const activeFinalists = players.filter(p => !eliminatedPlayers[p.name]);
+    const currentCeremonyPlayer = activeFinalists[ceremonyIndex] || activeFinalists[0];
+
+    // High-impact Web Audio Walk-Up Themes (Feature 3)
+    const playWalkUpTheme = (theme: WalkUpTheme) => {
+        if (!soundEnabled) return;
+        playWalkUpAudio(theme);
+    };
+
+    const handleSelectTheme = (playerName: string, theme: WalkUpTheme) => {
+        setPlayerThemes(prev => ({ ...prev, [playerName]: theme }));
+        savePlayerWalkUpTheme(playerName, theme);
+        playWalkUpTheme(theme);
+    };
+
+    const startCeremony = () => {
+        setCeremonyActive(true);
+        setCeremonyIndex(0);
+        if (activeFinalists[0]) {
+            const theme = playerThemes[activeFinalists[0].name] || 'gladiator';
+            playWalkUpTheme(theme);
+        }
+    };
+
+    const nextCeremonyPlayer = () => {
+        if (ceremonyIndex < activeFinalists.length - 1) {
+            const nextIdx = ceremonyIndex + 1;
+            setCeremonyIndex(nextIdx);
+            const theme = playerThemes[activeFinalists[nextIdx].name] || 'gladiator';
+            playWalkUpTheme(theme);
+        }
+    };
+
+    const prevCeremonyPlayer = () => {
+        if (ceremonyIndex > 0) {
+            const prevIdx = ceremonyIndex - 1;
+            setCeremonyIndex(prevIdx);
+            const theme = playerThemes[activeFinalists[prevIdx].name] || 'gladiator';
+            playWalkUpTheme(theme);
+        }
+    };
 
     const currentLevel = BLIND_LEVELS[currentLevelIdx] || BLIND_LEVELS[0];
     const nextLevel = BLIND_LEVELS[currentLevelIdx + 1];
@@ -178,6 +234,17 @@ export default function TVPresentationClient({ players, totalPot }: Props) {
                             <span className="text-base font-black text-gold font-mono">£{totalPot > 0 ? totalPot : '600+'}</span>
                         </div>
                     </div>
+
+                    {/* Final Table Ceremony Trigger (Feature 3) */}
+                    <button
+                        onClick={startCeremony}
+                        className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-gold via-yellow-400 to-amber-500 hover:brightness-110 text-black font-black uppercase text-xs tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                        title="Start Final Table Walk-Up Ceremony with Player Audio Hooks"
+                    >
+                        <Sparkles className="w-4 h-4 fill-black" />
+                        <span className="hidden md:inline">Final Table Ceremony</span>
+                        <span className="md:hidden">Ceremony</span>
+                    </button>
 
                     <button
                         onClick={() => setSoundEnabled(!soundEnabled)}
@@ -379,6 +446,154 @@ export default function TVPresentationClient({ players, totalPot }: Props) {
                 <span>E.P.T. POKER LEAGUE 2026 • OFFICIAL GRAND FINAL ENGINE</span>
                 <span className="text-gold font-bold">READY FOR TV MIRRORING &amp; PROJECTOR CASTING</span>
             </footer>
+
+            {/* TV Final Table Walk-Up Ceremony Overlay (Feature 3) */}
+            {ceremonyActive && currentCeremonyPlayer && (
+                <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex flex-col justify-between p-6 sm:p-12 animate-in fade-in zoom-in-95 duration-300">
+                    {/* Ceremony Top Header */}
+                    <div className="flex items-center justify-between border-b border-gold/30 pb-4">
+                        <div className="flex items-center gap-3">
+                            <span className="w-3 h-3 rounded-full bg-gold animate-ping" />
+                            <span className="text-xs sm:text-sm font-black uppercase tracking-[0.3em] text-gold">
+                                Live TV Walk-Up Presentation • Final Table
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="text-xs font-mono font-bold text-zinc-400">
+                                Finalist {ceremonyIndex + 1} of {activeFinalists.length}
+                            </span>
+                            <button
+                                onClick={() => setCeremonyActive(false)}
+                                className="p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/10 transition cursor-pointer"
+                                title="Exit Ceremony"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Finalist Centerpiece Banner (clamp() typography scaled for 1080p and 4K) */}
+                    <div className="flex flex-col items-center justify-center text-center my-auto space-y-6">
+                        {/* Avatar with Animated Gold / Laser Ring */}
+                        <div className="relative group">
+                            <div className="w-36 h-36 sm:w-52 sm:h-52 md:w-64 md:h-64 rounded-full border-4 border-gold shadow-[0_0_60px_rgba(212,175,55,0.6)] overflow-hidden bg-charcoal-dark flex items-center justify-center relative">
+                                <img
+                                    src={`/avatars/${getAvatarFilename(currentCeremonyPlayer.name)}`}
+                                    alt={currentCeremonyPlayer.name}
+                                    className="w-full h-full object-cover object-top scale-105"
+                                    onError={(e) => {
+                                        e.currentTarget.src = "/avatars/avatar_hoodie.png";
+                                    }}
+                                />
+                            </div>
+                            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gold text-black text-xs font-black uppercase tracking-widest shadow-xl">
+                                Rank #{currentCeremonyPlayer.rank}
+                            </div>
+                        </div>
+
+                        {/* Player Name */}
+                        <div>
+                            <div className="text-gold font-mono font-bold uppercase tracking-[0.4em] text-xs sm:text-base mb-2">
+                                Championship Finalist
+                            </div>
+                            <h2 
+                                className="font-black uppercase text-white tracking-tight drop-shadow-[0_0_35px_rgba(255,215,0,0.4)]"
+                                style={{ fontSize: 'clamp(2.2rem, 5.5vw, 6rem)', lineHeight: 1.1 }}
+                            >
+                                {currentCeremonyPlayer.name}
+                            </h2>
+                        </div>
+
+                        {/* Telemetry Stats Bar */}
+                        <div className="flex items-center gap-4 sm:gap-8 bg-zinc-950/80 px-6 py-3 rounded-2xl border border-gold/30 shadow-xl">
+                            <div className="text-center">
+                                <div className="text-[10px] uppercase font-mono text-zinc-500 font-bold">Championship Points</div>
+                                <div className="text-lg sm:text-2xl font-black text-white font-mono">{currentCeremonyPlayer.points} Pts</div>
+                            </div>
+                            <div className="w-[1px] h-8 bg-white/10" />
+                            <div className="text-center">
+                                <div className="text-[10px] uppercase font-mono text-zinc-500 font-bold">Knockouts</div>
+                                <div className="text-lg sm:text-2xl font-black text-ept-red font-mono">{currentCeremonyPlayer.knockOuts} KOs ☠️</div>
+                            </div>
+                            <div className="w-[1px] h-8 bg-white/10" />
+                            <div className="text-center">
+                                <div className="text-[10px] uppercase font-mono text-zinc-500 font-bold">Net Season Profit</div>
+                                <div className={`text-lg sm:text-2xl font-black font-mono ${currentCeremonyPlayer.profit >= 0 ? 'text-green-400' : 'text-ept-red'}`}>
+                                    {currentCeremonyPlayer.profit >= 0 ? `+£${currentCeremonyPlayer.profit}` : `-£${Math.abs(currentCeremonyPlayer.profit)}`}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Walk-Up Audio Hook Controls */}
+                        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                            <button
+                                onClick={() => {
+                                    const theme = playerThemes[currentCeremonyPlayer.name] || 'gladiator';
+                                    playWalkUpTheme(theme);
+                                }}
+                                className="px-5 py-2.5 rounded-full bg-gold/20 hover:bg-gold/30 border border-gold/50 text-gold text-xs sm:text-sm font-black uppercase tracking-wider flex items-center gap-2 transition active:scale-95 shadow-[0_0_15px_rgba(212,175,55,0.2)] cursor-pointer"
+                            >
+                                <Music size={14} />
+                                <span>Play Walk-Up Theme ({playerThemes[currentCeremonyPlayer.name] || 'Gladiator'})</span>
+                            </button>
+
+                            {/* Theme Selector */}
+                            <div className="flex items-center gap-1.5 bg-black/60 p-1 rounded-full border border-white/10 text-xs">
+                                {(['gladiator', 'cyberpunk', 'casino', 'rock'] as const).map(th => (
+                                    <button
+                                        key={th}
+                                        onClick={() => handleSelectTheme(currentCeremonyPlayer.name, th)}
+                                        className={`px-3 py-1 rounded-full uppercase font-mono font-bold text-[10px] transition cursor-pointer ${
+                                            (playerThemes[currentCeremonyPlayer.name] || 'gladiator') === th
+                                                ? 'bg-gold text-black shadow-md'
+                                                : 'text-zinc-400 hover:text-white'
+                                        }`}
+                                    >
+                                        {th}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Ceremony Navigation Controls */}
+                    <div className="flex items-center justify-between border-t border-white/10 pt-4">
+                        <button
+                            onClick={prevCeremonyPlayer}
+                            disabled={ceremonyIndex === 0}
+                            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-white/10 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer"
+                        >
+                            <ChevronLeft size={16} />
+                            <span>Previous Finalist</span>
+                        </button>
+
+                        <div className="flex items-center gap-1.5">
+                            {activeFinalists.map((_, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => {
+                                        setCeremonyIndex(i);
+                                        const theme = playerThemes[activeFinalists[i].name] || 'gladiator';
+                                        playWalkUpTheme(theme);
+                                    }}
+                                    className={`w-3 h-3 rounded-full transition-all cursor-pointer ${
+                                        ceremonyIndex === i ? 'bg-gold w-8' : 'bg-zinc-700 hover:bg-zinc-500'
+                                    }`}
+                                />
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={nextCeremonyPlayer}
+                            disabled={ceremonyIndex === activeFinalists.length - 1}
+                            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-gold to-yellow-500 hover:brightness-110 disabled:opacity-30 text-black font-black text-xs uppercase tracking-wider transition shadow-[0_0_20px_rgba(212,175,55,0.3)] cursor-pointer"
+                        >
+                            <span>Next Finalist</span>
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

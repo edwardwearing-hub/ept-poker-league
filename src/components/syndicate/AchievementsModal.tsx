@@ -29,7 +29,7 @@ interface Props {
   onStateUpdate: (newState: GameState) => void;
 }
 
-const ACH_ICONS: Record<string, React.ElementType> = {
+const ACH_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   Play,
   DollarSign,
   Coins,

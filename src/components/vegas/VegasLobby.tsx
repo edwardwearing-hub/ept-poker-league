@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Coins,
   Crown,
@@ -19,6 +20,7 @@ import {
   VolumeX,
   Maximize2,
   Minimize2,
+  Gamepad2,
 } from 'lucide-react';
 import {
   getActivePlayerName,
@@ -30,6 +32,7 @@ import { computeTotalAcademyChips } from '@/lib/poker-trainer/leaderboard';
 import { CareerTrackerStats } from '@/lib/poker-trainer/types';
 import { VEGAS_GAMES_CATALOG, VegasGameTutorial } from './vegas-rules-db';
 import VegasTutorialModal from './VegasTutorialModal';
+import VegasArcadeLounge from './VegasArcadeLounge';
 
 // Games
 import BlackjackGame from './games/BlackjackGame';
@@ -46,19 +49,30 @@ import PaiGowGame from './games/PaiGowGame';
 import VegasAiDealer from './VegasAiDealer';
 import VegasGameCompanion from './VegasGameCompanion';
 
-type CategoryFilter = 'all' | 'table' | 'machine' | 'poker' | 'sports';
+type CategoryFilter = 'all' | 'table' | 'machine' | 'poker' | 'sports' | 'arcade';
 
 export default function VegasLobby() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+
   const [activePlayerName, setActivePlayerName] = useState('Guest Trainee');
   const [trackerStats, setTrackerStats] = useState<CareerTrackerStats>(() =>
     loadTrackerStatsForPlayer('Guest Trainee')
   );
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [tutorialGame, setTutorialGame] = useState<VegasGameTutorial | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>(
+    tabParam === 'arcade' ? 'arcade' : 'all'
+  );
   const [showBailoutModal, setShowBailoutModal] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [theaterMode, setTheaterMode] = useState(true);
+
+  useEffect(() => {
+    if (tabParam === 'arcade') {
+      setCategoryFilter('arcade');
+    }
+  }, [tabParam]);
 
   // Sync player and bankroll on mount
   useEffect(() => {
@@ -144,13 +158,13 @@ export default function VegasLobby() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-12">
       {/* Las Vegas Neon Marquee Top Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-950/70 via-black to-purple-950/80 border-2 border-gold/50 p-6 sm:p-8 shadow-[0_0_40px_rgba(212,175,55,0.25)] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-red-950/70 via-black to-purple-950/80 border-2 border-gold/50 p-4 sm:p-6 md:p-8 shadow-[0_0_40px_rgba(212,175,55,0.25)] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
         <div className="space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/15 border border-gold/40 text-gold text-xs font-black uppercase tracking-widest">
-            <Sparkles size={14} />
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-gold/15 border border-gold/40 text-gold text-[10px] sm:text-xs font-black uppercase tracking-widest">
+            <Sparkles size={13} />
             <span>Fabulous Las Vegas Casino Floor</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight uppercase">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight uppercase">
             VEGAS GAMES! 🎰
           </h1>
           <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
@@ -159,7 +173,7 @@ export default function VegasLobby() {
         </div>
 
         {/* Player Bankroll Status HUD */}
-        <div className="bg-black/80 border-2 border-gold/40 rounded-2xl p-4 flex flex-col items-center sm:items-start gap-2 shrink-0 min-w-[260px] shadow-2xl">
+        <div className="bg-black/80 border-2 border-gold/40 rounded-2xl p-3 sm:p-4 flex flex-col items-center sm:items-start gap-2 w-full lg:w-auto shrink-0 min-w-0 sm:min-w-[260px] shadow-2xl">
           <div className="text-[10px] text-zinc-400 uppercase font-bold flex items-center justify-between w-full">
             <span>Player Bankroll:</span>
             <span className={`font-mono font-black ${isGuest ? 'text-amber-400' : 'text-gold'}`}>
@@ -373,9 +387,10 @@ export default function VegasLobby() {
         /* CASINO FLOOR LOBBY: Category Pills & 10 Game Cards */
         <div className="space-y-6">
           {/* Category Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 touch-momentum tabs-scrollbar">
             {[
               { id: 'all', label: 'All 10 Games' },
+              { id: 'arcade', label: 'Arcade Lounge 🕹️' },
               { id: 'table', label: 'Table Classics' },
               { id: 'machine', label: 'Slots & Video Machines' },
               { id: 'poker', label: 'Poker & Carnival' },
@@ -384,7 +399,7 @@ export default function VegasLobby() {
               <button
                 key={cat.id}
                 onClick={() => setCategoryFilter(cat.id as CategoryFilter)}
-                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition whitespace-nowrap ${
+                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition whitespace-nowrap cursor-pointer ${
                   categoryFilter === cat.id
                     ? 'bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]'
                     : 'bg-black/60 text-zinc-400 hover:text-white border border-white/10'
@@ -395,15 +410,19 @@ export default function VegasLobby() {
             ))}
           </div>
 
-          {/* AI Hostess / Dealer Welcome */}
-          <VegasAiDealer
-            compact
-            dialogue="Welcome to the VIP room, darling. I'm Sarah, your croupier tonight. Pick any table on the floor to play, or review the house rules before placing your wagers!"
-            gameTitle="VIP Casino Floor"
-            status="Hostess & Head Dealer"
-          />
+          {categoryFilter === 'arcade' ? (
+            <VegasArcadeLounge playerName={activePlayerName} />
+          ) : (
+            <>
+              {/* AI Hostess / Dealer Welcome */}
+              <VegasAiDealer
+                compact
+                dialogue="Welcome to the VIP room, darling. I'm Sarah, your croupier tonight. Pick any table on the floor to play, or review the house rules before placing your wagers!"
+                gameTitle="VIP Casino Floor"
+                status="Hostess & Head Dealer"
+              />
 
-          {/* 10 Realistic AI Casino Tables Grid */}
+              {/* 10 Realistic AI Casino Tables Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCatalog.map((game) => (
               <div
@@ -509,6 +528,8 @@ export default function VegasLobby() {
               </div>
             ))}
           </div>
+            </>
+          )}
         </div>
       )}
 

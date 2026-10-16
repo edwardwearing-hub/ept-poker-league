@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getLeaderboardData, getSheetsClient } from '@/lib/data';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { revalidatePath } from 'next/cache';
+import { verifyAdminAuth } from '@/lib/adminAuth';
 
 export async function GET() {
     try {
@@ -51,9 +52,19 @@ const CANDIDATE_MODELS = [
     'gemini-1.5-pro'
 ];
 
-async function generateGazetteStoryWithFallback(apiKey: string, rawContent: string, standingsContext: string): Promise<{ text?: string; error?: string }> {
+async function generateGazetteStoryWithFallback(
+    apiKey: string, 
+    rawContent: string, 
+    standingsContext: string,
+    pressQuotes?: string
+): Promise<{ text?: string; error?: string }> {
     const genAI = new GoogleGenerativeAI(apiKey);
     const systemInstruction = `You are the snarky, engaging sports journalist for "The E.P.T. Gazette" poker league. Write a fun, dramatic, 150-word newspaper-style report based EXACTLY on the raw bullet-point notes. Make it sound like a high-stakes casino recap. Reference the players' current leaderboard standings if relevant.${standingsContext}`;
+
+    let promptContent = `RAW GAME NOTES:\n${rawContent}`;
+    if (pressQuotes && pressQuotes.trim()) {
+        promptContent += `\n\nPOST-GAME PRESS CONFERENCE QUOTES:\n${pressQuotes.trim()}\nINSTRUCTION: Weave these authentic direct quotes into the article naturally as sports post-game soundbites (e.g. "Speaking in the post-game debrief, [Player] remarked...").`;
+    }
 
     let lastErrorMsg = '';
 
@@ -61,7 +72,7 @@ async function generateGazetteStoryWithFallback(apiKey: string, rawContent: stri
         for (let attempt = 1; attempt <= 2; attempt++) {
             try {
                 const model = genAI.getGenerativeModel({ model: modelName, systemInstruction });
-                const result = await model.generateContent(`RAW GAME NOTES:\n${rawContent}`);
+                const result = await model.generateContent(promptContent);
                 const text = result.response.text();
                 if (text && text.trim().length > 0) {
                     console.log(`[Gazette AI] Successfully generated story using model: ${modelName} (attempt ${attempt})`);
@@ -89,6 +100,10 @@ async function generateGazetteStoryWithFallback(apiKey: string, rawContent: stri
 }
 
 export async function POST(request: Request) {
+    if (!verifyAdminAuth(request)) {
+        return NextResponse.json({ error: 'Unauthorized: Invalid Admin Password' }, { status: 401 });
+    }
+
     try {
         const payload = await request.json();
 
@@ -110,7 +125,7 @@ export async function POST(request: Request) {
                 console.error("Failed to fetch standings for AI context", e);
             }
 
-            const aiResult = await generateGazetteStoryWithFallback(process.env.GEMINI_API_KEY, payload.content, standingsContext);
+            const aiResult = await generateGazetteStoryWithFallback(process.env.GEMINI_API_KEY, payload.content, standingsContext, payload.pressQuotes);
             if (aiResult.text) {
                 return NextResponse.json({ success: true, generatedText: aiResult.text });
             } else {
@@ -141,7 +156,7 @@ export async function POST(request: Request) {
                     console.error("Failed to fetch standings for AI context", e);
                 }
 
-                const aiResult = await generateGazetteStoryWithFallback(process.env.GEMINI_API_KEY, payload.content, standingsContext);
+                const aiResult = await generateGazetteStoryWithFallback(process.env.GEMINI_API_KEY, payload.content, standingsContext, payload.pressQuotes);
                 if (aiResult.text) {
                     payload.content = aiResult.text;
                 } else {

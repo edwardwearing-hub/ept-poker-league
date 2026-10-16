@@ -37,6 +37,14 @@ export default function LeaderboardTable({ initialData }: Props) {
         }
     };
 
+    if (!sortedData || sortedData.length === 0) {
+        return (
+            <div className="w-full py-16 text-center text-zinc-500 font-mono text-xs border border-white/5 rounded-2xl bg-black/20">
+                No player statistics recorded yet.
+            </div>
+        );
+    }
+
     return (
         <div className="w-full overflow-hidden">
             <div className="grid grid-cols-8 md:grid-cols-12 gap-2 md:gap-4 px-3 md:px-6 py-4 border-b border-white/10 text-[10px] md:text-xs font-bold uppercase tracking-wider text-zinc-500">
@@ -62,8 +70,8 @@ export default function LeaderboardTable({ initialData }: Props) {
                     >
                         <div className="col-span-1 flex justify-center">
                             <span className={clsx(
-                                "h-8 w-8 flex items-center justify-center rounded-full font-bold",
-                                player.rank === 1 ? "bg-gold text-charcoal-dark" :
+                                "h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center rounded-full font-bold text-xs sm:text-sm shrink-0",
+                                player.rank === 1 ? "bg-gold text-charcoal-dark shadow-[0_0_8px_rgba(212,175,55,0.6)]" :
                                     player.rank === 2 ? "bg-zinc-300 text-charcoal-dark" :
                                         player.rank === 3 ? "bg-amber-700 text-white" : "text-zinc-500"
                             )}>
@@ -71,23 +79,34 @@ export default function LeaderboardTable({ initialData }: Props) {
                             </span>
                         </div>
 
-                        <div className="col-span-5 md:col-span-4 flex items-center gap-2 md:gap-3">
-                            <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-charcoal-light border border-white/10 overflow-hidden relative group-hover:border-[#cfb53b] transition-colors shrink-0">
+                        <div className="col-span-5 md:col-span-4 flex items-center gap-2 sm:gap-3 min-w-0">
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-charcoal-light border border-white/10 overflow-hidden relative group-hover:border-[#cfb53b] transition-colors shrink-0">
                                 {/* Video Profile layer */}
                                 <WantedVideo playerName={player.name} />
 
-                                <div className="absolute inset-0 bg-gradient-to-br from-charcoal to-zinc-800 flex items-center justify-center text-[10px] md:text-xs font-bold text-zinc-500 z-0">
+                                <div className="absolute inset-0 bg-gradient-to-br from-charcoal to-zinc-800 flex items-center justify-center text-[10px] sm:text-xs font-bold text-zinc-500 z-0">
                                     {player.name.substring(0, 2).toUpperCase()}
                                 </div>
                             </div>
-                            <div className="min-w-0">
-                                <div className="font-bold text-white text-sm md:text-base group-hover:text-gold transition-colors truncate">{player.name}</div>
-                                <div className="text-[10px] md:text-xs text-zinc-500">Games: {player.gamesPlayed}</div>
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="font-bold text-white text-xs sm:text-base group-hover:text-gold transition-colors truncate">{player.name}</span>
+                                    {player.rank === 1 && (
+                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-gold/20 text-gold border border-gold/40 text-[9px] font-black uppercase tracking-wider shrink-0">
+                                            👑 Leader
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="text-[10px] sm:text-xs text-zinc-500 flex items-center gap-1.5 flex-wrap">
+                                    <span>Games: {player.gamesPlayed}</span>
+                                    <span className="md:hidden text-ept-red font-bold">· {player.knockOuts} ☠️</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="col-span-2 text-center font-mono text-base md:text-lg font-bold text-white">
-                            {player.points}
+                        <div className="col-span-2 text-center font-mono text-sm sm:text-base md:text-lg font-bold text-white">
+                            <span className="text-gold font-bold">{player.points}</span>
+                            <span className="text-[9px] text-zinc-500 block md:hidden uppercase">pts</span>
                         </div>
 
                         <div className="hidden md:block col-span-2 text-center font-mono text-zinc-300">
@@ -104,7 +123,7 @@ export default function LeaderboardTable({ initialData }: Props) {
                             "hidden md:block col-span-1 text-center font-mono font-bold text-xs",
                             player.profit > 0 ? "text-green-500" : player.profit < 0 ? "text-ept-red" : "text-zinc-500"
                         )}>
-                            {player.profit > 0 ? '+' : ''}{player.profit}
+                            {player.profit > 0 ? `+£${player.profit}` : player.profit < 0 ? `-£${Math.abs(player.profit)}` : '£0'}
                         </div>
                     </motion.div>
                 ))}

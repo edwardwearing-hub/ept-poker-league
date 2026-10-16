@@ -37,7 +37,7 @@ interface Props {
 type BuyMultiplier = 1 | 10 | 25 | 100 | 'max';
 const BUY_MULTIPLIERS: BuyMultiplier[] = [1, 10, 25, 100, 'max'];
 
-const ICON_MAP: Record<string, React.ElementType> = {
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   Dices,
   Gamepad2,
   Layers,

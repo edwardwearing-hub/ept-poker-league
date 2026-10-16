@@ -25,7 +25,7 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
     return (
         <div className="space-y-6 relative">
             {/* Minimal left timeline border */}
-            <div className="absolute left-6 md:left-12 top-8 bottom-8 w-[2px] bg-gradient-to-b from-gold/50 via-ept-red/20 to-transparent z-0" />
+            <div className="absolute left-3.5 sm:left-6 md:left-12 top-8 bottom-8 w-[2px] bg-gradient-to-b from-gold/50 via-ept-red/20 to-transparent z-0" />
 
             {reversedSessions.map((session, index) => {
                 const isExpanded = expandedCard === session.date;
@@ -48,10 +48,10 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
-                        className="relative z-10 pl-16 md:pl-28 pr-0"
+                        className="relative z-10 pl-8 sm:pl-16 md:pl-28 pr-0"
                     >
                         {/* Timeline Node */}
-                        <div className="absolute left-4 md:left-[2.6rem] top-6 w-5 h-5 rounded-full bg-[#1c1c1c] border-2 border-gold shadow-[0_0_10px_rgba(212,175,55,0.5)] z-20 flex items-center justify-center">
+                        <div className="absolute left-1.5 sm:left-4 md:left-[2.6rem] top-6 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#1c1c1c] border-2 border-gold shadow-[0_0_10px_rgba(212,175,55,0.5)] z-20 flex items-center justify-center">
                             <div className="w-1.5 h-1.5 bg-white rounded-full" />
                         </div>
 
@@ -64,31 +64,31 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                             onClick={() => setExpandedCard(isExpanded ? null : session.date)}
                         >
                             {/* Header (Always Visible) */}
-                            <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="p-4 sm:p-6 md:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <div>
-                                    <h2 className="text-xl md:text-2xl font-black italic uppercase tracking-widest text-white flex items-center gap-3">
+                                    <h2 className="text-lg sm:text-xl md:text-2xl font-black italic uppercase tracking-widest text-white flex items-center gap-2 sm:gap-3">
                                         {session.date}
                                         {index === 0 && (
-                                            <span className="bg-ept-red/20 text-ept-red text-[10px] px-2 py-0.5 rounded border border-ept-red/30 tracking-widest uppercase">
+                                            <span className="bg-ept-red/20 text-ept-red text-[9px] sm:text-[10px] px-2 py-0.5 rounded border border-ept-red/30 tracking-widest uppercase">
                                                 Latest
                                             </span>
                                         )}
                                     </h2>
-                                    <div className="text-sm font-bold text-zinc-500 uppercase tracking-widest mt-2 flex items-center gap-4">
-                                        <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {playerCount} Players</span>
+                                    <div className="text-xs sm:text-sm font-bold text-zinc-500 uppercase tracking-widest mt-1.5 sm:mt-2 flex items-center gap-3 sm:gap-4 flex-wrap">
+                                        <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {playerCount} Players</span>
                                         {winner && (
-                                            <span className="flex items-center gap-1 text-gold/80"><Trophy className="w-4 h-4" /> {winner.name}</span>
+                                            <span className="flex items-center gap-1 text-gold/80"><Trophy className="w-3.5 h-3.5" /> {winner.name}</span>
                                         )}
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-6">
-                                    <div className="text-right">
-                                        <div className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Prize Pot</div>
-                                        <div className="text-2xl font-black font-mono text-white">£{session.prizePot}</div>
+                                <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 border-t sm:border-t-0 border-white/5 pt-2 sm:pt-0">
+                                    <div className="text-left sm:text-right">
+                                        <div className="text-[10px] sm:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Prize Pot</div>
+                                        <div className="text-xl sm:text-2xl font-black font-mono text-white">£{session.prizePot}</div>
                                     </div>
-                                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition">
-                                        <ChevronDown className={clsx("w-5 h-5 text-zinc-400 transition-transform duration-300", isExpanded && "rotate-180 text-gold")} />
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition shrink-0">
+                                        <ChevronDown className={clsx("w-4 h-4 sm:w-5 sm:h-5 text-zinc-400 transition-transform duration-300", isExpanded && "rotate-180 text-gold")} />
                                     </div>
                                 </div>
                             </div>
@@ -102,9 +102,9 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                                         exit={{ height: 0, opacity: 0 }}
                                         className="overflow-hidden border-t border-white/5 bg-black/40"
                                     >
-                                        <div className="px-6 py-4">
+                                        <div className="px-3 sm:px-6 py-3 sm:py-4">
                                             {/* Table Headers */}
-                                            <div className="grid grid-cols-5 md:grid-cols-12 gap-4 pb-3 border-b border-white/10 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                                            <div className="grid grid-cols-5 md:grid-cols-12 gap-2 sm:gap-4 pb-2 sm:pb-3 border-b border-white/10 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-zinc-500">
                                                 <div className="col-span-1 text-center">Rnk</div>
                                                 <div className="col-span-2 md:col-span-4">Player</div>
                                                 <div className="col-span-1 md:col-span-2 text-center">KOs</div>
@@ -118,20 +118,25 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                                                     const isWinner = idx === 0;
                                                     return (
                                                         <div key={idx} className={clsx(
-                                                            "grid grid-cols-5 md:grid-cols-12 gap-4 py-3 items-center rounded-lg px-2 transition-colors",
+                                                            "grid grid-cols-5 md:grid-cols-12 gap-2 sm:gap-4 py-2 sm:py-3 items-center rounded-lg px-1.5 sm:px-2 transition-colors text-xs sm:text-sm",
                                                             isWinner ? "bg-gold/10 border border-gold/20" : "hover:bg-white/5 border border-transparent"
                                                         )}>
-                                                            <div className={clsx("col-span-1 font-black font-mono text-center", isWinner ? "text-gold" : "text-white")}>
+                                                            <div className={clsx("col-span-1 font-black font-mono text-center text-xs sm:text-sm", isWinner ? "text-gold" : "text-white")}>
                                                                 #{idx + 1}
                                                             </div>
-                                                            <div className="col-span-2 md:col-span-4 font-bold uppercase tracking-widest flex items-center gap-2">
-                                                                {isWinner && <Trophy className="w-3 h-3 text-gold" />}
-                                                                <span className={clsx("truncate", isWinner ? "text-white" : "text-zinc-300")}>{player.name}</span>
+                                                            <div className="col-span-2 md:col-span-4 font-bold uppercase tracking-widest flex items-center gap-1.5 min-w-0">
+                                                                {isWinner && <Trophy className="w-3 h-3 text-gold shrink-0" />}
+                                                                <div className="min-w-0">
+                                                                    <span className={clsx("truncate block", isWinner ? "text-white" : "text-zinc-300")}>{player.name}</span>
+                                                                    {player.winnings > 0 && (
+                                                                        <span className="md:hidden text-[9px] text-green-400 font-mono font-bold block">+£{player.winnings}</span>
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                            <div className="col-span-1 md:col-span-2 font-mono text-center text-zinc-400 font-bold">
+                                                            <div className="col-span-1 md:col-span-2 font-mono text-center text-zinc-400 font-bold text-xs sm:text-sm">
                                                                 {player.kos !== undefined && player.kos > 0 ? player.kos : '-'}
                                                             </div>
-                                                            <div className="col-span-1 md:col-span-2 font-mono text-center text-zinc-400 font-bold">
+                                                            <div className="col-span-1 md:col-span-2 font-mono text-center text-gold font-bold text-xs sm:text-sm">
                                                                 {player.points}
                                                             </div>
                                                             <div className={clsx("hidden md:block col-span-3 font-mono text-right font-black", player.winnings > 0 ? "text-green-400" : "text-zinc-600")}>
@@ -144,9 +149,9 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                                         </div>
 
                                         {/* Dynamic "Stat of the Night" Footer Banner */}
-                                        <div className="px-6 py-4 bg-gradient-to-r from-ept-red/20 to-transparent border-t border-ept-red/30 flex items-center gap-3">
-                                            <Coins className="w-5 h-5 text-gold" />
-                                            <span className="text-sm font-bold tracking-wide text-zinc-200 uppercase">
+                                        <div className="px-3 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-ept-red/20 to-transparent border-t border-ept-red/30 flex items-center gap-2 sm:gap-3">
+                                            <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-gold shrink-0" />
+                                            <span className="text-xs sm:text-sm font-bold tracking-wide text-zinc-200 uppercase line-clamp-1">
                                                 {statBanner}
                                             </span>
                                         </div>

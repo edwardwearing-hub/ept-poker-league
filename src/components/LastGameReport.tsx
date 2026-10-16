@@ -53,13 +53,13 @@ export default function LastGameReport() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                    <div className="lg:col-span-7 space-y-6">
-                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white italic tracking-tight uppercase leading-none">
-                            {report.title} <span className="text-zinc-600 block text-lg sm:text-xl md:text-2xl mt-1">{report.episode}</span>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
+                    <div className="lg:col-span-7 space-y-4 sm:space-y-6">
+                        <h1 className="text-xl sm:text-3xl md:text-4xl font-black text-white italic tracking-tight uppercase leading-none break-words">
+                            {report.title} <span className="text-zinc-600 block text-sm sm:text-xl md:text-2xl mt-1">{report.episode}</span>
                         </h1>
 
-                        <div className="prose prose-invert max-w-none text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                        <div className="prose prose-invert max-w-none text-xs sm:text-sm md:text-base text-zinc-300 leading-relaxed whitespace-pre-wrap">
                             {report.content}
                         </div>
 
@@ -71,11 +71,11 @@ export default function LastGameReport() {
                             />
                         )}
 
-                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                        <div className="flex items-center justify-between pt-4 border-t border-white/5 flex-wrap gap-2">
                             <div className="flex items-center gap-2">
                                 <Trophy className="text-gold w-4 h-4" />
-                                <span className="text-white font-bold text-sm">Winner:</span>
-                                <span className="text-gold font-mono font-bold">{report.winner}</span>
+                                <span className="text-white font-bold text-xs sm:text-sm">Winner:</span>
+                                <span className="text-gold font-mono font-bold text-xs sm:text-sm">{report.winner}</span>
                             </div>
                             <Link
                                 href="/gazette"
@@ -87,7 +87,7 @@ export default function LastGameReport() {
                         </div>
                     </div>
 
-                    <div className="lg:col-span-5 w-full bg-black rounded-xl overflow-hidden border-2 border-gold/30 shadow-[0_0_30px_rgba(212,175,55,0.2)] relative group/video flex items-center justify-center min-h-[250px] max-h-[500px]">
+                    <div className="lg:col-span-5 w-full bg-black rounded-xl overflow-hidden border-2 border-gold/30 shadow-[0_0_30px_rgba(212,175,55,0.2)] relative group/video flex items-center justify-center min-h-[200px] sm:min-h-[250px] max-h-[500px]">
                         {/* Custom Uploaded Picture OR Winner's Highlight Video */}
                         {report.imageUrl ? (
                             <img

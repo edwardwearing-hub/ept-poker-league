@@ -19,7 +19,7 @@ interface Props {
   onStateUpdate: (newState: GameState) => void;
 }
 
-const CATEGORY_ICONS: Record<string, React.ElementType> = {
+const CATEGORY_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   Equipment: Wrench,
   Hospitality: Coffee,
   Security: ShieldAlert,

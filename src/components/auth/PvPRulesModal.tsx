@@ -35,7 +35,7 @@ export default function PvPRulesModal({ onClose }: Props) {
     const handleBattleground = () => {
         localStorage.setItem('ept_pvp_onboarded_v2', 'true');
         onClose();
-        router.push('/wanted');
+        router.push('/bounties?view=wanted');
     };
 
     const handleAcknowledge = () => {

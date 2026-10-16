@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from "next/link";
 import Leaderboard from "@/components/Leaderboard";
 import WantedPoster from "@/components/WantedPoster";
@@ -6,11 +7,31 @@ import LastGameReport from "@/components/LastGameReport";
 import NextGameCountdown from "@/components/NextGameCountdown";
 import SyndicateAnnouncementModal from "@/components/SyndicateAnnouncementModal";
 import ChampionshipCountdownBanner from "@/components/ChampionshipCountdownBanner";
+import PrizePoolCalculator from "@/components/PrizePoolCalculator";
+import HostOperationsBanner from "@/components/HostOperationsBanner";
 import { getGlobalStats, getLeaderboardData } from "@/lib/data";
 import { GraduationCap, Dices, Sparkles, ArrowRight, Flame, Trophy, Crown } from "lucide-react";
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'E.P.T. 2026 Poker League | Official Standings, Final & Academy',
+  description: 'The official live leaderboard, tournament reports, countdowns, player scouting profiles, and GTO Poker Academy for the E.P.T. 2026 Poker League.',
+  openGraph: {
+    title: 'E.P.T. 2026 Poker League | Official Standings, Final & Academy',
+    description: 'The official live leaderboard, tournament reports, countdowns, player scouting profiles, and GTO Poker Academy for the E.P.T. 2026 Poker League.',
+    siteName: 'E.P.T. 2026 Poker League',
+    images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'E.P.T. 2026 Poker League' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'E.P.T. 2026 Poker League',
+    description: 'Live leaderboard, tournament reports, player profiles, and GTO Poker Academy.',
+    images: ['/ept-logo.jpg'],
+  },
+};
 
 export default async function Home() {
   const [stats, players] = await Promise.all([
@@ -28,7 +49,7 @@ export default async function Home() {
       <SyndicateAnnouncementModal />
 
       {/* Next Game Countdown Section */}
-      <NextGameCountdown />
+      <NextGameCountdown initialTargetDate={stats.nextGameDate} />
 
       {/* December Grand Final Road to Crown Banner */}
       <ChampionshipCountdownBanner 
@@ -38,13 +59,19 @@ export default async function Home() {
         gamesRemaining={gamesRemaining}
       />
 
+      {/* Host Logistics: Live Prize Pool Calculator (Feature 5) */}
+      <PrizePoolCalculator />
+
+      {/* Host Operations & Live Game Night Suite */}
+      <HostOperationsBanner />
+
       {/* ============================================================== */}
       {/* FEATURE SPOTLIGHT: THE POKER ACADEMY & LAS VEGAS CASINO SUITE */}
       {/* ============================================================== */}
       <section className="space-y-4 pt-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h3 className="text-2xl sm:text-3xl font-black text-white border-l-4 border-gold pl-4 uppercase tracking-tight">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white border-l-4 border-gold pl-3 sm:pl-4 uppercase tracking-tight">
               Featured Interactive Hubs
             </h3>
             <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold/15 text-gold border border-gold/30 text-xs font-black uppercase tracking-widest shadow-[0_0_12px_rgba(212,175,55,0.3)]">
@@ -54,11 +81,11 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {/* Card 1: EPT Poker Academy */}
           <Link
             href="/academy"
-            className="group relative rounded-3xl overflow-hidden border-2 border-cyan-500/40 hover:border-cyan-400 bg-gradient-to-br from-blue-950 via-charcoal-card to-black p-5 sm:p-6 shadow-[0_10px_30px_rgba(6,182,212,0.25)] hover:shadow-[0_15px_40px_rgba(6,182,212,0.45)] transition-all duration-300 flex flex-col justify-between min-h-[220px]"
+            className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-cyan-500/40 hover:border-cyan-400 bg-gradient-to-br from-blue-950 via-charcoal-card to-black p-4 sm:p-6 shadow-[0_10px_30px_rgba(6,182,212,0.25)] hover:shadow-[0_15px_40px_rgba(6,182,212,0.45)] transition-all duration-300 flex flex-col justify-between min-h-[220px]"
           >
             {/* Background Texture */}
             <div
@@ -67,31 +94,31 @@ export default async function Home() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none" />
 
-            <div className="relative z-10 space-y-2.5">
+            <div className="relative z-10 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md">
-                  <GraduationCap size={14} className="text-cyan-400" />
+                <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md">
+                  <GraduationCap size={13} className="text-cyan-400" />
                   GTO Trainer & AI Coach
                 </span>
-                <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">
-                  7 Game Modes
+                <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 uppercase tracking-widest">
+                  7 Modes
                 </span>
               </div>
 
-              <h4 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight group-hover:text-cyan-300 transition-colors flex items-center gap-2">
+              <h4 className="text-lg sm:text-2xl font-black text-white uppercase tracking-tight group-hover:text-cyan-300 transition-colors flex items-center gap-2">
                 <span>The EPT Poker Academy</span>
               </h4>
 
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed line-clamp-2">
-                Level up your poker IQ with interactive scenarios: Heads-Up, 6-Max, Bounty Hunter, Push/Fold & ICM Bubble. Get instant A+ to F grades and store career stats in your personal PIN Locker!
+                Level up your poker IQ with interactive scenarios: Heads-Up, 6-Max, Bounty Hunter, Push/Fold & ICM Bubble. Get instant grades and store career stats in your personal PIN Locker!
               </p>
             </div>
 
-            <div className="relative z-10 pt-4 flex items-center justify-between border-t border-white/10 mt-3">
-              <span className="text-xs font-bold text-zinc-400 group-hover:text-white transition">
+            <div className="relative z-10 pt-3 sm:pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-white/10 mt-3">
+              <span className="text-[11px] sm:text-xs font-bold text-zinc-400 group-hover:text-white transition">
                 Start with 10,000 Training Chips
               </span>
-              <span className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-[0_0_15px_rgba(6,182,212,0.4)] group-hover:brightness-110 transition">
+              <span className="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(6,182,212,0.4)] group-hover:brightness-110 transition min-h-[36px]">
                 <span>Enter Academy</span>
                 <ArrowRight size={14} />
               </span>
@@ -101,7 +128,7 @@ export default async function Home() {
           {/* Card 2: Las Vegas Casino & Pub Fruity */}
           <Link
             href="/vegas"
-            className="group relative rounded-3xl overflow-hidden border-2 border-amber-500/40 hover:border-amber-400 bg-gradient-to-br from-red-950 via-charcoal-card to-black p-5 sm:p-6 shadow-[0_10px_30px_rgba(245,158,11,0.25)] hover:shadow-[0_15px_40px_rgba(245,158,11,0.45)] transition-all duration-300 flex flex-col justify-between min-h-[220px]"
+            className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-amber-500/40 hover:border-amber-400 bg-gradient-to-br from-red-950 via-charcoal-card to-black p-4 sm:p-6 shadow-[0_10px_30px_rgba(245,158,11,0.25)] hover:shadow-[0_15px_40px_rgba(245,158,11,0.45)] transition-all duration-300 flex flex-col justify-between min-h-[220px]"
           >
             {/* Background Texture */}
             <div
@@ -110,18 +137,18 @@ export default async function Home() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none" />
 
-            <div className="relative z-10 space-y-2.5">
+            <div className="relative z-10 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="px-3 py-1 rounded-full bg-amber-500/20 text-yellow-300 border border-yellow-400/50 text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md">
-                  <Dices size={14} className="text-yellow-400" />
+                <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-amber-500/20 text-yellow-300 border border-yellow-400/50 text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md">
+                  <Dices size={13} className="text-yellow-400" />
                   11 Casino Games
                 </span>
-                <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">
+                <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 uppercase tracking-widest">
                   Live AI Sarah
                 </span>
               </div>
 
-              <h4 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight group-hover:text-yellow-300 transition-colors flex items-center gap-2">
+              <h4 className="text-lg sm:text-2xl font-black text-white uppercase tracking-tight group-hover:text-yellow-300 transition-colors flex items-center gap-2">
                 <span>The Vegas Strip & Pub Fruity</span>
               </h4>
 
@@ -130,11 +157,11 @@ export default async function Home() {
               </p>
             </div>
 
-            <div className="relative z-10 pt-4 flex items-center justify-between border-t border-white/10 mt-3">
-              <span className="text-xs font-bold text-zinc-400 group-hover:text-white transition">
+            <div className="relative z-10 pt-3 sm:pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-white/10 mt-3">
+              <span className="text-[11px] sm:text-xs font-bold text-zinc-400 group-hover:text-white transition">
                 Interactive Felt & Rules Tutorials
               </span>
-              <span className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-gold to-yellow-400 text-black font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-[0_0_15px_rgba(245,158,11,0.4)] group-hover:brightness-110 transition">
+              <span className="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-gold to-yellow-400 text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(245,158,11,0.4)] group-hover:brightness-110 transition min-h-[36px]">
                 <span>Hit The Strip</span>
                 <ArrowRight size={14} />
               </span>
@@ -217,12 +244,12 @@ export default async function Home() {
 
       {/* Latest Report */}
       <div className="mb-4 md:mb-8 pt-4 md:pt-8 border-t border-white/10">
-        <h3 className="text-3xl font-bold text-white border-l-4 border-gold pl-4 mb-6">The Latest Gazette</h3>
+        <h3 className="text-xl sm:text-3xl font-bold text-white border-l-4 border-gold pl-3 sm:pl-4 mb-4 sm:mb-6">The Latest Gazette</h3>
         <LastGameReport />
       </div>
 
       {/* Grid Layout for Widgets */}
-      <div className="grid grid-cols-12 gap-8">
+      <div className="grid grid-cols-12 gap-6 sm:gap-8">
         {/* Main Content (Leaderboard) - Spans 8 cols */}
         <div id="leaderboard" className="col-span-12 lg:col-span-8 space-y-6 scroll-mt-24">
           <Leaderboard />

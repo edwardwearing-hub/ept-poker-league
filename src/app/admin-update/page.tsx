@@ -30,6 +30,7 @@ export default function AdminUpdate() {
     const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
     const [reportWinner, setReportWinner] = useState('');
     const [reportContent, setReportContent] = useState('');
+    const [pressQuotes, setPressQuotes] = useState('');
     const [isGeneratingAi, setIsGeneratingAi] = useState(false);
     const [isStoryAiRefined, setIsStoryAiRefined] = useState(false);
 
@@ -48,7 +49,41 @@ export default function AdminUpdate() {
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [passwordInput, setPasswordInput] = useState('');
+    const [adminPassword, setAdminPassword] = useState('');
     const [loginError, setLoginError] = useState('');
+    const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+    React.useEffect(() => {
+        const stored = sessionStorage.getItem('ept_admin_password');
+        if (stored) {
+            setAdminPassword(stored);
+            setIsLoggedIn(true);
+        }
+    }, []);
+
+    const handleAuthenticate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoginError('');
+        setIsAuthenticating(true);
+        try {
+            const res = await fetch('/api/admin/verify', {
+                method: 'POST',
+                headers: { 'x-admin-password': passwordInput }
+            });
+            if (res.ok) {
+                setAdminPassword(passwordInput);
+                setIsLoggedIn(true);
+                sessionStorage.setItem('ept_admin_password', passwordInput);
+            } else {
+                setLoginError('Incorrect password. Access denied.');
+                setPasswordInput('');
+            }
+        } catch {
+            setLoginError('Authentication service unreachable.');
+        } finally {
+            setIsAuthenticating(false);
+        }
+    };
 
     const handleValidation = async () => {
         setIsValidating(true);
@@ -76,14 +111,17 @@ export default function AdminUpdate() {
         try {
             const response = await fetch('/api/admin/countdown', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-admin-password': adminPassword
+                },
                 body: JSON.stringify({ targetDate: new Date(nextGameDate).toISOString() })
             });
             if (response.ok) {
                 setScheduleStatus('Override set successfully! Refresh to confirm.');
                 loadSchedule();
             } else {
-                setScheduleStatus('Error updating countdown.');
+                setScheduleStatus('Error updating countdown (Unauthorized or server error).');
             }
         } catch (err) {
             console.error(err);
@@ -111,7 +149,10 @@ export default function AdminUpdate() {
         try {
             const res = await fetch('/api/admin/countdown', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-admin-password': adminPassword
+                },
                 body: JSON.stringify({ clear: true })
             });
             if (res.ok) {
@@ -191,10 +232,14 @@ export default function AdminUpdate() {
         try {
             const response = await fetch('/api/admin/report', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-admin-password': adminPassword
+                },
                 body: JSON.stringify({
                     action: 'generate',
-                    content: reportContent
+                    content: reportContent,
+                    pressQuotes: pressQuotes
                 })
             });
             const data = await response.json();
@@ -219,7 +264,10 @@ export default function AdminUpdate() {
         try {
             const response = await fetch('/api/admin/report', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-admin-password': adminPassword
+                },
                 body: JSON.stringify({
                     title: reportTitle,
                     episode: reportEpisode,
@@ -227,6 +275,7 @@ export default function AdminUpdate() {
                     winner: reportWinner,
                     content: reportContent,
                     imageUrl: reportImageUrl,
+                    pressQuotes: pressQuotes,
                     autoGenerate: !isStoryAiRefined
                 })
             });
@@ -293,26 +342,22 @@ export default function AdminUpdate() {
 
                     {loginError && <p className="text-[#ff073a] mb-4 text-sm font-bold bg-red-900/20 p-2 rounded">{loginError}</p>}
 
-                    <form onSubmit={(e) => {
-                        e.preventDefault();
-                        if (passwordInput === 'ept2026') {
-                            setIsLoggedIn(true);
-                            setLoginError('');
-                        } else {
-                            setLoginError('Incorrect password');
-                            setPasswordInput('');
-                        }
-                    }} className="space-y-6">
+                    <form onSubmit={handleAuthenticate} className="space-y-6">
                         <input
                             type="password"
                             value={passwordInput}
                             onChange={(e) => setPasswordInput(e.target.value)}
                             placeholder="•••••••"
-                            className="w-full bg-gray-900/50 border border-gray-700 rounded-lg p-4 text-white focus:border-[#cfb53b] outline-none tracking-[0.5em] text-center text-xl shadow-inner transition"
+                            disabled={isAuthenticating}
+                            className="w-full bg-gray-900/50 border border-gray-700 rounded-lg p-4 text-white focus:border-[#cfb53b] outline-none tracking-[0.5em] text-center text-xl shadow-inner transition disabled:opacity-50"
                             required
                         />
-                        <button type="submit" className="w-full py-4 bg-[#cfb53b] hover:bg-[#ffd700] text-black font-black uppercase tracking-widest rounded-lg shadow-[0_0_15px_rgba(212,175,55,0.4)] transition duration-300">
-                            Authenticate
+                        <button 
+                            type="submit" 
+                            disabled={isAuthenticating}
+                            className="w-full py-4 bg-[#cfb53b] hover:bg-[#ffd700] text-black font-black uppercase tracking-widest rounded-lg shadow-[0_0_15px_rgba(212,175,55,0.4)] transition duration-300 disabled:opacity-50"
+                        >
+                            {isAuthenticating ? 'Verifying...' : 'Authenticate'}
                         </button>
                     </form>
                 </div>
@@ -320,10 +365,24 @@ export default function AdminUpdate() {
         );
     }
 
+    const handleAdminLogout = () => {
+        sessionStorage.removeItem('ept_admin_password');
+        setAdminPassword('');
+        setIsLoggedIn(false);
+    };
+
     return (
         <div className="min-h-screen bg-[#1c1c1c] text-white p-4 md:p-8 font-sans">
             <div className="max-w-6xl mx-auto space-y-8 md:space-y-12">
-                <h1 className="text-3xl md:text-4xl text-[#ffd700] uppercase tracking-widest text-center">E.P.T. Admin Console</h1>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-[#cfb53b]/20 pb-4">
+                    <h1 className="text-3xl md:text-4xl text-[#ffd700] uppercase tracking-widest font-black">E.P.T. Admin Console</h1>
+                    <button
+                        onClick={handleAdminLogout}
+                        className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white bg-zinc-800/80 hover:bg-red-950/60 border border-zinc-700 hover:border-red-600/50 rounded-lg transition"
+                    >
+                        Sign Out
+                    </button>
+                </div>
 
                 {/* Scheduling Section */}
                 <div className="bg-black/50 p-4 md:p-8 rounded-2xl border border-[#cfb53b]/30 relative overflow-hidden">
@@ -564,6 +623,28 @@ export default function AdminUpdate() {
                                     </button>
                                 </div>
                             )}
+                        </div>
+
+                        {/* Press Conference Quotes Field (Feature 2) */}
+                        <div className="p-4 bg-gray-900/40 rounded-xl border border-gray-700/60 space-y-2">
+                            <label className="block text-sm text-gray-300 font-bold uppercase tracking-wider flex items-center justify-between">
+                                <span className="flex items-center gap-2">
+                                    <span>🎙️</span> Post-Game Press Conference Quotes (Optional)
+                                </span>
+                                <span className="text-[10px] text-zinc-500 font-mono">
+                                    Integrated into AI Recap
+                                </span>
+                            </label>
+                            <textarea
+                                value={pressQuotes}
+                                onChange={e => setPressQuotes(e.target.value)}
+                                rows={2}
+                                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-[#cfb53b] outline-none text-xs sm:text-sm font-sans"
+                                placeholder={`e.g. Luke Daly: "My heart was pounding on the river, but I smelled weakness."\nDave Blackburn: "I got baited by the ace on the turn."`}
+                            />
+                            <p className="text-[11px] text-zinc-400">
+                                Attach 1–2 authentic player reactions from the night. The Gazette AI will integrate them into the article as realistic post-game soundbites.
+                            </p>
                         </div>
 
                         <div>

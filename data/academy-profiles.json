@@ -1,1 +1,139 @@
-{}
+{
+  "edward_wearing": {
+    "handsPlayed": 0,
+    "handsWon": 0,
+    "showdownsReached": 0,
+    "showdownsWon": 0,
+    "netChipsWon": 50,
+    "netBBWon": 0,
+    "bountiesClaimed": 0,
+    "bountyCashWon": 0,
+    "bankruptcyCount": 0,
+    "bailoutChipsReceived": 0,
+    "vpipOpportunities": 0,
+    "vpipCount": 0,
+    "pfrCount": 0,
+    "threeBetOpportunities": 0,
+    "threeBetCount": 0,
+    "limpCount": 0,
+    "postflopBetsAndRaises": 0,
+    "postflopCalls": 0,
+    "postflopFolds": 0,
+    "cbetOpportunities": 0,
+    "cbetCount": 0,
+    "totalDecisionsGraded": 0,
+    "gradeCounts": {
+      "A+": 0,
+      "B": 0,
+      "C": 0,
+      "D": 0,
+      "F": 0
+    },
+    "leakCounts": {
+      "limping-preflop": 0,
+      "calling-without-odds": 0,
+      "overfolding-equity": 0,
+      "passive-value-miss": 0,
+      "positional-looseness": 0,
+      "pot-limit-sizing": 0,
+      "bounty-miscalculation": 0,
+      "aof-push-fold-error": 0
+    },
+    "handsByMode": {
+      "no-limit": 0,
+      "pot-limit": 0,
+      "bounty-hunter": 0,
+      "all-in-or-fold": 0,
+      "icm-bubble": 0,
+      "bomb-pot": 0,
+      "tournament-eliminator": 0
+    },
+    "byPosition": {
+      "BTN": {
+        "hands": 0,
+        "vpipCount": 0,
+        "pfrCount": 0,
+        "handsWon": 0,
+        "netBB": 0,
+        "optimalDecisions": 0,
+        "totalDecisions": 0
+      },
+      "SB": {
+        "hands": 0,
+        "vpipCount": 0,
+        "pfrCount": 0,
+        "handsWon": 0,
+        "netBB": 0,
+        "optimalDecisions": 0,
+        "totalDecisions": 0
+      },
+      "BB": {
+        "hands": 0,
+        "vpipCount": 0,
+        "pfrCount": 0,
+        "handsWon": 0,
+        "netBB": 0,
+        "optimalDecisions": 0,
+        "totalDecisions": 0
+      },
+      "UTG": {
+        "hands": 0,
+        "vpipCount": 0,
+        "pfrCount": 0,
+        "handsWon": 0,
+        "netBB": 0,
+        "optimalDecisions": 0,
+        "totalDecisions": 0
+      },
+      "UTG+1": {
+        "hands": 0,
+        "vpipCount": 0,
+        "pfrCount": 0,
+        "handsWon": 0,
+        "netBB": 0,
+        "optimalDecisions": 0,
+        "totalDecisions": 0
+      },
+      "MP": {
+        "hands": 0,
+        "vpipCount": 0,
+        "pfrCount": 0,
+        "handsWon": 0,
+        "netBB": 0,
+        "optimalDecisions": 0,
+        "totalDecisions": 0
+      },
+      "LJ": {
+        "hands": 0,
+        "vpipCount": 0,
+        "pfrCount": 0,
+        "handsWon": 0,
+        "netBB": 0,
+        "optimalDecisions": 0,
+        "totalDecisions": 0
+      },
+      "HJ": {
+        "hands": 0,
+        "vpipCount": 0,
+        "pfrCount": 0,
+        "handsWon": 0,
+        "netBB": 0,
+        "optimalDecisions": 0,
+        "totalDecisions": 0
+      },
+      "CO": {
+        "hands": 0,
+        "vpipCount": 0,
+        "pfrCount": 0,
+        "handsWon": 0,
+        "netBB": 0,
+        "optimalDecisions": 0,
+        "totalDecisions": 0
+      }
+    },
+    "recentFeedback": [],
+    "secretPin": "0000",
+    "avatarUrl": "/avatars/avatar_shark.png",
+    "nickname": "Edward"
+  }
+}

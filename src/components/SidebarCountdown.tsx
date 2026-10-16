@@ -7,25 +7,25 @@ interface Props {
     targetDateStr: string;
 }
 
+function calculateSidebarDiff(targetStr: string) {
+    if (!targetStr) return { days: 0, hours: 0, minutes: 0 };
+    const targetDate = new Date(targetStr).getTime();
+    if (isNaN(targetDate)) return { days: 0, hours: 0, minutes: 0 };
+    const difference = targetDate - Date.now();
+    if (difference <= 0) return { days: 0, hours: 0, minutes: 0 };
+    return {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+    };
+}
+
 export default function SidebarCountdown({ targetDateStr }: Props) {
-    const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
+    const [timeLeft, setTimeLeft] = useState(() => calculateSidebarDiff(targetDateStr));
 
     useEffect(() => {
-        const targetDate = new Date(targetDateStr).getTime();
-
         const calculateTimeLeft = () => {
-            const now = new Date().getTime();
-            const difference = targetDate - now;
-
-            if (difference > 0) {
-                setTimeLeft({
-                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-                    hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-                    minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-                });
-            } else {
-                setTimeLeft({ days: 0, hours: 0, minutes: 0 });
-            }
+            setTimeLeft(calculateSidebarDiff(targetDateStr));
         };
 
         calculateTimeLeft();

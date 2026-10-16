@@ -33,7 +33,7 @@ interface Props {
 type BuyMultiplier = 1 | 10 | 25 | 100 | 'max';
 const BUY_MULTIPLIERS: BuyMultiplier[] = [1, 10, 25, 100, 'max'];
 
-const BIZ_ICONS: Record<string, React.ElementType> = {
+const BIZ_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   Droplets,
   RotateCw,
   Music,

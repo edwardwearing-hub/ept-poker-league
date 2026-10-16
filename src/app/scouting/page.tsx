@@ -1,9 +1,20 @@
 
+import type { Metadata } from 'next';
 import { getLeaderboardData } from "@/lib/data";
 import Link from 'next/link';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+    title: 'Player Scouting Reports & Rival Intelligence',
+    description: 'Detailed dossiers, play-style tendencies, nemesis matchups, and head-to-head records for all league contenders.',
+    openGraph: {
+        title: 'Player Scouting Reports | E.P.T. 2026',
+        description: 'Detailed dossiers, play-style tendencies, and head-to-head records for all league contenders.',
+        images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'EPT Scouting Reports' }],
+    },
+};
 
 export default async function ScoutingPage() {
     const players = await getLeaderboardData();

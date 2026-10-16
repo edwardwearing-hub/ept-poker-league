@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Activity,
   Calculator,
@@ -12,6 +13,7 @@ import {
   Trophy,
   Tv,
   User,
+  Brain,
 } from 'lucide-react';
 import { CareerTrackerStats, ScenarioPreset } from '@/lib/poker-trainer/types';
 import {
@@ -34,11 +36,13 @@ import RangeAndOddsLab from './RangeAndOddsLab';
 import CurriculumAndQuiz from './CurriculumAndQuiz';
 import ConsoleAestheticsAndLicenses from './ConsoleAestheticsAndLicenses';
 import AcademyChipLeaderboard from './AcademyChipLeaderboard';
+import HandOfTheWeekPuzzle from './HandOfTheWeekPuzzle';
 import InfoTooltip from './InfoTooltip';
 import { computeTotalAcademyChips } from '@/lib/poker-trainer/leaderboard';
 
 export type AcademyTab =
   | 'arena'
+  | 'puzzles'
   | 'leaderboard'
   | 'licenses'
   | 'tracker'
@@ -66,7 +70,13 @@ export const LEAGUE_PLAYERS = [
 ];
 
 export default function AcademyHub({ defaultTab = 'arena' }: Props) {
-  const [activeTab, setActiveTab] = useState<AcademyTab>(defaultTab);
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get('tab') as AcademyTab | null;
+  const initialTab = (urlTab && ['arena', 'puzzles', 'leaderboard', 'licenses', 'tracker', 'ranges', 'curriculum'].includes(urlTab))
+    ? urlTab
+    : defaultTab;
+
+  const [activeTab, setActiveTab] = useState<AcademyTab>(initialTab);
   const [activePlayerName, setActivePlayerName] = useState<string>('Guest Trainee');
   const [trackerStats, setTrackerStats] = useState<CareerTrackerStats>(() =>
     getInitialTrackerStats()
@@ -75,6 +85,12 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
   const [activeHudTheme, setActiveHudTheme] =
     useState<ConsoleHudThemeId>('gt4-license');
   const [allPlayersList, setAllPlayersList] = useState<{ name: string; isCustom?: boolean }[]>([]);
+
+  useEffect(() => {
+    if (urlTab && ['arena', 'puzzles', 'leaderboard', 'licenses', 'tracker', 'ranges', 'curriculum'].includes(urlTab)) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab]);
 
   const fetchPlayerRoster = () => {
     fetch('/api/players')
@@ -249,12 +265,21 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
   }[] = [
     {
       id: 'arena',
-      shortLabel: 'Poker Table',
+      shortLabel: 'Free Play Arena',
       icon: Gamepad2,
       badge: 'LIVE',
       tooltipTitle: 'AI Bot Trainer & Scenario Simulator',
       tooltipDesc:
         'Play full poker hands against 1 to 8 AI bots with distinct E.P.T. playstyles. Customize the game format (No-Limit, Pot Limit, Bounty Hunter, All-In or Fold, ICM Bubble, Bomb Pot) while the Virtual Coach grades every action in real time.',
+    },
+    {
+      id: 'puzzles',
+      shortLabel: 'Hand of Week',
+      icon: Brain,
+      badge: 'NEW',
+      tooltipTitle: 'Hand of the Week League Puzzles',
+      tooltipDesc:
+        'Interactive real hands played in the E.P.T. league. Test your tactical decisions and study instant mathematical pot odds, breakeven equity, and coach debriefs.',
     },
     {
       id: 'leaderboard',
@@ -392,7 +417,7 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
             </div>
 
             {/* Center Segmented Navigation Pills */}
-            <div className="flex items-center gap-1.5 bg-black/60 p-1 rounded-xl border border-white/10 overflow-x-auto max-w-full">
+            <div className="flex items-center gap-1.5 bg-black/60 p-1 rounded-xl border border-white/10 overflow-x-auto max-w-full touch-momentum tabs-scrollbar">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -406,7 +431,7 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
                       if (e.key === 'Enter' || e.key === ' ')
                         setActiveTab(tab.id);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-95 ${
                       isActive
                         ? 'bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black shadow-[0_0_12px_rgba(212,175,55,0.35)]'
                         : 'text-zinc-300 hover:text-white hover:bg-white/5'
@@ -436,7 +461,7 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
             </div>
 
             {/* Right Compact Career Telemetry Pill with Live Total Chip Amount */}
-            <div className="flex items-center gap-2.5 bg-black/65 px-3 py-1.5 rounded-xl border border-white/10 text-xs">
+            <div className="flex items-center justify-between sm:justify-start gap-2.5 bg-black/65 px-3 py-1.5 rounded-xl border border-white/10 text-xs w-full lg:w-auto">
               {/* Total Chip Bankroll Badge (Clickable to open Leaderboard) */}
               <div
                 onClick={() => setActiveTab('leaderboard')}
@@ -554,6 +579,8 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
             playerName={activePlayerName}
           />
         )}
+
+        {activeTab === 'puzzles' && <HandOfTheWeekPuzzle />}
 
         {activeTab === 'leaderboard' && (
           <AcademyChipLeaderboard

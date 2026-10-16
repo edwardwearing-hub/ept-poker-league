@@ -61,11 +61,11 @@ function ReportCard({ report, index, isLatest }: { report: Report; index: number
             {/* Card Header */}
             <button
                 onClick={() => setExpanded(e => !e)}
-                className="w-full text-left p-4 sm:p-6 flex items-start gap-3 sm:gap-4 group"
+                className="w-full text-left p-3.5 sm:p-6 flex items-start gap-2.5 sm:gap-4 group active:bg-white/5"
             >
                 {/* Winner avatar */}
                 {report.winner && (
-                    <div className={`shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 ${isLatest ? 'border-gold/40' : 'border-white/10'} bg-black/50`}>
+                    <div className={`shrink-0 w-11 h-11 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl overflow-hidden border-2 ${isLatest ? 'border-gold/40' : 'border-white/10'} bg-black/50`}>
                         <img
                             src={`/avatars/${getAvatarFilename(report.winner)}`}
                             alt={report.winner}
@@ -76,24 +76,24 @@ function ReportCard({ report, index, isLatest }: { report: Report; index: number
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{report.episode}</span>
+                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{report.episode}</span>
                         {report.date && (
                             <>
                                 <span className="text-zinc-700">·</span>
-                                <span className="text-[10px] text-zinc-600 flex items-center gap-1">
+                                <span className="text-[10px] text-zinc-500 flex items-center gap-1">
                                     <Calendar className="w-3 h-3" />
                                     {report.date}
                                 </span>
                             </>
                         )}
                     </div>
-                    <h2 className={`text-xl font-black uppercase tracking-tight leading-tight ${isLatest ? 'text-gold' : 'text-white group-hover:text-gold transition-colors'}`}>
+                    <h2 className={`text-base sm:text-xl font-black uppercase tracking-tight leading-tight break-words ${isLatest ? 'text-gold' : 'text-white group-hover:text-gold transition-colors'}`}>
                         {report.title}
                     </h2>
                     {report.winner && (
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                            <Trophy className="w-3 h-3 text-gold" />
-                            <span className="text-xs text-gold font-bold">{report.winner}</span>
+                        <div className="flex items-center gap-1.5 mt-1 sm:mt-1.5">
+                            <Trophy className="w-3 h-3 text-gold shrink-0" />
+                            <span className="text-xs text-gold font-bold truncate">{report.winner}</span>
                         </div>
                     )}
                 </div>

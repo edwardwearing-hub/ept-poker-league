@@ -1,10 +1,24 @@
+import type { Metadata } from "next";
 import StatCorner from "@/components/StatCorner";
+import LeagueSubNav from "@/components/LeagueSubNav";
+
+export const metadata: Metadata = {
+    title: 'Player Statistics & League Analytics',
+    description: 'Deep-dive statistical graphs, season highs, knockout ratios, and profit trajectories for the E.P.T. 2026 Season.',
+    openGraph: {
+        title: 'Player Statistics & League Analytics | E.P.T. 2026',
+        description: 'Deep-dive statistical graphs, season highs, and knockout ratios for the E.P.T. 2026 Season.',
+        images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'EPT League Statistics' }],
+    },
+};
 
 export default function StatsPage() {
     return (
-        <div className="space-y-8 animate-in float-in-from-bottom-4 duration-700">
-            <h1 className="text-4xl font-extrabold text-white text-center mb-8 tracking-tight">
-                League <span className="text-gold">Statistics</span>
+        <div className="space-y-6 animate-in float-in-from-bottom-4 duration-700">
+            <LeagueSubNav />
+
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white text-center mb-6 tracking-tight">
+                League <span className="text-gold">Statistics &amp; Analytics</span>
             </h1>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                 <StatCorner />

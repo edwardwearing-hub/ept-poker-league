@@ -1,19 +1,42 @@
 import { NextResponse } from 'next/server';
 import { getSheetsClient } from '@/lib/data';
+import { verifyAdminAuth } from '@/lib/adminAuth';
 
 // Game schedule dates live in Sheet1!B22:AC22 (merged 3 cols per date)
 const SCHEDULE_RANGE = 'Sheet1!B22:AC22';
 // Manual admin override lives in Sheet1!AH1
 const OVERRIDE_RANGE = 'Sheet1!AH1';
 
+const MONTH_MAP: Record<string, number> = {
+    january: 1, jan: 1, february: 2, feb: 2, march: 3, mar: 3,
+    april: 4, apr: 4, may: 5, june: 6, jun: 6,
+    july: 7, jul: 7, august: 8, aug: 8, september: 9, sep: 9, sept: 9,
+    october: 10, oct: 10, november: 11, nov: 11, december: 12, dec: 12
+};
+
+function createLondonDate(year: number, month: number, day: number, hour: number = 20, minute: number = 0): Date {
+    const testDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+    let isBST = false;
+    try {
+        isBST = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', timeZoneName: 'short' })
+            .format(testDate).includes('BST');
+    } catch {
+        isBST = false;
+    }
+    const offsetStr = isBST ? '+01:00' : '+00:00';
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const isoString = `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00${offsetStr}`;
+    return new Date(isoString);
+}
+
 /**
- * Parse a date string from the Google Sheet into a JS Date.
+ * Parse a date string from the Google Sheet into a JS Date in UK Time (Europe/London).
  * Handles:
  *   - "Saturday, May 23, 2026"  (Google Sheets formatted date cell)
  *   - "Saturday, May 23, 2026 20:00" (with time)
  *   - "23/05/2026" or "23/05/2026 20:00"
  *   - ISO strings
- * Defaults to 20:00 UK time when no time is present (typical game night start).
+ * Defaults to 20:00 UK time when no time is present.
  */
 function parseSheetDate(raw: string): Date | null {
     if (!raw || typeof raw !== 'string') return null;
@@ -27,18 +50,19 @@ function parseSheetDate(raw: string): Date | null {
     }
 
     // "Saturday, May 23, 2026" or "Saturday, May 23, 2026 20:00"
-    // Strip optional leading day-of-week (e.g. "Saturday, ")
     const withoutDayName = trimmed.replace(/^[A-Za-z]+,\s*/, '');
-    // withoutDayName is now "May 23, 2026" or "May 23, 2026 20:00"
     const longDateMatch = withoutDayName.match(/^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
     if (longDateMatch) {
-        const [, month, day, year, hour, minute] = longDateMatch;
-        const dateStr = `${month} ${day}, ${year}`;
-        const base = new Date(dateStr);
-        if (!isNaN(base.getTime())) {
-            // Apply time — default to 20:00 local if not specified
-            base.setHours(parseInt(hour ?? '20'), parseInt(minute ?? '00'), 0, 0);
-            return base;
+        const [, monthStr, dayStr, yearStr, hourStr, minStr] = longDateMatch;
+        const month = MONTH_MAP[monthStr.toLowerCase()];
+        if (month) {
+            return createLondonDate(
+                parseInt(yearStr),
+                month,
+                parseInt(dayStr),
+                parseInt(hourStr ?? '20'),
+                parseInt(minStr ?? '00')
+            );
         }
     }
 
@@ -46,11 +70,13 @@ function parseSheetDate(raw: string): Date | null {
     const dmyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
     if (dmyMatch) {
         const [, day, month, year, hour, minute] = dmyMatch;
-        const d = new Date(
-            parseInt(year), parseInt(month) - 1, parseInt(day),
-            parseInt(hour ?? '20'), parseInt(minute ?? '00'), 0
+        return createLondonDate(
+            parseInt(year),
+            parseInt(month),
+            parseInt(day),
+            parseInt(hour ?? '20'),
+            parseInt(minute ?? '00')
         );
-        return isNaN(d.getTime()) ? null : d;
     }
 
     // Last resort: native JS parse
@@ -140,6 +166,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+    if (!verifyAdminAuth(request)) {
+        return NextResponse.json({ error: 'Unauthorized: Invalid Admin Password' }, { status: 401 });
+    }
+
     try {
         const body = await request.json();
         const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();

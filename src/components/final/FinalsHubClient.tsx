@@ -32,6 +32,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getAvatarFilename } from '@/lib/avatars';
 import PlayerGameMentions, { GazetteReport } from './PlayerGameMentions';
+import TrophyShowcaseClient from '@/components/3d/TrophyShowcaseClient';
 
 interface Player {
     name: string;
@@ -511,6 +512,36 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
                 </div>
             </div>
 
+            {/* 3D Interactive Trophy & Season Prize Showcase */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                <div className="lg:col-span-2">
+                    <TrophyShowcaseClient />
+                </div>
+                <div className="lg:col-span-1 rounded-3xl border border-[#cfb53b]/30 bg-black/60 p-6 flex flex-col justify-between shadow-xl backdrop-blur-md">
+                    <div>
+                        <div className="relative h-44 w-full rounded-2xl overflow-hidden border border-white/10 mb-4 group">
+                            <img
+                                src="/assets/3d/trophy/trophy-hero.jpg"
+                                alt="E.P.T. Championship Trophy"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                            <span className="absolute bottom-2 left-3 text-[10px] font-mono text-gold font-bold uppercase tracking-wider">
+                                Official Hardware
+                            </span>
+                        </div>
+                        <h4 className="text-base font-black text-white uppercase tracking-tight">The 2026 Champion's Urn</h4>
+                        <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
+                            Crafted in polished gold and black marble. The winner of the December Grand Final will carve their name onto the permanent honours board and claim 50% of the season prize vault.
+                        </p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-mono">
+                        <span className="text-zinc-500">Prize Share:</span>
+                        <span className="text-gold font-bold">£{firstPayout} + Champion Crown</span>
+                    </div>
+                </div>
+            </div>
+
             {/* Navigation Tabs */}
             <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-white/10 custom-scrollbar">
                 {[
@@ -909,14 +940,21 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
             {/* TAB 3: AWARDS & SUPERLATIVES */}
             {activeTab === 'awards' && (
                 <div className="space-y-6">
-                    <div className="p-5 bg-zinc-950 border border-white/10 rounded-2xl">
-                        <h3 className="text-lg font-black uppercase text-white flex items-center gap-2">
-                            <Trophy className="w-5 h-5 text-gold" />
-                            2026 Season Superlatives &amp; Hall of Fame
-                        </h3>
-                        <p className="text-xs text-zinc-400 mt-0.5">
-                            Honouring the ruthless, the stubborn, and the most generous bankrolls of the season.
-                        </p>
+                    <div className="p-5 bg-zinc-950 border border-white/10 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h3 className="text-lg font-black uppercase text-white flex items-center gap-2">
+                                <Trophy className="w-5 h-5 text-gold" />
+                                2026 Season Superlatives &amp; Hall of Fame
+                            </h3>
+                            <p className="text-xs text-zinc-400 mt-0.5">
+                                Honouring the ruthless, the stubborn, and the most generous bankrolls of the season.
+                            </p>
+                        </div>
+                        <img 
+                            src="/assets/3d/medals/championship-medals.jpg" 
+                            alt="E.P.T. Official Championship Medals" 
+                            className="w-24 h-24 object-cover rounded-xl border border-gold/40 shadow-xl shrink-0 hidden sm:block" 
+                        />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

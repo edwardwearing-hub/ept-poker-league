@@ -24,7 +24,7 @@ interface Props {
   onStateUpdate: (newState: GameState) => void;
 }
 
-const RELIC_ICONS: Record<string, React.ElementType> = {
+const RELIC_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   Layers,
   Dices,
   ShieldCheck,
