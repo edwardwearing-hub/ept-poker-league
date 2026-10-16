@@ -71,7 +71,10 @@ export default function LockerPINModal({ onSuccess, onClose, initialTab = 'roste
         try {
             const res = await fetch('/api/auth/player-login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: JSON.stringify({ name: selectedPlayer.name, pin })
             });
 
@@ -113,7 +116,10 @@ export default function LockerPINModal({ onSuccess, onClose, initialTab = 'roste
         try {
             const res = await fetch('/api/auth/player-login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: JSON.stringify({
                     name: cleanName,
                     pin: newPlayerPin,

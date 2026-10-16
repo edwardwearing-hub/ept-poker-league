@@ -1,52 +1,44 @@
 import { NextResponse } from 'next/server';
-import { CareerTrackerStats } from '@/lib/poker-trainer/types';
-import {
-  computeDerivedMetrics,
-  generatePlayerImprovementAdvice,
-  getInitialTrackerStats,
-} from '@/lib/poker-trainer/tracker';
 import { getPlayerDoc, savePlayerDoc } from '@/lib/firebase-admin';
+import { CareerTrackerStats } from '@/lib/poker-trainer/types';
+import { computeDerivedMetrics, generatePlayerImprovementAdvice, getInitialTrackerStats } from '@/lib/poker-trainer/tracker';
+import { getPlayerSession } from '@/lib/playerAuth';
+import { verifyAdminAuth } from '@/lib/adminAuth';
+import { verifyCsrf } from '@/lib/security';
 
 export const revalidate = 0;
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const name = searchParams.get('name') || 'Guest Trainee';
-    const cleanName = name.trim();
+    const name = searchParams.get('name');
 
-    // Guest mode: always fresh baseline, never read saved stats
-    if (cleanName.toLowerCase() === 'guest trainee' || cleanName.toLowerCase() === 'guest') {
+    if (!name || name.toLowerCase().trim() === 'guest trainee' || name.toLowerCase().trim() === 'guest') {
       const stats = getInitialTrackerStats();
       const derived = computeDerivedMetrics(stats);
       const advice = generatePlayerImprovementAdvice(stats, 'Guest Trainee');
       return NextResponse.json({
         name: 'Guest Trainee',
+        isGuest: true,
         stats,
         derived,
         advice,
-        isGuest: true,
       });
     }
 
-    const doc = await getPlayerDoc(cleanName);
-    const rawStats: CareerTrackerStats = doc?.stats || getInitialTrackerStats();
-    const stats: CareerTrackerStats = {
-      ...getInitialTrackerStats(),
-      ...rawStats,
-      bankruptcyCount: rawStats.bankruptcyCount || 0,
-      bailoutChipsReceived: rawStats.bailoutChipsReceived || 0,
-    };
-
+    const doc = await getPlayerDoc(name.trim());
+    const stats = doc?.stats || getInitialTrackerStats();
     const derived = computeDerivedMetrics(stats);
-    const advice = generatePlayerImprovementAdvice(stats, cleanName);
+    const advice = generatePlayerImprovementAdvice(stats, name);
 
     return NextResponse.json({
-      name: cleanName,
+      name: doc?.name || name,
+      nickname: doc?.nickname,
+      avatarUrl: doc?.avatarUrl,
+      isGuest: false,
       stats,
       derived,
       advice,
-      isGuest: false,
     });
   } catch (error) {
     console.error('Error in GET /api/player/academy-profile:', error);
@@ -55,6 +47,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // 1. CSRF Verification
+  const csrf = verifyCsrf(request);
+  if (!csrf.valid) {
+    return NextResponse.json({ error: csrf.reason || 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const { name, stats } = body as { name?: string; stats?: CareerTrackerStats };
@@ -64,18 +62,13 @@ export async function POST(request: Request) {
     }
 
     const cleanName = name.trim();
-    const mergedStats: CareerTrackerStats = {
-      ...getInitialTrackerStats(),
-      ...stats,
-      gradeCounts: { ...getInitialTrackerStats().gradeCounts, ...(stats.gradeCounts || {}) },
-      leakCounts: { ...getInitialTrackerStats().leakCounts, ...(stats.leakCounts || {}) },
-      handsByMode: { ...getInitialTrackerStats().handsByMode, ...(stats.handsByMode || {}) },
-      byPosition: { ...getInitialTrackerStats().byPosition, ...(stats.byPosition || {}) },
-      recentFeedback: stats.recentFeedback || [],
-    };
 
-    // CRITICAL USER RULE: If Guest, do NOT save any data!
+    // 2. CRITICAL USER RULE: If Guest, do NOT save any data, just return advice
     if (cleanName.toLowerCase() === 'guest trainee' || cleanName.toLowerCase() === 'guest') {
+      const mergedStats: CareerTrackerStats = {
+        ...getInitialTrackerStats(),
+        ...stats,
+      };
       const derived = computeDerivedMetrics(mergedStats);
       const advice = generatePlayerImprovementAdvice(mergedStats, 'Guest Trainee');
       return NextResponse.json({
@@ -89,23 +82,50 @@ export async function POST(request: Request) {
       });
     }
 
-    // Existing or custom player: fetch or update Firestore record
+    // 3. Authorization Verification: Caller must have a valid session matching the targeted player
+    const session = getPlayerSession(request);
+    const isAdmin = verifyAdminAuth(request);
+
+    if (!session && !isAdmin) {
+      return NextResponse.json({
+        error: 'Unauthorized: You must log in with your PIN to persist training stats.'
+      }, { status: 401 });
+    }
+
+    if (session && !isAdmin && session.name.toLowerCase() !== cleanName.toLowerCase()) {
+      return NextResponse.json({
+        error: 'Unauthorized: You cannot overwrite another player’s academy profile.'
+      }, { status: 403 });
+    }
+
+    const mergedStats: CareerTrackerStats = {
+      ...getInitialTrackerStats(),
+      ...stats,
+      gradeCounts: { ...getInitialTrackerStats().gradeCounts, ...(stats.gradeCounts || {}) },
+      leakCounts: { ...getInitialTrackerStats().leakCounts, ...(stats.leakCounts || {}) },
+      handsByMode: { ...getInitialTrackerStats().handsByMode, ...(stats.handsByMode || {}) },
+      byPosition: { ...getInitialTrackerStats().byPosition, ...(stats.byPosition || {}) },
+      recentFeedback: stats.recentFeedback || [],
+    };
+
+    // 4. Update Firestore / Persistent Profile (preserving existing scrypt hash)
     const existing = await getPlayerDoc(cleanName);
     const updatedRecord = {
       name: cleanName,
-      pin: existing?.pin || '0000',
+      pin: existing?.pin || '', // never inject insecure default '0000'
       nickname: existing?.nickname || cleanName.split(' ')[0],
       avatarUrl: existing?.avatarUrl || '/avatars/avatar_shark.png',
       isCustomPlayer: existing?.isCustomPlayer ?? true,
       createdAt: existing?.createdAt || Date.now(),
       lastLoginAt: Date.now(),
       stats: mergedStats,
+      needsPinSetup: existing?.needsPinSetup || false,
     };
 
     await savePlayerDoc(updatedRecord);
 
-    const derived = computeDerivedMetrics(stats);
-    const advice = generatePlayerImprovementAdvice(stats, cleanName);
+    const derived = computeDerivedMetrics(mergedStats);
+    const advice = generatePlayerImprovementAdvice(mergedStats, cleanName);
 
     return NextResponse.json({
       success: true,

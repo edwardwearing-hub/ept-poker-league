@@ -3,6 +3,7 @@ import { getLeaderboardData, getSheetsClient } from '@/lib/data';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { revalidatePath } from 'next/cache';
 import { verifyAdminAuth } from '@/lib/adminAuth';
+import { verifyCsrf } from '@/lib/security';
 
 export async function GET() {
     try {
@@ -100,8 +101,13 @@ async function generateGazetteStoryWithFallback(
 }
 
 export async function POST(request: Request) {
+    const csrf = verifyCsrf(request);
+    if (!csrf.valid) {
+        return NextResponse.json({ error: csrf.reason || 'Forbidden' }, { status: 403 });
+    }
+
     if (!verifyAdminAuth(request)) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid Admin Password' }, { status: 401 });
+        return NextResponse.json({ error: 'Unauthorized: Invalid Admin Credentials' }, { status: 401 });
     }
 
     try {

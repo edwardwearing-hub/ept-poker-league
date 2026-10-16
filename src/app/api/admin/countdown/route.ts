@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSheetsClient } from '@/lib/data';
 import { verifyAdminAuth } from '@/lib/adminAuth';
+import { verifyCsrf } from '@/lib/security';
 
 // Game schedule dates live in Sheet1!B22:AC22 (merged 3 cols per date)
 const SCHEDULE_RANGE = 'Sheet1!B22:AC22';
@@ -166,8 +167,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+    const csrf = verifyCsrf(request);
+    if (!csrf.valid) {
+        return NextResponse.json({ error: csrf.reason || 'Forbidden' }, { status: 403 });
+    }
+
     if (!verifyAdminAuth(request)) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid Admin Password' }, { status: 401 });
+        return NextResponse.json({ error: 'Unauthorized: Invalid Admin Credentials' }, { status: 401 });
     }
 
     try {

@@ -145,7 +145,10 @@ export default function ProfileRedemption({ playerName, enemyQueue, onSuccess }:
 
             fetch('/api/player/redeem', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: JSON.stringify({ playerName })
             }).catch(e => console.error('Failed to notify server of redemption', e));
 

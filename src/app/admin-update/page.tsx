@@ -54,11 +54,15 @@ export default function AdminUpdate() {
     const [isAuthenticating, setIsAuthenticating] = useState(false);
 
     React.useEffect(() => {
-        const stored = sessionStorage.getItem('ept_admin_password');
-        if (stored) {
-            setAdminPassword(stored);
-            setIsLoggedIn(true);
-        }
+        // 1. Check if valid server-side HttpOnly admin session cookie exists
+        fetch('/api/admin/verify')
+            .then(res => res.json())
+            .then(data => {
+                if (data.authenticated) {
+                    setIsLoggedIn(true);
+                }
+            })
+            .catch(() => {});
     }, []);
 
     const handleAuthenticate = async (e: React.FormEvent) => {
@@ -68,14 +72,19 @@ export default function AdminUpdate() {
         try {
             const res = await fetch('/api/admin/verify', {
                 method: 'POST',
-                headers: { 'x-admin-password': passwordInput }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'x-admin-password': passwordInput 
+                },
+                body: JSON.stringify({ password: passwordInput })
             });
-            if (res.ok) {
+            const data = await res.json();
+            if (res.ok && data.success) {
                 setAdminPassword(passwordInput);
                 setIsLoggedIn(true);
-                sessionStorage.setItem('ept_admin_password', passwordInput);
             } else {
-                setLoginError('Incorrect password. Access denied.');
+                setLoginError(data.error || 'Incorrect password. Access denied.');
                 setPasswordInput('');
             }
         } catch {

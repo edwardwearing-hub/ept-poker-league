@@ -30,7 +30,10 @@ export default function AttackButton({ targetName, isTargetHijacked, onAttackSuc
         try {
             const res = await fetch('/api/player/attack', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: JSON.stringify({ attacker: attackerName, target: targetName })
             });
 

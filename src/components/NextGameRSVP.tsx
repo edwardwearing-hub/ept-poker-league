@@ -37,9 +37,8 @@ export default function NextGameRSVP() {
             return;
         }
 
-        const isSelfOrAdmin = savedPlayer.toLowerCase().trim() === player.toLowerCase().trim() ||
-                              savedPlayer.toLowerCase().includes('edward');
-        if (!isSelfOrAdmin) {
+        const isSelf = savedPlayer.toLowerCase().trim() === player.toLowerCase().trim();
+        if (!isSelf) {
             setGuestNotice(`Only ${player} can change their attendance`);
             setTimeout(() => setGuestNotice(null), 3500);
             return;
@@ -52,11 +51,20 @@ export default function NextGameRSVP() {
         setRegistrations(prev => ({ ...prev, [player]: newState }));
 
         try {
-            await fetch('/api/rsvp', {
+            const res = await fetch('/api/rsvp', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: JSON.stringify({ player, isPlaying: newState })
             });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                setRegistrations(prev => ({ ...prev, [player]: !newState }));
+                setGuestNotice(data.error || "Please log in to your locker to update RSVP");
+                setTimeout(() => setGuestNotice(null), 3500);
+            }
         } catch {
             // Revert on error
             setRegistrations(prev => ({ ...prev, [player]: !newState }));

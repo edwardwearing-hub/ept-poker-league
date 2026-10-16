@@ -7,13 +7,14 @@ import { getInitialTrackerStats } from './poker-trainer/tracker';
 
 export interface PokerPlayerRecord {
   name: string;
-  pin: string; // 4-digit PIN
+  pin: string; // scrypt hash ($scrypt$...) or legacy PIN during migration
   nickname?: string;
   avatarUrl: string;
   isCustomPlayer: boolean; // true if created via zero-friction sign-in
   createdAt: number;
   lastLoginAt: number;
   stats: CareerTrackerStats;
+  needsPinSetup?: boolean;
 }
 
 let firestoreInstance: Firestore | null = null;
