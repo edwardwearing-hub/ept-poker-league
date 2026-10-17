@@ -14,6 +14,9 @@ import {
   Coins,
   Brain,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Check,
   Timer,
   Clock,
   RefreshCw,
@@ -205,6 +208,7 @@ export default function BotTrainerArena({
   const [isProcessingBots, setIsProcessingBots] = useState(false);
   const [actingPlayerId, setActingPlayerId] = useState<string | null>(null);
   const [actionTimeline, setActionTimeline] = useState<ActionTimelineEntry[]>([]);
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
   const timelineEndRef = useRef<HTMLDivElement | null>(null);
   const timersRef = useRef<number[]>([]);
 
@@ -2137,257 +2141,127 @@ export default function BotTrainerArena({
 
   return (
     <div className="space-y-3">
-      {/* CONDENSED SINGLE-ROW TABLE CONTROL STRIP */}
-      <div className="glass-panel rounded-2xl px-4 py-2.5 border border-white/15">
+      {/* =====================================================================
+          LAYER C: GAME CONTROLS STRIP
+          Poker variant pills, blind status, grouped Table Settings & Tools drawer,
+          and prominent high-contrast Deal Hand CTA.
+          ===================================================================== */}
+      <div className="glass-panel rounded-2xl px-3.5 sm:px-4 py-2 border border-white/15 shadow-md">
         <div className="flex flex-wrap items-center justify-between gap-2.5">
-          {/* Left: Compact Game Format Selector Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto max-w-full py-0.5">
-            {(Object.keys(GAME_MODES_INFO) as GameMode[]).map((modeKey) => {
-              const m = GAME_MODES_INFO[modeKey];
-              const isSelected = config.gameMode === modeKey;
-              return (
-                <div
-                  key={modeKey}
-                  onClick={() => handleModeChange(modeKey)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') handleModeChange(modeKey);
-                  }}
-                  className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-                    isSelected
-                      ? 'bg-white/15 border-gold text-white shadow-[0_0_10px_rgba(212,175,55,0.2)]'
-                      : 'bg-black/40 border-white/10 text-zinc-400 hover:text-white hover:border-white/25'
-                  }`}
-                >
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: m.accentColor }}
-                  />
-                  <span>{m.shortBadge}</span>
-                  <InfoTooltip
-                    title={m.name}
-                    description={m.description}
-                    formula={m.rulesSummary[1]}
-                    size={11}
-                  />
-                </div>
-              );
-            })}
+          {/* Left: Compact Game Format Selector Pills + Live Blind Indicator */}
+          <div className="flex items-center gap-2 overflow-x-auto max-w-full py-0.5 scrollbar-hide">
+            <div className="flex items-center gap-1.5 shrink-0">
+              {(Object.keys(GAME_MODES_INFO) as GameMode[]).map((modeKey) => {
+                const m = GAME_MODES_INFO[modeKey];
+                const isSelected = config.gameMode === modeKey;
+                return (
+                  <button
+                    key={modeKey}
+                    type="button"
+                    onClick={() => handleModeChange(modeKey)}
+                    className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap active:scale-95 ${
+                      isSelected
+                        ? 'bg-white/15 border-gold text-white shadow-[0_0_10px_rgba(212,175,55,0.25)]'
+                        : 'bg-black/40 border-white/10 text-zinc-400 hover:text-white hover:border-white/25'
+                    }`}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: m.accentColor }}
+                    />
+                    <span>{m.shortBadge}</span>
+                    <InfoTooltip
+                      title={m.name}
+                      description={m.description}
+                      formula={m.rulesSummary[1]}
+                      size={11}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick Blinds & Clock Pill */}
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/50 border border-white/10 text-[11px] font-mono shrink-0">
+              <span className="text-zinc-400">Blinds:</span>
+              <span className="font-bold text-gold">
+                £{config.smallBlind}/£{config.bigBlind}
+              </span>
+              {timedBlindsConfig.enabled && (
+                <span className="text-amber-300 font-bold flex items-center gap-1 border-l border-white/15 pl-1.5">
+                  <Timer size={11} className="text-gold" />
+                  L{currentLevelIndex + 1} ({formatTimeDisplay(blindSecondsRemaining)})
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* Right: Live Player Chip Bankroll + Felt Swatches + Setup Drawer + Coach Toggle + Deal Hand */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Live Player Total Chips & Table Stack Counter in Top Bar */}
-            <div
-              onClick={onSwitchToTrackerTab}
-              title="Your Live Chips & Bankroll. Win pots to make money and climb the Leaderboard!"
-              className="flex items-center gap-2 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500/15 via-gold/15 to-amber-600/15 border border-gold/50 shadow-[0_0_15px_rgba(212,175,55,0.2)] cursor-pointer hover:border-gold hover:scale-[1.02] active:scale-95 transition"
-            >
-              <div className="w-5 h-5 rounded-full bg-gold text-black flex items-center justify-center font-black shadow shrink-0">
-                <Coins size={12} />
-              </div>
-              <div className="flex flex-col text-left leading-none">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-300">
-                    Total Chips
-                  </span>
-                  {trackerStats.netChipsWon !== 0 && (
-                    <span
-                      className={`text-[8px] font-mono font-bold ${
-                        trackerStats.netChipsWon > 0
-                          ? 'text-emerald-400'
-                          : 'text-red-400'
-                      }`}
-                    >
-                      {trackerStats.netChipsWon > 0 ? '+' : ''}
-                      £{trackerStats.netChipsWon.toLocaleString()}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-xs sm:text-sm font-mono font-black text-white">
-                    £{totalCareerChips.toLocaleString()}
-                  </span>
-                  {hero && (
-                    <span className="text-[10px] font-mono text-gold font-bold">
-                      (Stack: £{hero.chips.toLocaleString()})
-                    </span>
-                  )}
-                  {Number(trackerStats.bankruptcyCount || 0) > 0 && (
-                    <span
-                      title={`You went bankrupt ${trackerStats.bankruptcyCount || 0} time${(trackerStats.bankruptcyCount || 0) > 1 ? 's' : ''}!`}
-                      className="px-1.5 py-0.2 rounded bg-red-950/90 border border-red-500/70 text-red-300 font-mono font-black text-[9px] flex items-center gap-0.5 shadow"
-                    >
-                      <span>🤡</span>
-                      <span>×{trackerStats.bankruptcyCount || 0}</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Felt Cloth Selector (Sky Blue vs Emerald vs VIP Obsidian) */}
-            <div className="flex items-center gap-1 bg-black/50 px-2 py-1 rounded-lg border border-white/10">
-              <span className="text-[10px] text-zinc-400 font-bold uppercase mr-0.5">
-                Felt:
-              </span>
-              {[
-                { id: 'sky-blue', label: 'Sky Blue', color: '#25668c' },
-                { id: 'ept-emerald', label: 'Casino Green', color: '#166534' },
-                { id: 'vip-obsidian', label: 'VIP Obsidian', color: '#2b261d' },
-              ].map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() =>
-                    setFeltColor(f.id as 'sky-blue' | 'ept-emerald' | 'vip-obsidian')
-                  }
-                  title={`Switch table cloth to ${f.label}`}
-                  style={{ backgroundColor: f.color }}
-                  className={`w-4 h-4 rounded-full border transition ${
-                    feltColor === f.id
-                      ? 'border-gold scale-110 ring-2 ring-gold/40'
-                      : 'border-white/30 opacity-70 hover:opacity-100'
-                  }`}
-                />
-              ))}
-            </div>
-
-            {/* Screen Record Hand Button */}
-            {isRecording ? (
-              <button
-                onClick={stopScreenRecording}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider bg-red-600 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.7)] hover:bg-red-700 transition"
-                title="Click to stop recording and download your video clip"
-              >
-                <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
-                <span>
-                  REC {String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:
-                  {String(recordingSeconds % 60).padStart(2, '0')} (Stop)
+          {/* Right: Eliminator Status + Unified Table Settings & Tools + Prominent Deal Hand CTA */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Eliminator Tournament Alive Badge */}
+            {config.gameMode === 'tournament-eliminator' && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gradient-to-r from-rose-950/70 to-zinc-900 border border-rose-500/50 shadow-[0_0_12px_rgba(244,63,94,0.2)]">
+                <Trophy size={12} className="text-rose-400" />
+                <span className="text-[11px] font-black text-rose-300">
+                  {players.filter((p) => p.chips > 0).length || config.numPlayers} / {config.numPlayers} Alive
                 </span>
-              </button>
-            ) : (
-              <button
-                onClick={startScreenRecording}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white/5 hover:bg-red-500/20 text-zinc-300 hover:text-red-300 border border-white/10 hover:border-red-500/40 transition"
-                title="Record hand screen capture to a video file for advice or coaching reviews"
-              >
-                <Video size={13} className="text-red-400" />
-                <span>Record Hand</span>
-              </button>
+              </div>
             )}
 
+            {/* Grouped Table Settings & Tools Button with Dynamic Status Indicators */}
             <button
-              onClick={() =>
-                setConfig((prev) => ({
-                  ...prev,
-                  liveCoachHints: !prev.liveCoachHints,
-                }))
-              }
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition ${
-                config.liveCoachHints
-                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
-                  : 'bg-zinc-900 border-white/10 text-zinc-400'
-              }`}
-            >
-              {config.liveCoachHints ? <Eye size={13} /> : <EyeOff size={13} />}
-              <span>{config.liveCoachHints ? 'Coach HUD' : 'Exam Mode'}</span>
-            </button>
-
-            <button
+              type="button"
               onClick={() => setShowConfigPanel(!showConfigPanel)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition ${
                 showConfigPanel
-                  ? 'bg-gold text-black border-gold shadow-[0_0_10px_rgba(212,175,55,0.3)]'
-                  : 'bg-white/5 hover:bg-white/10 border-gold/40 text-gold'
+                  ? 'bg-gold text-black border-gold shadow-[0_0_12px_rgba(212,175,55,0.35)]'
+                  : 'bg-white/5 hover:bg-white/10 border-white/15 text-zinc-300 hover:text-white'
               }`}
-              title="Open Table Settings (Table size, bot difficulty, stack depth, and blinds)"
+              title="Open Table Settings, AI Roster, Blinds Clock, Screen Recording & Tools"
+              aria-expanded={showConfigPanel}
             >
-              <Sliders size={13} />
-              <span>Table Settings</span>
-            </button>
-
-            {/* 4-Color Deck Accessibility Toggle */}
-            <button
-              onClick={() => {
-                const nextVal = !fourColorDeck;
-                setFourColorDeck(nextVal);
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem('ept_four_color_deck', String(nextVal));
-                }
-              }}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition ${
-                fourColorDeck
-                  ? 'bg-blue-500/20 border-blue-500/60 text-blue-300 shadow-[0_0_10px_rgba(59,130,246,0.25)]'
-                  : 'bg-zinc-900 border-white/10 text-zinc-400 hover:text-white'
-              }`}
-              title="Toggle 4-Color Deck (♠ Black, ♥ Red, ♦ Blue, ♣ Green) for high-contrast accessibility"
-            >
-              <Palette size={13} />
-              <span>4-Color Deck: {fourColorDeck ? 'ON' : 'OFF'}</span>
-            </button>
-
-            {/* Eliminator Tournament Alive Badge */}
-            {config.gameMode === 'tournament-eliminator' && (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-rose-950/70 to-zinc-900 border border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.2)]">
-                <Trophy size={13} className="text-rose-400" />
-                <span className="text-xs font-black text-rose-300">
-                  {players.filter((p) => p.chips > 0).length || config.numPlayers} / {config.numPlayers} Alive
-                </span>
-                <span className="text-[10px] text-zinc-400 font-bold border-l border-white/20 pl-1.5">
-                  Lvl {Math.min(TOURNAMENT_BLIND_LEVELS.length, Math.floor(handNumber / 3) + 1)}
-                </span>
+              <Sliders size={13} className={showConfigPanel ? 'text-black' : 'text-gold'} />
+              <span>Table Settings & Tools</span>
+              <div className="flex items-center gap-1 ml-0.5">
+                {isRecording && (
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" title="Recording active" />
+                )}
+                {autoAdvanceEnabled && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Auto-deal active" />
+                )}
+                {!config.liveCoachHints && (
+                  <span className="text-[9px] px-1 rounded bg-zinc-800 text-zinc-400 font-mono">Exam</span>
+                )}
               </div>
-            )}
-
-            {/* Auto-Deal Hands Toggle Button */}
-            <button
-              onClick={() => {
-                const nextVal = !autoAdvanceEnabled;
-                setAutoAdvanceEnabled(nextVal);
-                if (!nextVal) setAutoAdvanceCountdown(null);
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition ${
-                autoAdvanceEnabled
-                  ? 'bg-gold/20 border-gold/60 text-gold shadow-[0_0_10px_rgba(212,175,55,0.2)]'
-                  : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white'
-              }`}
-              title="Automatically progress from hand to hand without manual clicking"
-            >
-              <Zap size={12} className={autoAdvanceEnabled ? 'fill-gold' : ''} />
-              <span>Auto-Deal: {autoAdvanceEnabled ? 'ON' : 'OFF'}</span>
+              {showConfigPanel ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
             </button>
 
-            {/* Reset Tournament Button (Eliminator Mode Only) */}
-            {config.gameMode === 'tournament-eliminator' && (
-              <button
-                onClick={startNewFullTournament}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-rose-500/40 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 transition"
-                title="Restart Full Game Eliminator from Hand #1"
-              >
-                <RotateCcw size={12} />
-                <span className="hidden sm:inline">Reset Tournament</span>
-              </button>
-            )}
-
+            {/* Primary Action Button: Prominent High-Contrast Tactile Deal Hand */}
             <button
+              type="button"
               onClick={dealNewHand}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black hover:brightness-110 transition shadow-[0_0_12px_rgba(212,175,55,0.3)]"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider bg-gradient-to-r from-[#ffd700] via-[#ffe578] to-[#cfb53b] text-black hover:brightness-110 active:scale-95 transition shadow-[0_0_16px_rgba(212,175,55,0.45)] ring-1 ring-gold/50 cursor-pointer"
             >
               <Play size={13} fill="currentColor" />
-              {street === 'Waiting' ? 'Deal Hand' : 'Next Hand'}
+              <span>
+                {street === 'Waiting'
+                  ? config.gameMode === 'tournament-eliminator'
+                    ? 'Start Tournament 🏆'
+                    : 'Deal Hand'
+                  : 'Next Hand ⚡'}
+              </span>
             </button>
           </div>
         </div>
 
-        {/* Collapsible Scenario Setup Drawer */}
+        {/* Collapsible Table Settings & Tools Command Drawer */}
         {showConfigPanel && (
-          <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 animate-in fade-in duration-200">
-            {/* Opponents / Table Size */}
-            <div className="bg-black/60 p-3 rounded-xl border border-white/10">
-              <div className="text-[11px] font-bold text-gold uppercase tracking-wider flex items-center justify-between mb-1.5">
+          <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 animate-in fade-in duration-200">
+            {/* Card 1: Table Size & Bot Difficulty */}
+            <div className="bg-black/60 p-3 rounded-xl border border-white/10 space-y-2">
+              <div className="text-[11px] font-bold text-gold uppercase tracking-wider flex items-center justify-between">
                 <span className="flex items-center gap-1">
-                  <Users size={13} /> Table Size ({config.numPlayers}P)
+                  <Users size={13} /> Table Size & Opponents
                 </span>
                 <InfoTooltip
                   title="Table Size & Hand Ranges"
@@ -2399,9 +2273,8 @@ export default function BotTrainerArena({
                 {[2, 3, 4, 6, 9].map((num) => (
                   <button
                     key={num}
-                    onClick={() =>
-                      setConfig((prev) => ({ ...prev, numPlayers: num }))
-                    }
+                    type="button"
+                    onClick={() => setConfig((prev) => ({ ...prev, numPlayers: num }))}
                     className={`py-1 rounded text-[11px] font-bold border transition ${
                       config.numPlayers === num
                         ? 'bg-gold text-black border-gold'
@@ -2412,51 +2285,44 @@ export default function BotTrainerArena({
                   </button>
                 ))}
               </div>
-            </div>
 
-            {/* AI Difficulty */}
-            <div className="bg-black/60 p-3 rounded-xl border border-white/10">
-              <div className="text-[11px] font-bold text-gold uppercase tracking-wider flex items-center justify-between mb-1.5">
-                <span className="flex items-center gap-1">
-                  <Brain size={13} /> Bot Difficulty
-                </span>
-                <InfoTooltip
-                  title="AI Bot Difficulty Tiers"
-                  description="Rookie bots play too loose and passively. EPT Regular bots mimic league members. Pro Shark bots actively read your tracked VPIP/PFR HUD to exploit your habits! GTO Solver bots play balanced frequencies."
-                  size={11}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-1">
-                {(
-                  [
-                    { id: 'rookie', label: 'Rookie' },
-                    { id: 'regular', label: 'EPT Regular' },
-                    { id: 'shark', label: 'Pro Shark' },
-                    { id: 'gto', label: 'GTO Solver' },
-                  ] as { id: DifficultyLevel; label: string }[]
-                ).map((d) => (
-                  <button
-                    key={d.id}
-                    onClick={() =>
-                      setConfig((prev) => ({ ...prev, difficulty: d.id }))
-                    }
-                    className={`py-1 px-2 rounded text-[11px] font-bold border transition ${
-                      config.difficulty === d.id
-                        ? 'bg-ept-red text-white border-ept-red'
-                        : 'bg-zinc-900 text-zinc-400 border-white/10 hover:text-white'
-                    }`}
-                  >
-                    {d.label}
-                  </button>
-                ))}
+              <div className="pt-1.5 border-t border-white/10">
+                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between mb-1">
+                  <span className="flex items-center gap-1">
+                    <Brain size={12} /> AI Bot Difficulty
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-1">
+                  {(
+                    [
+                      { id: 'rookie', label: 'Rookie' },
+                      { id: 'regular', label: 'EPT Regular' },
+                      { id: 'shark', label: 'Pro Shark' },
+                      { id: 'gto', label: 'GTO Solver' },
+                    ] as { id: DifficultyLevel; label: string }[]
+                  ).map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => setConfig((prev) => ({ ...prev, difficulty: d.id }))}
+                      className={`py-1 px-1.5 rounded text-[10px] font-bold border transition ${
+                        config.difficulty === d.id
+                          ? 'bg-ept-red text-white border-ept-red'
+                          : 'bg-zinc-900 text-zinc-400 border-white/10 hover:text-white'
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Stack Depth (in Big Blinds) */}
-            <div className="bg-black/60 p-3 rounded-xl border border-white/10">
-              <div className="text-[11px] font-bold text-gold uppercase tracking-wider flex items-center justify-between mb-1.5">
+            {/* Card 2: Stack Depth & Training Drills */}
+            <div className="bg-black/60 p-3 rounded-xl border border-white/10 space-y-2">
+              <div className="text-[11px] font-bold text-gold uppercase tracking-wider flex items-center justify-between">
                 <span className="flex items-center gap-1">
-                  <Coins size={13} /> Stack Depth (BB)
+                  <Coins size={13} /> Starting Stack Depth
                 </span>
                 <InfoTooltip
                   title="Stack Depth in Big Blinds (BB)"
@@ -2468,6 +2334,7 @@ export default function BotTrainerArena({
                 {[10, 25, 50, 100, 200].map((bbDepth) => (
                   <button
                     key={bbDepth}
+                    type="button"
                     disabled={config.gameMode === 'all-in-or-fold' && bbDepth !== 10}
                     onClick={() =>
                       setConfig((prev) => ({
@@ -2485,39 +2352,34 @@ export default function BotTrainerArena({
                   </button>
                 ))}
               </div>
-            </div>
 
-            {/* Spot Drill Preset */}
-            <div className="bg-black/60 p-3 rounded-xl border border-white/10">
-              <div className="text-[11px] font-bold text-gold uppercase tracking-wider flex items-center justify-between mb-1.5">
-                <span className="flex items-center gap-1">
-                  <Target size={13} /> Training Spot Drill
-                </span>
-                <InfoTooltip
-                  title="Custom Spot Drills"
-                  description="Jump directly into high-pressure tournament or cash situations—like defending the Big Blind vs Button steals, hunting short-stack Bounties, or navigating wet flops."
-                  size={11}
-                />
-              </div>
-              <select
-                value={config.preset}
-                onChange={(e) => applyPreset(e.target.value as ScenarioPreset)}
-                className="w-full bg-zinc-900 border border-white/15 rounded-lg p-1.5 text-xs text-white font-semibold focus:outline-none focus:border-gold"
-              >
-                {Object.values(SCENARIO_PRESETS_INFO).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Timed Blinds & Tournament Clock */}
-            <div className="bg-black/60 p-3 rounded-xl border border-white/10 flex flex-col justify-between">
-              <div>
-                <div className="text-[11px] font-bold text-gold uppercase tracking-wider flex items-center justify-between mb-1.5">
+              <div className="pt-1.5 border-t border-white/10">
+                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between mb-1">
                   <span className="flex items-center gap-1">
-                    <Timer size={13} /> Timed Blinds
+                    <Target size={12} /> Training Scenario Drill
+                  </span>
+                </div>
+                <select
+                  aria-label="Training Scenario Drill Preset"
+                  value={config.preset}
+                  onChange={(e) => applyPreset(e.target.value as ScenarioPreset)}
+                  className="w-full bg-zinc-900 border border-white/15 rounded-lg p-1.5 text-[11px] text-white font-semibold focus:outline-none focus:border-gold"
+                >
+                  {Object.values(SCENARIO_PRESETS_INFO).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Card 3: Timed Blinds & Tournament Clock */}
+            <div className="bg-black/60 p-3 rounded-xl border border-white/10 space-y-2 flex flex-col justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-gold uppercase tracking-wider flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Timer size={13} /> Timed Blinds Clock
                   </span>
                   <InfoTooltip
                     title="Tournament Blind Timer"
@@ -2525,118 +2387,176 @@ export default function BotTrainerArena({
                     size={11}
                   />
                 </div>
-                <div className="text-[11px] text-zinc-300">
+                <div className="text-[11px] text-zinc-300 mt-1">
                   Status:{' '}
                   <span className={timedBlindsConfig.enabled ? 'text-emerald-400 font-bold' : 'text-zinc-500'}>
                     {timedBlindsConfig.enabled
                       ? `L${currentLevelIndex + 1} (${formatTimeDisplay(blindSecondsRemaining)})`
-                      : 'Disabled (Fixed)'}
+                      : 'Disabled (Fixed Blinds)'}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 mt-2">
-                <button
-                  onClick={() => {
-                    const next = !timedBlindsConfig.enabled;
-                    handleSaveTimedBlindsConfig({
-                      ...timedBlindsConfig,
-                      enabled: next,
-                    });
-                  }}
-                  className={`flex-1 py-1 px-2 rounded text-[10px] font-bold border transition ${
-                    timedBlindsConfig.enabled
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                      : 'bg-zinc-800 text-zinc-400 border-zinc-700'
-                  }`}
-                >
-                  {timedBlindsConfig.enabled ? 'Enabled' : 'Disabled'}
-                </button>
-                <button
-                  onClick={() => setShowCustomizerModal(true)}
-                  className="py-1 px-2 rounded text-[10px] font-bold bg-gold/15 text-gold border border-gold/40 hover:bg-gold/25 transition"
-                >
-                  Configure...
-                </button>
+              <div className="space-y-1.5 pt-1.5 border-t border-white/10">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !timedBlindsConfig.enabled;
+                      handleSaveTimedBlindsConfig({
+                        ...timedBlindsConfig,
+                        enabled: next,
+                      });
+                    }}
+                    className={`flex-1 py-1 px-2 rounded text-[10px] font-bold border transition ${
+                      timedBlindsConfig.enabled
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                        : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                    }`}
+                  >
+                    {timedBlindsConfig.enabled ? 'Enabled' : 'Disabled'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomizerModal(true)}
+                    className="py-1 px-2 rounded text-[10px] font-bold bg-gold/15 text-gold border border-gold/40 hover:bg-gold/25 transition"
+                  >
+                    Configure...
+                  </button>
+                </div>
+
+                {config.gameMode === 'tournament-eliminator' && (
+                  <button
+                    type="button"
+                    onClick={startNewFullTournament}
+                    className="w-full py-1 px-2 rounded text-[10px] font-bold border border-rose-500/40 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 transition flex items-center justify-center gap-1"
+                  >
+                    <RotateCcw size={11} />
+                    <span>Reset Full Tournament</span>
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Auto-Rebuys & Bankroll Controls */}
-            <div className="bg-black/60 p-3 rounded-xl border border-white/10 flex flex-col justify-between">
+            {/* Card 4: Table Tools, Cosmetics & Automation */}
+            <div className="bg-black/60 p-3 rounded-xl border border-white/10 space-y-2 flex flex-col justify-between">
               <div>
-                <div className="text-[11px] font-bold text-gold uppercase tracking-wider flex items-center justify-between mb-1.5">
+                <div className="text-[11px] font-bold text-gold uppercase tracking-wider flex items-center justify-between">
                   <span className="flex items-center gap-1">
-                    <RefreshCw size={13} /> Rebuys & Bankroll
+                    <Palette size={13} /> Table Tools & Felt
                   </span>
-                  <InfoTooltip
-                    title="Rebuys & Bankroll Mechanics"
-                    description="Bots Auto-Rebuy: Defeated bots instantly reload full starting stacks each hand. Hero Rebuy: When you bust your table stack, you rebuy 100 BB from your Main Bankroll as long as funds remain. If you lose all your money (Main Bankroll <= £0), the emergency £1,000 Bailout activates with a league bankrupt strike."
-                    size={11}
-                  />
                 </div>
-                <div className="text-[10px] text-zinc-300 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-400">Bots Auto-Rebuy:</span>
-                    <button
-                      onClick={() =>
-                        setConfig((prev) => ({
-                          ...prev,
-                          botsAutoRebuy: prev.botsAutoRebuy === false ? true : false,
-                        }))
-                      }
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition ${
-                        config.botsAutoRebuy !== false
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                          : 'bg-zinc-800 text-zinc-400 border-zinc-700'
-                      }`}
-                    >
-                      {config.botsAutoRebuy !== false ? 'ON' : 'OFF'}
-                    </button>
+
+                {/* Felt Selector */}
+                <div className="flex items-center justify-between mt-1 text-[10px] text-zinc-300">
+                  <span className="text-zinc-400 font-bold uppercase">Felt Cloth:</span>
+                  <div className="flex items-center gap-1.5">
+                    {[
+                      { id: 'sky-blue', label: 'Sky Blue', color: '#25668c' },
+                      { id: 'ept-emerald', label: 'Casino Green', color: '#166534' },
+                      { id: 'vip-obsidian', label: 'VIP Obsidian', color: '#2b261d' },
+                    ].map((f) => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => setFeltColor(f.id as 'sky-blue' | 'ept-emerald' | 'vip-obsidian')}
+                        title={`Switch felt to ${f.label}`}
+                        style={{ backgroundColor: f.color }}
+                        className={`w-4 h-4 rounded-full border transition ${
+                          feltColor === f.id
+                            ? 'border-gold scale-110 ring-2 ring-gold/40'
+                            : 'border-white/30 opacity-70 hover:opacity-100'
+                        }`}
+                      />
+                    ))}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-400">Hero Auto-Rebuy:</span>
-                    <button
-                      onClick={() =>
-                        setConfig((prev) => ({
-                          ...prev,
-                          heroAutoRebuy: prev.heroAutoRebuy === false ? true : false,
-                        }))
+                </div>
+
+                {/* 4-Color Deck & Coach HUD Toggles */}
+                <div className="grid grid-cols-2 gap-1.5 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextVal = !fourColorDeck;
+                      setFourColorDeck(nextVal);
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('ept_four_color_deck', String(nextVal));
                       }
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition ${
-                        config.heroAutoRebuy !== false
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                          : 'bg-zinc-800 text-zinc-400 border-zinc-700'
-                      }`}
-                    >
-                      {config.heroAutoRebuy !== false ? 'ON' : 'OFF'}
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-400">Auto Hand Report:</span>
-                    <button
-                      onClick={() =>
-                        setConfig((prev) => ({
-                          ...prev,
-                          autoShowDebrief: !prev.autoShowDebrief,
-                        }))
-                      }
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition ${
-                        config.autoShowDebrief
-                          ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
-                          : 'bg-zinc-800 text-zinc-400 border-zinc-700'
-                      }`}
-                    >
-                      {config.autoShowDebrief ? 'ON' : 'OFF'}
-                    </button>
-                  </div>
+                    }}
+                    className={`py-1 px-1.5 rounded text-[10px] font-bold border transition text-center ${
+                      fourColorDeck
+                        ? 'bg-blue-500/20 border-blue-500/60 text-blue-300'
+                        : 'bg-zinc-900 border-white/10 text-zinc-400'
+                    }`}
+                  >
+                    4-Color: {fourColorDeck ? 'ON' : 'OFF'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        liveCoachHints: !prev.liveCoachHints,
+                      }))
+                    }
+                    className={`py-1 px-1.5 rounded text-[10px] font-bold border transition text-center ${
+                      config.liveCoachHints
+                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+                        : 'bg-zinc-900 border-white/10 text-zinc-400'
+                    }`}
+                  >
+                    {config.liveCoachHints ? 'Coach HUD' : 'Exam Mode'}
+                  </button>
                 </div>
               </div>
 
-              <div className="mt-2 text-[10px] font-mono border-t border-white/5 pt-1.5 flex items-center justify-between">
-                <span className="text-zinc-400">Main Pot:</span>
-                <span className="font-bold text-gold">
-                  £{totalCareerChips.toLocaleString()}
-                </span>
+              {/* Automation Toggles & Screen Recording */}
+              <div className="space-y-1.5 pt-1.5 border-t border-white/10">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextVal = !autoAdvanceEnabled;
+                      setAutoAdvanceEnabled(nextVal);
+                      if (!nextVal) setAutoAdvanceCountdown(null);
+                    }}
+                    className={`flex-1 py-1 px-1.5 rounded text-[10px] font-bold border transition flex items-center justify-center gap-1 ${
+                      autoAdvanceEnabled
+                        ? 'bg-gold/20 border-gold/60 text-gold'
+                        : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+                    }`}
+                  >
+                    <Zap size={11} className={autoAdvanceEnabled ? 'fill-gold' : ''} />
+                    <span>Auto-Deal: {autoAdvanceEnabled ? 'ON' : 'OFF'}</span>
+                  </button>
+
+                  {isRecording ? (
+                    <button
+                      type="button"
+                      onClick={stopScreenRecording}
+                      className="py-1 px-2 rounded text-[10px] font-black uppercase bg-red-600 text-white animate-pulse transition"
+                    >
+                      REC {String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:
+                      {String(recordingSeconds % 60).padStart(2, '0')} (Stop)
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={startScreenRecording}
+                      className="py-1 px-2 rounded text-[10px] font-bold bg-white/5 hover:bg-red-500/20 text-zinc-300 hover:text-red-300 border border-white/10 transition flex items-center gap-1"
+                    >
+                      <Video size={11} className="text-red-400" />
+                      <span>Record</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-[9px] text-zinc-400">
+                  <span>Bots Rebuy: {config.botsAutoRebuy !== false ? 'ON' : 'OFF'}</span>
+                  <span>Hero Rebuy: {config.heroAutoRebuy !== false ? 'ON' : 'OFF'}</span>
+                  <span>Debrief: {config.autoShowDebrief ? 'ON' : 'OFF'}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -2776,24 +2696,53 @@ export default function BotTrainerArena({
 
                 {street === 'Waiting' ? (
                   /* Pre-Deal Welcome Overlay on the Felt */
-                  <div className="relative z-20 text-center max-w-md mx-auto space-y-3 py-6 px-4 bg-black/65 backdrop-blur-md rounded-3xl border border-gold/30 shadow-2xl">
+                  <div className="relative z-20 text-center max-w-md mx-auto space-y-3.5 py-6 px-5 bg-black/75 backdrop-blur-md rounded-3xl border border-gold/40 shadow-2xl animate-in zoom-in-95 duration-200">
                     <div className="w-12 h-12 rounded-2xl bg-gold/15 border border-gold/40 flex items-center justify-center mx-auto text-gold shadow-[0_0_25px_rgba(212,175,55,0.3)]">
                       <Brain size={26} />
                     </div>
-                    <h3 className="text-xl font-black text-white tracking-tight">
-                      {activeModeInfo.name} Table Ready
-                    </h3>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
-                      {activeModeInfo.description}
-                    </p>
-                    <button
-                      onClick={dealNewHand}
-                      className="px-7 py-3 rounded-xl bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black uppercase tracking-widest text-xs shadow-[0_0_25px_rgba(212,175,55,0.5)] hover:scale-105 transition"
-                    >
-                      {config.gameMode === 'tournament-eliminator'
-                        ? 'Start Full Game Tournament (Winner Takes All) 🏆'
-                        : 'Deal Training Hand'}
-                    </button>
+                    <div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-gold mb-0.5">
+                        E.P.T. Training Arena
+                      </div>
+                      <h3 className="text-xl font-black text-white tracking-tight">
+                        {activeModeInfo.name} Table Ready
+                      </h3>
+                      <p className="text-xs text-zinc-300 leading-relaxed mt-1">
+                        {activeModeInfo.description}
+                      </p>
+                    </div>
+
+                    {/* Table Specification Badges */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-2 rounded-xl bg-black/60 border border-white/10 text-[10px] font-mono">
+                      <div className="text-center p-1 rounded bg-white/5">
+                        <div className="text-zinc-400 text-[9px] uppercase">Seats</div>
+                        <div className="font-bold text-white">{config.numPlayers}-Max</div>
+                      </div>
+                      <div className="text-center p-1 rounded bg-white/5">
+                        <div className="text-zinc-400 text-[9px] uppercase">Blinds</div>
+                        <div className="font-bold text-gold">£{config.smallBlind}/£{config.bigBlind}</div>
+                      </div>
+                      <div className="text-center p-1 rounded bg-white/5">
+                        <div className="text-zinc-400 text-[9px] uppercase">Stack</div>
+                        <div className="font-bold text-emerald-400">{config.startingBigBlinds} BB</div>
+                      </div>
+                      <div className="text-center p-1 rounded bg-white/5">
+                        <div className="text-zinc-400 text-[9px] uppercase">AI Level</div>
+                        <div className="font-bold text-amber-300 uppercase">{config.difficulty}</div>
+                      </div>
+                    </div>
+
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={dealNewHand}
+                        className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-[#ffd700] via-[#ffe578] to-[#cfb53b] text-black font-black uppercase tracking-wider text-xs shadow-[0_0_25px_rgba(212,175,55,0.5)] hover:brightness-110 active:scale-95 transition cursor-pointer"
+                      >
+                        {config.gameMode === 'tournament-eliminator'
+                          ? 'Start Full Game Tournament (Winner Takes All) 🏆'
+                          : 'Deal Training Hand →'}
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -3661,11 +3610,33 @@ export default function BotTrainerArena({
                 </div>
 
                 {!latestFeedback ? (
-                  <div className="p-4 rounded-xl bg-black/50 border border-white/10 text-center text-xs text-zinc-400">
-                    Act on the table (<strong className="text-red-400">Fold</strong>,{' '}
-                    <strong className="text-sky-400">Check</strong>,{' '}
-                    <strong className="text-emerald-400">Call</strong>, or{' '}
-                    <strong className="text-gold">Raise</strong>) to receive instant plain-English Coach Grading & advice.
+                  <div className="p-3.5 rounded-xl bg-black/50 border border-white/10 text-xs text-zinc-300 space-y-1">
+                    {street === 'Waiting' ? (
+                      <div className="text-center text-zinc-400 py-1">
+                        <span className="text-gold font-bold">Table Ready:</span> Click <strong className="text-gold">Deal Hand</strong> above to start and receive real-time coach advice on every street.
+                      </div>
+                    ) : hero && !hero.folded && actingPlayerId === 'hero' ? (
+                      <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-200">
+                        <div className="font-bold flex items-center gap-1.5 text-xs text-emerald-300 mb-0.5">
+                          <span>🎯</span>
+                          <span>Your Turn to Act ({hero.position})</span>
+                        </div>
+                        <div className="text-[11px] text-zinc-300">
+                          Review your Win Chance vs Call Price above, then choose Fold, Check/Call, or Raise. Coach grading will evaluate your decision instantly.
+                        </div>
+                      </div>
+                    ) : hero && hero.folded ? (
+                      <div className="text-center text-zinc-400 py-1">
+                        You folded this hand. Waiting for bots to conclude the street.
+                      </div>
+                    ) : (
+                      <div className="text-center text-zinc-400 py-1">
+                        Act on the table (<strong className="text-red-400">Fold</strong>,{' '}
+                        <strong className="text-sky-400">Check</strong>,{' '}
+                        <strong className="text-emerald-400">Call</strong>, or{' '}
+                        <strong className="text-gold">Raise</strong>) to receive instant Coach Grading & advice.
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-2.5 animate-in fade-in duration-200">
@@ -3700,7 +3671,7 @@ export default function BotTrainerArena({
                 )}
               </div>
 
-              {/* 3. Live Table Action Timeline (Running commentary & hand action ticker) */}
+              {/* 3. Live Table Action Timeline (Expandable & Collapsible to protect Coach Advice visibility) */}
               <div className="pt-3 border-t border-white/10 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
@@ -3709,172 +3680,220 @@ export default function BotTrainerArena({
                       Table Action Timeline
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-zinc-400">
-                      Hand #{handNumber || 1}
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.2 rounded bg-black/60 text-[10px] font-mono text-zinc-400 border border-white/10">
+                      H#{handNumber || 1}
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-gold/15 border border-gold/40 text-gold font-mono font-bold text-[10px]">
-                      Pot: £{pot.toLocaleString()}
+                      £{pot.toLocaleString()}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-zinc-300 text-[10px] font-bold border border-white/10 transition"
+                      title={isTimelineExpanded ? 'Collapse action timeline' : 'Expand full action timeline'}
+                    >
+                      <span>{isTimelineExpanded ? 'Collapse' : `Expand (${actionTimeline.length})`}</span>
+                      {isTimelineExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                    </button>
                   </div>
                 </div>
 
-                <div className="max-h-[300px] overflow-y-auto space-y-1.5 pr-1 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-                  {actionTimeline.length === 0 ? (
-                    <div className="p-3 rounded-xl bg-black/40 border border-white/5 text-center text-xs text-zinc-500">
-                      Hand starting... Actions will stream here in real-time as players act.
+                {/* Collapsed Compact Preview Row */}
+                {!isTimelineExpanded ? (
+                  actionTimeline.length === 0 ? (
+                    <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 text-center text-[11px] text-zinc-500">
+                      Hand starting... Actions will stream here in real-time.
                     </div>
                   ) : (
-                    actionTimeline.map((entry) => {
-                      const badgeMeta = getTimelineBadgeMeta(entry.type, entry.actionText);
-                      const isShowdown = entry.type === 'showdown';
-                      const isDeal = entry.type === 'deal';
-
-                      if (isDeal) {
-                        return (
-                          <div
-                            key={entry.id}
-                            className="py-1 px-2.5 rounded-lg bg-indigo-950/40 border border-indigo-500/30 text-center flex items-center justify-between gap-2"
-                          >
-                            <span className="text-[10px] font-mono font-black text-indigo-300 uppercase tracking-widest flex items-center gap-1">
-                              <span>──</span>
-                              <span>{entry.actionText}</span>
-                              <span>──</span>
-                            </span>
-                            {entry.cards && entry.cards.length > 0 && (
-                              <div className="flex items-center gap-1">
-                                {entry.cards.map((c, i) => {
-                                  let pillClass = 'bg-zinc-900 text-zinc-200 border-zinc-600';
-                                  if (fourColorDeck) {
-                                    if (c.suit === '♠') pillClass = 'bg-zinc-900 text-zinc-200 border-zinc-600';
-                                    else if (c.suit === '♥') pillClass = 'bg-red-950/60 text-red-300 border-red-500/40';
-                                    else if (c.suit === '♦') pillClass = 'bg-blue-950/60 text-blue-300 border-blue-500/40';
-                                    else if (c.suit === '♣') pillClass = 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40';
-                                  } else {
-                                    pillClass = (c.suit === '♥' || c.suit === '♦')
-                                      ? 'bg-red-950/60 text-red-300 border-red-500/40'
-                                      : 'bg-zinc-900 text-zinc-200 border-zinc-600';
-                                  }
-                                  return (
-                                    <span
-                                      key={i}
-                                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black border ${pillClass}`}
-                                    >
-                                      {c.rank}{c.suit}
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      }
-
-                      if (isShowdown) {
-                        return (
-                          <div
-                            key={entry.id}
-                            className="p-2.5 rounded-xl bg-gradient-to-r from-amber-950/70 via-black to-amber-950/70 border border-gold/60 space-y-1 shadow-[0_0_15px_rgba(212,175,55,0.2)]"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="px-2 py-0.5 rounded-full bg-gold text-black text-[9px] font-black uppercase tracking-wider">
-                                🏆 {badgeMeta.label}
-                              </span>
-                              <span className="text-xs font-mono font-black text-gold">
-                                £{entry.amount?.toLocaleString()} Pot
-                              </span>
-                            </div>
-                            <div className="text-xs font-black text-white">
-                              {entry.playerName} won with {entry.actionText}
-                            </div>
-                            {entry.cards && entry.cards.length > 0 && (
-                              <div className="flex items-center gap-1 mt-1">
-                                <span className="text-[10px] text-zinc-400">Winning Hand:</span>
-                                {entry.cards.map((c, i) => {
-                                  let pillClass = 'bg-zinc-900 text-zinc-200 border-zinc-600';
-                                  if (fourColorDeck) {
-                                    if (c.suit === '♠') pillClass = 'bg-zinc-900 text-zinc-200 border-zinc-600';
-                                    else if (c.suit === '♥') pillClass = 'bg-red-950/60 text-red-300 border-red-500/40';
-                                    else if (c.suit === '♦') pillClass = 'bg-blue-950/60 text-blue-300 border-blue-500/40';
-                                    else if (c.suit === '♣') pillClass = 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40';
-                                  } else {
-                                    pillClass = (c.suit === '♥' || c.suit === '♦')
-                                      ? 'bg-red-950/60 text-red-300 border-red-500/40'
-                                      : 'bg-zinc-900 text-zinc-200 border-zinc-600';
-                                  }
-                                  return (
-                                    <span
-                                      key={i}
-                                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black border ${pillClass}`}
-                                    >
-                                      {c.rank}{c.suit}
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <div
-                          key={entry.id}
-                          className={`p-2 rounded-xl border text-xs transition-all ${
-                            entry.isHero
-                              ? 'bg-emerald-950/30 border-emerald-500/40'
-                              : 'bg-black/50 border-white/5'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-1.5">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              {entry.avatar && (
-                                <img
-                                  src={entry.avatar}
-                                  alt={entry.playerName}
-                                  className="w-5 h-5 rounded-full border border-white/20 shrink-0"
-                                />
-                              )}
-                              <span
-                                className={`truncate font-bold text-xs ${
-                                  entry.isHero ? 'text-emerald-300' : 'text-white'
-                                }`}
-                              >
-                                {entry.playerName}
-                                {entry.isHero && (
-                                  <span className="text-[10px] text-emerald-400 font-normal ml-1">
-                                    (You)
-                                  </span>
-                                )}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${badgeMeta.bg}`}
-                              >
-                                {badgeMeta.label}
-                                {entry.amount ? ` £${entry.amount}` : ''}
-                              </span>
-                              {entry.potAfter !== undefined && (
-                                <span className="text-[10px] font-mono text-zinc-400">
-                                  (Pot: £{entry.potAfter})
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {entry.reasoning && (
-                            <div className="mt-1 text-[10px] text-zinc-400 italic pl-6 border-l border-white/10">
-                              "{entry.reasoning}"
-                            </div>
-                          )}
+                    <div
+                      onClick={() => setIsTimelineExpanded(true)}
+                      className="p-2 rounded-xl bg-black/45 border border-white/10 hover:border-gold/40 text-xs flex items-center justify-between gap-2 cursor-pointer transition group"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
+                        <span className="text-[11px] text-zinc-300 truncate">
+                          Latest: <strong className="text-white">{actionTimeline[actionTimeline.length - 1].playerName}</strong> {actionTimeline[actionTimeline.length - 1].actionText}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-gold font-bold group-hover:underline shrink-0 flex items-center gap-0.5">
+                        <span>Show full history ({actionTimeline.length})</span>
+                        <ChevronDown size={10} />
+                      </span>
+                    </div>
+                  )
+                ) : (
+                  /* Expanded Full Timeline */
+                  <div className="space-y-1.5">
+                    <div className="max-h-[260px] overflow-y-auto space-y-1.5 pr-1 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                      {actionTimeline.length === 0 ? (
+                        <div className="p-3 rounded-xl bg-black/40 border border-white/5 text-center text-xs text-zinc-500">
+                          Hand starting... Actions will stream here in real-time as players act.
                         </div>
-                      );
-                    })
-                  )}
-                  <div ref={timelineEndRef} />
-                </div>
+                      ) : (
+                        actionTimeline.map((entry) => {
+                          const badgeMeta = getTimelineBadgeMeta(entry.type, entry.actionText);
+                          const isShowdown = entry.type === 'showdown';
+                          const isDeal = entry.type === 'deal';
+
+                          if (isDeal) {
+                            return (
+                              <div
+                                key={entry.id}
+                                className="py-1 px-2.5 rounded-lg bg-indigo-950/40 border border-indigo-500/30 text-center flex items-center justify-between gap-2"
+                              >
+                                <span className="text-[10px] font-mono font-black text-indigo-300 uppercase tracking-widest flex items-center gap-1">
+                                  <span>──</span>
+                                  <span>{entry.actionText}</span>
+                                  <span>──</span>
+                                </span>
+                                {entry.cards && entry.cards.length > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    {entry.cards.map((c, i) => {
+                                      let pillClass = 'bg-zinc-900 text-zinc-200 border-zinc-600';
+                                      if (fourColorDeck) {
+                                        if (c.suit === '♠') pillClass = 'bg-zinc-900 text-zinc-200 border-zinc-600';
+                                        else if (c.suit === '♥') pillClass = 'bg-red-950/60 text-red-300 border-red-500/40';
+                                        else if (c.suit === '♦') pillClass = 'bg-blue-950/60 text-blue-300 border-blue-500/40';
+                                        else if (c.suit === '♣') pillClass = 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40';
+                                      } else {
+                                        pillClass = (c.suit === '♥' || c.suit === '♦')
+                                          ? 'bg-red-950/60 text-red-300 border-red-500/40'
+                                          : 'bg-zinc-900 text-zinc-200 border-zinc-600';
+                                      }
+                                      return (
+                                        <span
+                                          key={i}
+                                          className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black border ${pillClass}`}
+                                        >
+                                          {c.rank}{c.suit}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+
+                          if (isShowdown) {
+                            return (
+                              <div
+                                key={entry.id}
+                                className="p-2.5 rounded-xl bg-gradient-to-r from-amber-950/70 via-black to-amber-950/70 border border-gold/60 space-y-1 shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="px-2 py-0.5 rounded-full bg-gold text-black text-[9px] font-black uppercase tracking-wider">
+                                    🏆 {badgeMeta.label}
+                                  </span>
+                                  <span className="text-xs font-mono font-black text-gold">
+                                    £{entry.amount?.toLocaleString()} Pot
+                                  </span>
+                                </div>
+                                <div className="text-xs font-black text-white">
+                                  {entry.playerName} won with {entry.actionText}
+                                </div>
+                                {entry.cards && entry.cards.length > 0 && (
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <span className="text-[10px] text-zinc-400">Winning Hand:</span>
+                                    {entry.cards.map((c, i) => {
+                                      let pillClass = 'bg-zinc-900 text-zinc-200 border-zinc-600';
+                                      if (fourColorDeck) {
+                                        if (c.suit === '♠') pillClass = 'bg-zinc-900 text-zinc-200 border-zinc-600';
+                                        else if (c.suit === '♥') pillClass = 'bg-red-950/60 text-red-300 border-red-500/40';
+                                        else if (c.suit === '♦') pillClass = 'bg-blue-950/60 text-blue-300 border-blue-500/40';
+                                        else if (c.suit === '♣') pillClass = 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40';
+                                      } else {
+                                        pillClass = (c.suit === '♥' || c.suit === '♦')
+                                          ? 'bg-red-950/60 text-red-300 border-red-500/40'
+                                          : 'bg-zinc-900 text-zinc-200 border-zinc-600';
+                                      }
+                                      return (
+                                        <span
+                                          key={i}
+                                          className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-black border ${pillClass}`}
+                                        >
+                                          {c.rank}{c.suit}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div
+                              key={entry.id}
+                              className={`p-2 rounded-xl border text-xs transition-all ${
+                                entry.isHero
+                                  ? 'bg-emerald-950/30 border-emerald-500/40'
+                                  : 'bg-black/50 border-white/5'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1.5">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  {entry.avatar && (
+                                    <img
+                                      src={entry.avatar}
+                                      alt={entry.playerName}
+                                      className="w-5 h-5 rounded-full border border-white/20 shrink-0"
+                                    />
+                                  )}
+                                  <span
+                                    className={`truncate font-bold text-xs ${
+                                      entry.isHero ? 'text-emerald-300' : 'text-white'
+                                    }`}
+                                  >
+                                    {entry.playerName}
+                                    {entry.isHero && (
+                                      <span className="text-[10px] text-emerald-400 font-normal ml-1">
+                                        (You)
+                                      </span>
+                                    )}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${badgeMeta.bg}`}
+                                  >
+                                    {badgeMeta.label}
+                                    {entry.amount ? ` £${entry.amount}` : ''}
+                                  </span>
+                                  {entry.potAfter !== undefined && (
+                                    <span className="text-[10px] font-mono text-zinc-400">
+                                      (Pot: £{entry.potAfter})
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {entry.reasoning && (
+                                <div className="mt-1 text-[10px] text-zinc-400 italic pl-6 border-l border-white/10">
+                                  "{entry.reasoning}"
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                      <div ref={timelineEndRef} />
+                    </div>
+
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsTimelineExpanded(false)}
+                        className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 transition"
+                      >
+                        <span>Collapse Timeline</span>
+                        <ChevronUp size={10} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ) : rightDockTab === 'ladder' ? (
