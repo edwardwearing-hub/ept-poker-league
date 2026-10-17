@@ -4,6 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, X, ChevronRight, AlertTriangle, Eye, Sparkles, UserPlus, Users, Check, Shield, Music, Volume2 } from 'lucide-react';
 import { WALK_UP_THEMES, WalkUpTheme, playWalkUpAudio, savePlayerWalkUpTheme, getPlayerWalkUpTheme } from '@/lib/walkup-audio';
+import {
+    loadTrackerStatsForPlayer,
+    transferGuestChipsToPlayer,
+} from '@/lib/poker-trainer/tracker';
 
 interface Player {
     name: string;
@@ -81,6 +85,20 @@ export default function LockerPINModal({ onSuccess, onClose, initialTab = 'roste
             const data = await res.json();
 
             if (res.ok && data.success) {
+                // If there are guest winnings, transfer them to this player
+                transferGuestChipsToPlayer(selectedPlayer.name);
+                const currentStats = loadTrackerStatsForPlayer(selectedPlayer.name);
+
+                // Immediately sync to server now that we have an active verified session
+                fetch('/api/player/academy-profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ name: selectedPlayer.name, stats: currentStats }),
+                }).catch(() => {});
+
                 savePlayerWalkUpTheme(selectedPlayer.name, selectedTheme);
                 localStorage.setItem('ept_active_player_v2', selectedPlayer.name);
                 window.dispatchEvent(new Event('storage'));
@@ -131,6 +149,19 @@ export default function LockerPINModal({ onSuccess, onClose, initialTab = 'roste
             const data = await res.json();
 
             if (res.ok && data.success) {
+                // If there are guest winnings, transfer them to this player
+                transferGuestChipsToPlayer(cleanName);
+                const currentStats = loadTrackerStatsForPlayer(cleanName);
+
+                fetch('/api/player/academy-profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ name: cleanName, stats: currentStats }),
+                }).catch(() => {});
+
                 savePlayerWalkUpTheme(cleanName, selectedTheme);
                 localStorage.setItem('ept_active_player_v2', cleanName);
                 window.dispatchEvent(new Event('storage'));

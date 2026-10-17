@@ -21,14 +21,18 @@ import {
   Maximize2,
   Minimize2,
   Gamepad2,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import {
   getActivePlayerName,
   loadTrackerStatsForPlayer,
   saveTrackerStatsForPlayer,
+  transferGuestChipsToPlayer,
+  getUnclaimedGuestWinnings,
 } from '@/lib/poker-trainer/tracker';
 import { isSoundEnabled, setSoundEnabled } from '@/lib/vegas/VegasAudio';
-import { computeTotalAcademyChips } from '@/lib/poker-trainer/leaderboard';
+import { computeTotalAcademyChips, LEAGUE_PLAYERS } from '@/lib/poker-trainer/leaderboard';
 import { CareerTrackerStats } from '@/lib/poker-trainer/types';
 import { VEGAS_GAMES_CATALOG, VegasGameTutorial } from './vegas-rules-db';
 import VegasTutorialModal from './VegasTutorialModal';
@@ -67,6 +71,7 @@ export default function VegasLobby() {
   const [showBailoutModal, setShowBailoutModal] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [theaterMode, setTheaterMode] = useState(true);
+  const [authSyncNotice, setAuthSyncNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (tabParam === 'arcade') {
@@ -82,14 +87,18 @@ export default function VegasLobby() {
     const stats = loadTrackerStatsForPlayer(current);
     setTrackerStats(stats);
 
-    // Sync from server if registered
+    // Sync from server if registered, but NEVER downgrade local bankroll
     if (current && current !== 'Guest Trainee') {
       fetch(`/api/player/academy-profile?name=${encodeURIComponent(current)}`)
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data && data.stats) {
-            setTrackerStats(data.stats);
-            saveTrackerStatsForPlayer(data.stats, current);
+            const serverTotal = computeTotalAcademyChips(data.stats);
+            const localTotal = computeTotalAcademyChips(stats);
+            if (serverTotal >= localTotal) {
+              setTrackerStats(data.stats);
+              saveTrackerStatsForPlayer(data.stats, current);
+            }
           }
         })
         .catch(() => {});
@@ -113,6 +122,38 @@ export default function VegasLobby() {
     !activePlayerName ||
     activePlayerName.toLowerCase().trim() === 'guest trainee' ||
     activePlayerName.toLowerCase().startsWith('guest');
+
+  const handleSwitchPlayer = (newPlayer: string) => {
+    if (newPlayer === '__add_new__') {
+      window.dispatchEvent(new CustomEvent('ept_open_login'));
+      return;
+    }
+
+    // If player had winnings while in guest mode, transfer them to the chosen player!
+    if (isGuest && totalChips > 10000 && newPlayer !== 'Guest Trainee') {
+      const transferRes = transferGuestChipsToPlayer(newPlayer);
+      if (transferRes.transferredChips > 0) {
+        setAuthSyncNotice(
+          `🎉 Linked +£${transferRes.transferredChips.toLocaleString()} in Vegas winnings to ${newPlayer}! Total: £${transferRes.newTotalChips.toLocaleString()}.`
+        );
+      }
+    }
+
+    setActivePlayerName(newPlayer);
+    if (newPlayer !== 'Guest Trainee') {
+      try {
+        localStorage.setItem('ept_active_player_v2', newPlayer);
+      } catch {}
+    } else {
+      try {
+        localStorage.removeItem('ept_active_player_v2');
+      } catch {}
+    }
+
+    const nextStats = loadTrackerStatsForPlayer(newPlayer);
+    setTrackerStats(nextStats);
+    window.dispatchEvent(new Event('storage'));
+  };
 
   // Handle Bankroll Update across all Vegas games with automatic bailout rule
   const handleUpdateBankroll = (delta: number) => {
@@ -139,9 +180,20 @@ export default function VegasLobby() {
       if (activePlayerName && !isGuest) {
         fetch('/api/player/academy-profile', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
           body: JSON.stringify({ name: activePlayerName, stats: next }),
-        }).catch(() => {});
+        })
+          .then((res) => {
+            if (res.status === 401) {
+              setAuthSyncNotice('Saved on this device. Sign in with your PIN to sync to the public Academy Leaderboard.');
+            } else if (res.ok) {
+              setAuthSyncNotice(null);
+            }
+          })
+          .catch(() => {});
       }
 
       return next;
@@ -172,13 +224,41 @@ export default function VegasLobby() {
           </p>
         </div>
 
-        {/* Player Bankroll Status HUD */}
-        <div className="bg-black/80 border-2 border-gold/40 rounded-2xl p-3 sm:p-4 flex flex-col items-center sm:items-start gap-2 w-full lg:w-auto shrink-0 min-w-0 sm:min-w-[260px] shadow-2xl">
-          <div className="text-[10px] text-zinc-400 uppercase font-bold flex items-center justify-between w-full">
-            <span>Player Bankroll:</span>
-            <span className={`font-mono font-black ${isGuest ? 'text-amber-400' : 'text-gold'}`}>
-              {isGuest ? 'Guest (Temporary)' : activePlayerName}
-            </span>
+        {/* Player Bankroll Status HUD with Identity Selector */}
+        <div className="bg-black/85 border-2 border-gold/40 rounded-2xl p-3 sm:p-4 flex flex-col items-center sm:items-start gap-2 w-full lg:w-auto shrink-0 min-w-0 sm:min-w-[280px] shadow-2xl">
+          <div className="flex items-center justify-between w-full gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div
+                className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                  !isGuest
+                    ? 'bg-[#00FF41] shadow-[0_0_8px_#00FF41]'
+                    : 'bg-amber-400 shadow-[0_0_8px_#f59e0b]'
+                }`}
+              />
+              <span className="text-[10px] text-zinc-400 uppercase font-black tracking-wider truncate">
+                {!isGuest ? 'Linked Player:' : 'Status:'}
+              </span>
+            </div>
+
+            {/* Quick Player Switcher Dropdown */}
+            <select
+              value={isGuest ? 'Guest Trainee' : activePlayerName}
+              onChange={(e) => handleSwitchPlayer(e.target.value)}
+              className={`bg-zinc-950/90 border border-white/20 text-xs font-mono font-black rounded-lg px-2 py-0.5 focus:outline-none cursor-pointer truncate max-w-[150px] sm:max-w-[180px] ${
+                !isGuest ? 'text-gold' : 'text-amber-400'
+              }`}
+              title="Select your League Player handle to link your chips"
+            >
+              <option value="Guest Trainee">Guest Trainee (Unlinked)</option>
+              <optgroup label="EPT League Players">
+                {LEAGUE_PLAYERS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </optgroup>
+              <option value="__add_new__">+ Login with PIN...</option>
+            </select>
           </div>
 
           <div className="flex items-center gap-3 w-full">
@@ -221,17 +301,80 @@ export default function VegasLobby() {
             </button>
 
             <Link
-              href="/academy"
-              className="text-center py-1 px-2 rounded-lg text-[10px] font-bold text-zinc-400 hover:text-gold transition border border-white/5 hover:border-gold/30"
+              href="/academy?tab=leaderboard"
+              className="text-center py-1 px-2.5 rounded-lg text-[10px] font-black text-zinc-300 hover:text-gold transition border border-white/10 hover:border-gold/40 bg-white/5"
             >
-              ← Leaderboard
+              ← Academy Leaderboard
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Guest Mode Alert Banner */}
-      {isGuest && (
+      {/* Auth / Sync Notification Toast */}
+      {authSyncNotice && (
+        <div className="bg-gradient-to-r from-blue-950/80 via-black to-blue-950/80 border border-blue-500/60 rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs text-blue-200 shadow-lg">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+            <span>{authSyncNotice}</span>
+          </div>
+          <button
+            onClick={() => setAuthSyncNotice(null)}
+            className="text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-white/10 shrink-0"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Unlinked Guest Winnings Banner: Prompts player to claim their slot machine bankroll! */}
+      {isGuest && totalChips > 10000 && (
+        <div className="bg-gradient-to-r from-emerald-950/90 via-black to-emerald-950/90 border-2 border-emerald-400/80 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_0_30px_rgba(16,185,129,0.35)] animate-in fade-in">
+          <div className="flex items-center gap-3.5 text-xs text-emerald-100">
+            <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 flex items-center justify-center text-lg font-black shrink-0 shadow">
+              🎰
+            </div>
+            <div>
+              <div className="font-black text-sm uppercase text-emerald-300 tracking-wide flex items-center gap-2">
+                <span>Unlinked Vegas Winnings Detected!</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold">
+                  +£{(totalChips - 10000).toLocaleString()} PROFIT
+                </span>
+              </div>
+              <p className="text-zinc-300 text-xs mt-0.5">
+                You reached <strong className="text-gold font-mono">£{totalChips.toLocaleString()}</strong> on the slot machine! Select your League Player name below to link and claim these chips on the Academy Leaderboard:
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+            <select
+              value=""
+              onChange={(e) => {
+                if (e.target.value) handleSwitchPlayer(e.target.value);
+              }}
+              className="px-3 py-2 rounded-xl bg-zinc-950 border border-emerald-500/70 text-emerald-300 text-xs font-black focus:outline-none cursor-pointer flex-1 md:flex-initial"
+            >
+              <option value="" disabled>
+                Claim to My Player...
+              </option>
+              {LEAGUE_PLAYERS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('ept_open_login'))}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black uppercase text-xs tracking-wider shadow hover:brightness-110 active:scale-95 transition whitespace-nowrap"
+            >
+              Sign In with PIN →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Guest Mode Alert Banner (Standard) */}
+      {isGuest && totalChips <= 10000 && (
         <div className="bg-gradient-to-r from-amber-950/70 via-black to-amber-950/70 border border-amber-500/50 rounded-2xl px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
           <div className="flex items-center gap-3 text-xs text-amber-200">
             <span className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center justify-center text-sm font-black shrink-0">
@@ -240,7 +383,7 @@ export default function VegasLobby() {
             <div>
               <span className="font-black uppercase text-amber-300">Guest Play Mode: </span>
               <span className="text-zinc-300">
-                You are playing with a temporary £10,000 roll. To save your bankroll and appear on the Challenger Leaderboard, claim a player handle!
+                You are playing with a temporary £10,000 roll. To link your winnings to your League Player profile and climb the Academy Leaderboard, select your player above!
               </span>
             </div>
           </div>

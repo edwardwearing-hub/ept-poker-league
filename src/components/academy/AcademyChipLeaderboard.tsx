@@ -27,7 +27,13 @@ import {
   AcademyLeaderboardEntry,
   AcademyTrainingLevel,
   BASE_ACADEMY_BANKROLL,
+  computeTotalAcademyChips,
 } from '@/lib/poker-trainer/leaderboard';
+import {
+  loadTrackerStatsForPlayer,
+  getUnclaimedGuestWinnings,
+  transferGuestChipsToPlayer,
+} from '@/lib/poker-trainer/tracker';
 import { ScenarioPreset } from '@/lib/poker-trainer/types';
 import InfoTooltip from './InfoTooltip';
 
@@ -50,6 +56,11 @@ export default function AcademyChipLeaderboard({
   const [leagueDivision, setLeagueDivision] = useState<LeagueDivision>('challengers');
   const [challengerFilter, setChallengerFilter] = useState<ChallengerFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasLocalUnsyncedWinnings, setHasLocalUnsyncedWinnings] = useState(false);
+  const [localChipDelta, setLocalChipDelta] = useState(0);
+  const [unclaimedGuestChips, setUnclaimedGuestChips] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
   const [playerStanding, setPlayerStanding] = useState<{
     entry: AcademyLeaderboardEntry | null;
     behindLeaderChips: number;
@@ -57,12 +68,51 @@ export default function AcademyChipLeaderboard({
     chipsToNextRank: number;
   } | null>(null);
 
-  useEffect(() => {
+  const isGuest =
+    !activePlayerName ||
+    activePlayerName.toLowerCase().trim() === 'guest trainee' ||
+    activePlayerName.toLowerCase().startsWith('guest');
+
+  const loadLeaderboardData = () => {
     fetch(`/api/player/academy-leaderboard?name=${encodeURIComponent(activePlayerName)}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && Array.isArray(data.leaderboard)) {
-          setLeaderboard(data.leaderboard);
+          let list: AcademyLeaderboardEntry[] = [...data.leaderboard];
+
+          // Check if local device has un-synced winnings (e.g. from slot machine)
+          if (activePlayerName && !isGuest) {
+            const localStats = loadTrackerStatsForPlayer(activePlayerName);
+            const localChips = computeTotalAcademyChips(localStats);
+            const matchIdx = list.findIndex(
+              (e) => e.name.toLowerCase().trim() === activePlayerName.toLowerCase().trim()
+            );
+
+            if (matchIdx !== -1 && localChips > list[matchIdx].chips) {
+              const delta = localChips - list[matchIdx].chips;
+              setHasLocalUnsyncedWinnings(true);
+              setLocalChipDelta(delta);
+              list[matchIdx] = {
+                ...list[matchIdx],
+                chips: localChips,
+                netChipsWon: (localStats.netChipsWon || 0) + (localStats.bountyCashWon || 0),
+              };
+              // Re-sort with local chips
+              list.sort((a, b) => {
+                if (b.chips !== a.chips) return b.chips - a.chips;
+                if (b.handsPlayed !== a.handsPlayed) return b.handsPlayed - a.handsPlayed;
+                return b.coachGrade - a.coachGrade;
+              });
+              list.forEach((entry, idx) => {
+                entry.rank = idx + 1;
+              });
+            } else {
+              setHasLocalUnsyncedWinnings(false);
+              setLocalChipDelta(0);
+            }
+          }
+
+          setLeaderboard(list);
           if (data.playerStanding) {
             setPlayerStanding(data.playerStanding);
           }
@@ -70,12 +120,63 @@ export default function AcademyChipLeaderboard({
       })
       .catch((err) => console.error('Failed to load academy leaderboard:', err))
       .finally(() => setLoading(false));
+
+    setUnclaimedGuestChips(getUnclaimedGuestWinnings());
+  };
+
+  useEffect(() => {
+    loadLeaderboardData();
   }, [activePlayerName]);
 
-  const isGuest =
-    !activePlayerName ||
-    activePlayerName.toLowerCase().trim() === 'guest trainee' ||
-    activePlayerName.toLowerCase().startsWith('guest');
+  const handleClaimGuestChips = () => {
+    if (!activePlayerName || isGuest) {
+      window.dispatchEvent(new CustomEvent('ept_open_login'));
+      return;
+    }
+    const res = transferGuestChipsToPlayer(activePlayerName);
+    setUnclaimedGuestChips(0);
+    setSyncFeedback(
+      `🎉 Claimed +£${res.transferredChips.toLocaleString()} in guest session winnings to ${activePlayerName}! Total Bankroll: £${res.newTotalChips.toLocaleString()}.`
+    );
+    loadLeaderboardData();
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  const handleSyncToCloud = async () => {
+    if (!activePlayerName || isGuest) {
+      window.dispatchEvent(new CustomEvent('ept_open_login'));
+      return;
+    }
+    setIsSyncing(true);
+    setSyncFeedback(null);
+    try {
+      const localStats = loadTrackerStatsForPlayer(activePlayerName);
+      const res = await fetch('/api/player/academy-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ name: activePlayerName, stats: localStats }),
+      });
+      if (res.status === 401) {
+        setSyncFeedback(
+          'PIN authentication required: enter your 4-digit PIN to authorize saving to the public leaderboard.'
+        );
+        window.dispatchEvent(new CustomEvent('ept_open_login'));
+      } else if (res.ok) {
+        setHasLocalUnsyncedWinnings(false);
+        setSyncFeedback('✅ Successfully published bankroll to the public Academy Leaderboard!');
+        loadLeaderboardData();
+      } else {
+        setSyncFeedback('Could not sync to cloud. Please check connection and try again.');
+      }
+    } catch {
+      setSyncFeedback('Network error while syncing to cloud.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const userEntry = useMemo(() => {
     return leaderboard.find(
@@ -269,6 +370,76 @@ export default function AcademyChipLeaderboard({
           </div>
         ) : null}
       </div>
+
+      {/* Sync Feedback Toast */}
+      {syncFeedback && (
+        <div className="bg-gradient-to-r from-blue-950/90 via-black to-blue-950/90 border border-blue-500/60 rounded-2xl p-3 flex items-center justify-between gap-3 text-xs text-blue-200 shadow-lg animate-in fade-in">
+          <span>{syncFeedback}</span>
+          <button
+            onClick={() => setSyncFeedback(null)}
+            className="text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-white/10 shrink-0"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Local Device Bankroll Ahead Banner: Reconciles offline/Vegas slot winnings */}
+      {hasLocalUnsyncedWinnings && (
+        <div className="bg-gradient-to-r from-emerald-950/90 via-black to-emerald-950/90 border-2 border-emerald-500/70 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_0_30px_rgba(16,185,129,0.3)] animate-in fade-in">
+          <div className="flex items-center gap-3.5 text-xs text-emerald-100">
+            <span className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 flex items-center justify-center text-lg font-black shrink-0 shadow">
+              ⚡
+            </span>
+            <div>
+              <div className="font-black text-sm uppercase text-emerald-300 flex items-center gap-2">
+                <span>Local Device Winnings Reconciled</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold">
+                  +£{localChipDelta.toLocaleString()} CHIPS
+                </span>
+              </div>
+              <p className="text-zinc-300 text-xs mt-0.5">
+                Your device has <strong className="text-gold font-mono">£{(userEntry?.chips || 0).toLocaleString()}</strong> total chips (including Slot Machine & Vegas play). Your updated position is shown below! Publish now to lock in your rank on the cloud server.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleSyncToCloud}
+            disabled={isSyncing}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black uppercase text-xs tracking-wider shadow hover:brightness-110 active:scale-95 transition whitespace-nowrap disabled:opacity-50 shrink-0"
+          >
+            {isSyncing ? 'Syncing...' : 'Publish to Cloud Leaderboard →'}
+          </button>
+        </div>
+      )}
+
+      {/* Unclaimed Guest Vegas Winnings Banner */}
+      {unclaimedGuestChips > 0 && (
+        <div className="bg-gradient-to-r from-purple-950/90 via-black to-purple-950/90 border-2 border-purple-500/70 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_0_25px_rgba(168,85,247,0.3)] animate-in fade-in">
+          <div className="flex items-center gap-3.5 text-xs text-purple-100">
+            <span className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/50 flex items-center justify-center text-lg font-black shrink-0 shadow">
+              🎰
+            </span>
+            <div>
+              <div className="font-black text-sm uppercase text-purple-300 flex items-center gap-2">
+                <span>Unclaimed Vegas Slot Winnings</span>
+                <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-mono font-bold">
+                  +£{unclaimedGuestChips.toLocaleString()}
+                </span>
+              </div>
+              <p className="text-zinc-300 text-xs mt-0.5">
+                You accumulated winnings on the Slot Machine during an unlinked session. Claim them now to add them directly to <strong className="text-gold">{isGuest ? 'your player profile' : activePlayerName}</strong>!
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleClaimGuestChips}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-black uppercase text-xs tracking-wider shadow hover:brightness-110 active:scale-95 transition whitespace-nowrap shrink-0"
+          >
+            Claim +£{unclaimedGuestChips.toLocaleString()} to {isGuest ? 'My Player' : activePlayerName} →
+          </button>
+        </div>
+      )}
 
       {/* 2-League Navigation Tabs */}
       <div className="bg-black/60 p-2 rounded-2xl border border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-lg">

@@ -25,6 +25,7 @@ import {
   loadTrackerStatsForPlayer,
   resetTrackerStats,
   saveTrackerStatsForPlayer,
+  transferGuestChipsToPlayer,
 } from '@/lib/poker-trainer/tracker';
 import {
   ACADEMY_LICENSE_TESTS,
@@ -106,14 +107,18 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
     const localStats = loadTrackerStatsForPlayer(effectivePlayer);
     setTrackerStats(localStats);
 
-    // Sync with server profile if available
+    // Sync with server profile if available (never downgrade higher local bankroll)
     if (effectivePlayer && effectivePlayer !== 'Guest Trainee') {
       fetch(`/api/player/academy-profile?name=${encodeURIComponent(effectivePlayer)}`)
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
-          if (data && data.stats && data.stats.handsPlayed > localStats.handsPlayed) {
-            setTrackerStats(data.stats);
-            saveTrackerStatsForPlayer(data.stats, effectivePlayer);
+          if (data && data.stats) {
+            const serverChips = computeTotalAcademyChips(data.stats);
+            const localChips = computeTotalAcademyChips(localStats);
+            if (serverChips >= localChips && data.stats.handsPlayed >= localStats.handsPlayed) {
+              setTrackerStats(data.stats);
+              saveTrackerStatsForPlayer(data.stats, effectivePlayer);
+            }
           }
         })
         .catch(() => {});
@@ -150,23 +155,37 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
       window.dispatchEvent(new CustomEvent('ept_open_login'));
       return;
     }
+
+    // If switching from guest to a league player, claim any guest session winnings
+    if (activePlayerName === 'Guest Trainee' && newPlayer !== 'Guest Trainee') {
+      transferGuestChipsToPlayer(newPlayer);
+    }
+
     setActivePlayerName(newPlayer);
     if (newPlayer !== 'Guest Trainee') {
       try {
         localStorage.setItem('ept_active_player_v2', newPlayer);
       } catch {}
+    } else {
+      try {
+        localStorage.removeItem('ept_active_player_v2');
+      } catch {}
     }
     const stats = loadTrackerStatsForPlayer(newPlayer);
     setTrackerStats(stats);
 
-    // Also check server profile
+    // Also check server profile without downgrading local bankroll
     if (newPlayer !== 'Guest Trainee') {
       fetch(`/api/player/academy-profile?name=${encodeURIComponent(newPlayer)}`)
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
-          if (data && data.stats && data.stats.handsPlayed > stats.handsPlayed) {
-            setTrackerStats(data.stats);
-            saveTrackerStatsForPlayer(data.stats, newPlayer);
+          if (data && data.stats) {
+            const serverChips = computeTotalAcademyChips(data.stats);
+            const localChips = computeTotalAcademyChips(stats);
+            if (serverChips >= localChips && data.stats.handsPlayed >= stats.handsPlayed) {
+              setTrackerStats(data.stats);
+              saveTrackerStatsForPlayer(data.stats, newPlayer);
+            }
           }
         })
         .catch(() => {});
@@ -193,7 +212,10 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
       if (activePlayerName && activePlayerName !== 'Guest Trainee') {
         fetch('/api/player/academy-profile', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
           body: JSON.stringify({ name: activePlayerName, stats: next }),
         }).catch(() => {});
       }

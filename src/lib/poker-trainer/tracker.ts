@@ -108,6 +108,8 @@ export function getActivePlayerName(): string | null {
   }
 }
 
+export const GUEST_STORAGE_KEY = 'ept_academy_guest_tracker_stats';
+
 export function isGuestPlayer(playerName?: string | null): boolean {
   if (!playerName) return true;
   const lower = playerName.toLowerCase().trim();
@@ -124,7 +126,23 @@ export function getStorageKeyForPlayer(playerName?: string | null): string {
 export function loadTrackerStatsForPlayer(playerName?: string | null): CareerTrackerStats {
   if (typeof window === 'undefined') return getInitialTrackerStats();
   if (isGuestPlayer(playerName)) {
-    return getInitialTrackerStats();
+    try {
+      const raw = localStorage.getItem(GUEST_STORAGE_KEY);
+      if (!raw) return getInitialTrackerStats();
+      const parsed = JSON.parse(raw);
+      const initial = getInitialTrackerStats();
+      return {
+        ...initial,
+        ...parsed,
+        gradeCounts: { ...initial.gradeCounts, ...(parsed.gradeCounts || {}) },
+        leakCounts: { ...initial.leakCounts, ...(parsed.leakCounts || {}) },
+        handsByMode: { ...initial.handsByMode, ...(parsed.handsByMode || {}) },
+        byPosition: { ...initial.byPosition, ...(parsed.byPosition || {}) },
+        recentFeedback: Array.isArray(parsed.recentFeedback) ? parsed.recentFeedback : [],
+      };
+    } catch {
+      return getInitialTrackerStats();
+    }
   }
   const key = getStorageKeyForPlayer(playerName);
   try {
@@ -151,8 +169,15 @@ export function saveTrackerStatsForPlayer(
   playerName?: string | null
 ): void {
   if (typeof window === 'undefined') return;
-  // If player is guest, do NOT save their stats!
-  if (isGuestPlayer(playerName)) return;
+  // If player is guest, persist to guest tracker key so session bankroll is not lost
+  if (isGuestPlayer(playerName)) {
+    try {
+      localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(stats));
+    } catch {
+      // Ignore storage quota errors
+    }
+    return;
+  }
 
   const key = getStorageKeyForPlayer(playerName);
   try {
@@ -161,6 +186,66 @@ export function saveTrackerStatsForPlayer(
   } catch {
     // Ignore storage quota errors
   }
+}
+
+/**
+ * Checks if there are positive winnings accumulated during an unlinked/guest session.
+ */
+export function getUnclaimedGuestWinnings(): number {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const guestStats = loadTrackerStatsForPlayer('Guest Trainee');
+    return Math.max(0, guestStats.netChipsWon || 0);
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Transfers chips accumulated during a guest/unlinked session into a specified player's career stats.
+ */
+export function transferGuestChipsToPlayer(targetPlayerName: string): {
+  transferredChips: number;
+  newTotalChips: number;
+} {
+  if (typeof window === 'undefined' || isGuestPlayer(targetPlayerName)) {
+    return { transferredChips: 0, newTotalChips: 0 };
+  }
+  try {
+    const guestStats = loadTrackerStatsForPlayer('Guest Trainee');
+    const guestNet = guestStats.netChipsWon || 0;
+    const playerStats = loadTrackerStatsForPlayer(targetPlayerName);
+
+    if (guestNet !== 0) {
+      playerStats.netChipsWon = (playerStats.netChipsWon || 0) + guestNet;
+      if ((guestStats.bankruptcyCount || 0) > 0) {
+        playerStats.bankruptcyCount = (playerStats.bankruptcyCount || 0) + (guestStats.bankruptcyCount || 0);
+        playerStats.bailoutChipsReceived =
+          (playerStats.bailoutChipsReceived || 0) + (guestStats.bailoutChipsReceived || 0);
+      }
+
+      saveTrackerStatsForPlayer(playerStats, targetPlayerName);
+      // Clear guest session now that it is safely linked
+      localStorage.removeItem(GUEST_STORAGE_KEY);
+
+      const base = 10000;
+      const newTotalChips =
+        base +
+        (playerStats.netChipsWon || 0) +
+        (playerStats.bountyCashWon || 0) +
+        (playerStats.bailoutChipsReceived || 0);
+
+      return { transferredChips: guestNet, newTotalChips: Math.max(0, newTotalChips) };
+    }
+  } catch (err) {
+    console.error('Failed to transfer guest chips to player:', err);
+  }
+
+  const cur = loadTrackerStatsForPlayer(targetPlayerName);
+  const base = 10000;
+  const currentTotal =
+    base + (cur.netChipsWon || 0) + (cur.bountyCashWon || 0) + (cur.bailoutChipsReceived || 0);
+  return { transferredChips: 0, newTotalChips: Math.max(0, currentTotal) };
 }
 
 export function loadTrackerStats(): CareerTrackerStats {
