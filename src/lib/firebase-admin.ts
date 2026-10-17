@@ -99,15 +99,17 @@ export async function getPlayerDoc(name: string): Promise<PokerPlayerRecord | nu
   // Fallback to local academy-profiles.json
   const local = getLocalProfile(docId);
   if (local) {
+    const rawPin = (local as any).secretPin || '';
     return {
       name,
-      pin: (local as any).secretPin || '0000',
+      pin: rawPin,
       nickname: (local as any).nickname || name.split(' ')[0],
       avatarUrl: (local as any).avatarUrl || '/avatars/avatar_shark.png',
       isCustomPlayer: true,
       createdAt: Date.now(),
       lastLoginAt: Date.now(),
       stats: local,
+      needsPinSetup: !rawPin,
     };
   }
 
@@ -126,7 +128,7 @@ export async function savePlayerDoc(record: PokerPlayerRecord): Promise<boolean>
   const docId = sanitizeDocId(record.name);
   const db = getFirestoreDb();
 
-  // Always save local backup
+  // Always save local backup for dev
   saveLocalProfile(docId, record.stats, record.pin, record.avatarUrl, record.nickname);
 
   if (db) {
@@ -140,8 +142,13 @@ export async function savePlayerDoc(record: PokerPlayerRecord): Promise<boolean>
       );
       return true;
     } catch (err) {
-      console.warn('Firestore save failed, saved to local cache:', err);
+      console.error('Firestore save failed:', err);
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Database persistence failed. Profile changes could not be saved to Firestore.');
+      }
     }
+  } else if (process.env.NODE_ENV === 'production') {
+    throw new Error('Database persistence unavailable: Firestore is not configured or offline.');
   }
 
   return true;

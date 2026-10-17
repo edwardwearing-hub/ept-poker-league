@@ -3,12 +3,9 @@
 import React, { useState } from 'react';
 import { Calendar, Save, Trash2, Unlock, Image as ImageIcon, Upload, X, Link as LinkIcon, Sparkles } from 'lucide-react';
 import MultiSelect from '@/components/MultiSelect';
+import { CANONICAL_PLAYER_NAMES } from '@/lib/roster';
 
-const PLAYERS = [
-    "Edward Wearing", "Georgina Wearing", "Luke Daly", "Daniel Horne",
-    "Darren Daly", "Chris Daly", "Stephen Flood", "Dave Blackburn",
-    "Liam Duxbury", "Nathen Benson", "Dave Taylor"
-];
+const PLAYERS = CANONICAL_PLAYER_NAMES;
 
 export default function AdminUpdate() {
     const [validationStatus, setValidationStatus] = useState('');

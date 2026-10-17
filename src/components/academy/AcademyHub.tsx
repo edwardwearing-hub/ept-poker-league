@@ -39,6 +39,7 @@ import AcademyChipLeaderboard from './AcademyChipLeaderboard';
 import HandOfTheWeekPuzzle from './HandOfTheWeekPuzzle';
 import InfoTooltip from './InfoTooltip';
 import { computeTotalAcademyChips } from '@/lib/poker-trainer/leaderboard';
+import { CANONICAL_PLAYER_NAMES } from '@/lib/roster';
 
 export type AcademyTab =
   | 'arena'
@@ -55,19 +56,7 @@ interface Props {
 
 const HUD_THEME_STORAGE_KEY = 'ept_academy_hud_theme_v1';
 
-export const LEAGUE_PLAYERS = [
-  'Edward Wearing',
-  'Liam Duxbury',
-  'Luke Daly',
-  'Georgina Wearing',
-  'Daniel Horne',
-  'Darren Daly',
-  'Chris Daly',
-  'Stephen Flood',
-  'Dave Blackburn',
-  'Nathen Benson',
-  'Dave Taylor',
-];
+export const LEAGUE_PLAYERS = CANONICAL_PLAYER_NAMES;
 
 export default function AcademyHub({ defaultTab = 'arena' }: Props) {
   const searchParams = useSearchParams();

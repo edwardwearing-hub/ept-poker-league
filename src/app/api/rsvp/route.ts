@@ -5,17 +5,15 @@ import { getFirestoreDb } from '@/lib/firebase-admin';
 import { getPlayerSession } from '@/lib/playerAuth';
 import { verifyAdminAuth } from '@/lib/adminAuth';
 import { verifyCsrf } from '@/lib/security';
+import { CANONICAL_PLAYER_NAMES, normalizePlayerName } from '@/lib/roster';
 
 export const dynamic = 'force-dynamic';
 
-const PLAYERS = [
-    "Edward Wearing", "Liam Duxbury", "Luke Daly", "Georgina Wearing",
-    "Daniel Horne", "Darren Daly", "Chris Daly", "Stephen Flood",
-    "Dave Blackburn", "Nathen Benson", "Dave Taylor"
-];
-
-// In-memory fallback cache
-let inMemoryRsvp: Record<string, boolean> = PLAYERS.reduce((acc, p) => ({ ...acc, [p]: false }), {});
+// Canonical In-memory fallback cache seeded with the canonical roster
+let inMemoryRsvp: Record<string, boolean> = CANONICAL_PLAYER_NAMES.reduce(
+    (acc, p) => ({ ...acc, [p]: false }),
+    {}
+);
 
 const DATA_FILE = path.join(process.cwd(), 'registrations.json');
 const TMP_FILE = path.join('/tmp', 'registrations.json');
@@ -48,24 +46,33 @@ async function getRegistrations(): Promise<Record<string, boolean>> {
     return inMemoryRsvp;
 }
 
-async function saveRegistrations(data: Record<string, boolean>) {
+async function saveRegistrations(data: Record<string, boolean>): Promise<{ durable: boolean }> {
     inMemoryRsvp = data;
     const db = getFirestoreDb();
     if (db) {
         try {
             await db.collection('league_state').doc('rsvp').set(data, { merge: true });
-            return;
+            return { durable: true };
         } catch (e) {
-            console.warn('Firestore RSVP save warning:', e);
+            console.error('Firestore RSVP save error:', e);
+            throw new Error('Database persistence failed. Please try again.');
         }
     }
 
+    let written = false;
     for (const file of [DATA_FILE, TMP_FILE]) {
         try {
             fs.writeFileSync(file, JSON.stringify(data, null, 2));
+            written = true;
             break;
         } catch {}
     }
+
+    if (!written && process.env.NODE_ENV === 'production') {
+        throw new Error('Persistent storage is not configured or unavailable in production.');
+    }
+
+    return { durable: written };
 }
 
 export async function GET() {
@@ -100,20 +107,35 @@ export async function POST(request: Request) {
 
         const targetPlayer = String(player).trim();
 
-        // 3. Authorization Check: A player can ONLY toggle their own RSVP
+        // 3. Authorization Check: A player can ONLY toggle their own RSVP (unless admin)
         if (session && !isAdmin && session.name.toLowerCase() !== targetPlayer.toLowerCase()) {
             return NextResponse.json({
                 error: 'Unauthorized: You can only update your own attendance status.'
             }, { status: 403 });
         }
 
+        // 4. Canonical player roster verification
+        const canonicalName = normalizePlayerName(targetPlayer);
+        if (!canonicalName) {
+            return NextResponse.json({ 
+                error: `Unknown player '${player}'. Must match a registered player in the canonical roster.` 
+            }, { status: 400 });
+        }
+
         const currentData = await getRegistrations();
-        currentData[targetPlayer] = Boolean(isPlaying);
+        currentData[canonicalName] = Boolean(isPlaying);
+        
         await saveRegistrations(currentData);
 
-        return NextResponse.json(currentData);
-    } catch (error) {
+        return NextResponse.json({
+            success: true,
+            player: canonicalName,
+            isPlaying: Boolean(isPlaying),
+            registrations: currentData
+        });
+    } catch (error: unknown) {
         console.error('RSVP update error:', error);
-        return NextResponse.json({ error: 'Failed to update RSVP' }, { status: 500 });
+        const message = (error as Error)?.message || 'Failed to update RSVP. Database unreachable.';
+        return NextResponse.json({ error: message }, { status: 503 });
     }
 }

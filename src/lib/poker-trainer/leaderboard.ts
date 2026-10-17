@@ -15,19 +15,9 @@ export function computeTotalAcademyChips(stats: CareerTrackerStats): number {
   return Math.max(0, total);
 }
 
-export const LEAGUE_PLAYERS = [
-  'Edward Wearing',
-  'Liam Duxbury',
-  'Luke Daly',
-  'Georgina Wearing',
-  'Daniel Horne',
-  'Darren Daly',
-  'Chris Daly',
-  'Stephen Flood',
-  'Dave Blackburn',
-  'Nathen Benson',
-  'Dave Taylor',
-];
+import { CANONICAL_PLAYER_NAMES } from '@/lib/roster';
+
+export const LEAGUE_PLAYERS = CANONICAL_PLAYER_NAMES;
 
 export const PLAYER_NICKNAMES: Record<string, string> = {
   'Edward Wearing': 'The Bounty',
@@ -38,6 +28,7 @@ export const PLAYER_NICKNAMES: Record<string, string> = {
   'Darren Daly': 'Double D',
   'Chris Daly': 'The Wildcard',
   'Stephen Flood': 'The Flash',
+  'Phil Landsberger': 'The Grinder',
   'Dave Blackburn': 'The Professor',
   'Nathen Benson': 'Big Stack',
   'Dave Taylor': 'The Ace',

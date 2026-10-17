@@ -2,6 +2,7 @@
 import path from 'path';
 import fs from 'fs';
 import { google } from 'googleapis';
+import { CANONICAL_PLAYER_NAMES, normalizePlayerName } from '@/lib/roster';
 
 export async function getSheetsClient() {
     let auth;
@@ -128,11 +129,7 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
 
         // 2. We want to pull Sheet1, and every individual player sheet if they exist
         const ranges = ['Sheet1!A1:Z30', 'PVP_SYSTEM!B1:F30'];
-        const allowedPlayers = [
-            "Edward Wearing", "Georgina Wearing", "Luke Daly", "Daniel Horne",
-            "Darren Daly", "Chris Daly", "Stephen Flood", "Dave Blackburn",
-            "Liam Duxbury", "Nathen Benson", "Dave Taylor"
-        ];
+        const allowedPlayers = CANONICAL_PLAYER_NAMES;
 
         allowedPlayers.forEach(name => {
             const exactSheetMatch = sheetNames.find(n => n.trim().toLowerCase() === name.toLowerCase());
@@ -167,6 +164,7 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
             "Darren Daly": "Double D",
             "Chris Daly": "The Wildcard",
             "Stephen Flood": "The Flash",
+            "Phil Landsberger": "The Grinder",
             "Dave Blackburn": "The Professor",
             "Nathen Benson": "Big Stack",
             "Dave Taylor": "The Ace"
@@ -197,7 +195,7 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
             if (!row || !row[0]) continue;
 
             const rawName = row[0].toString().trim();
-            const matchedName = allowedPlayers.find(p => p.toLowerCase() === rawName.toLowerCase());
+            const matchedName = normalizePlayerName(rawName) || allowedPlayers.find(p => p.toLowerCase() === rawName.toLowerCase());
 
             if (!matchedName) continue;
             if (seenPlayers.has(matchedName)) continue;
