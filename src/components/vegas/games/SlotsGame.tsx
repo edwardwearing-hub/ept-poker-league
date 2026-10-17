@@ -443,29 +443,29 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
       />
 
       {/* 1. TOP HUD STATUS BAR */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-2xl bg-black/70 border border-white/10 mb-3 text-white">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-2xl bg-black/70 border border-white/10 mb-3 text-white">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-fuchsia-600 to-purple-500 border border-white/40 flex items-center justify-center text-sm shadow-md">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-fuchsia-600 to-purple-500 border border-white/40 flex items-center justify-center text-sm shadow-md shrink-0">
             🎰
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-purple-800 to-fuchsia-700 border border-purple-400/50 text-xs font-black">
+          <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-gradient-to-r from-purple-800 to-fuchsia-700 border border-purple-400/50 text-xs font-black">
             <span className="text-yellow-300">★ 1</span>
             <span className="text-white hidden sm:inline">{playerName}</span>
           </div>
         </div>
 
         {/* Center: Recessed Total Bet Display */}
-        <div className="flex items-center gap-2 bg-[#12071f] border-2 border-[#7e22ce] rounded-xl px-3 py-1 shadow-inner">
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-[#12071f] border-2 border-[#7e22ce] rounded-xl px-2.5 sm:px-3 py-1 shadow-inner">
           <span className="text-[10px] font-black uppercase tracking-wider text-purple-300">BET</span>
           <span className="font-mono font-black text-sm sm:text-base text-yellow-300">
             £{totalBet.toLocaleString()}
           </span>
-          <span className="text-[9px] text-zinc-400 font-mono">({activeLines} Lines)</span>
+          <span className="text-[9px] text-zinc-400 font-mono hidden sm:inline">({activeLines} Lines)</span>
         </div>
 
         {/* Right: Bankroll & Tools */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-[#12071f] border-2 border-[#7e22ce] rounded-xl px-3 py-1 shadow-inner">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <div className="flex items-center gap-1 bg-[#12071f] border-2 border-[#7e22ce] rounded-xl px-2.5 sm:px-3 py-1 shadow-inner">
             <span className="font-mono font-black text-sm sm:text-base text-white">
               £{bankroll.toLocaleString()}
             </span>
@@ -473,7 +473,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
 
           <Link
             href="/academy?tab=leaderboard&discipline=slots"
-            className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600/30 to-fuchsia-600/30 hover:bg-purple-600/50 border border-purple-400/60 text-yellow-300 font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5"
+            className="px-2 sm:px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600/30 to-fuchsia-600/30 hover:bg-purple-600/50 border border-purple-400/60 text-yellow-300 font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5"
             title="View Slots & Fruit Machine League Standings"
           >
             <Trophy size={14} className="text-yellow-300" />
@@ -483,21 +483,20 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
           {onSwitchToPubFruity && (
             <button
               onClick={onSwitchToPubFruity}
-              className="px-2.5 py-1.5 rounded-xl bg-amber-950/80 hover:bg-amber-900 border border-amber-500/60 text-amber-200 font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5"
+              className="px-2 sm:px-2.5 py-1.5 rounded-xl bg-amber-950/80 hover:bg-amber-900 border border-amber-500/60 text-amber-200 font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5"
               title="Switch to English Pub Fruit Machine"
             >
-              <span>🍺 Pub Fruity</span>
+              <span>🍺 <span className="hidden sm:inline">Pub Fruity</span></span>
             </button>
           )}
 
           <button
             onClick={() => {
-
               const next = !soundOn;
               setSoundOn(next);
               setSoundEnabled(next);
             }}
-            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition"
+            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition shrink-0"
             title="Toggle Sound"
           >
             {soundOn ? <Volume2 size={15} /> : <VolumeX size={15} className="text-zinc-400" />}
@@ -505,7 +504,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
 
           <button
             onClick={() => setVoiceOn(!voiceOn)}
-            className={`w-8 h-8 rounded-xl border flex items-center justify-center transition ${
+            className={`w-8 h-8 rounded-xl border flex items-center justify-center transition shrink-0 ${
               voiceOn ? 'bg-gold/25 border-gold text-gold shadow-[0_0_10px_#ffd700]' : 'bg-white/10 hover:bg-white/20 border-white/20 text-zinc-400'
             }`}
             title="Toggle Hostess Voice"
@@ -515,7 +514,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
 
           <button
             onClick={onOpenTutorial}
-            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-yellow-300 flex items-center justify-center transition"
+            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-yellow-300 flex items-center justify-center transition shrink-0"
             title="Rules & Paytable"
           >
             <HelpCircle size={15} />
@@ -735,8 +734,8 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
           </div>
         </div>
 
-        {/* 3D Physical Chrome & Red Mechanical Pull Lever */}
-        <div className="flex md:flex-col items-center justify-center pl-2">
+        {/* 3D Physical Chrome & Red Mechanical Pull Lever (Desktop / Tablet side-mounted) */}
+        <div className="hidden md:flex md:flex-col items-center justify-center pl-2">
           <button
             disabled={isAnySpinning || totalBet > bankroll}
             onClick={handleSpin}
@@ -769,9 +768,9 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
       {/* 5. TACTILE CASINO BUTTON DECK (CONSOLE) */}
       <div className="mt-3 rounded-2xl p-3 sm:p-4 bg-gradient-to-b from-[#2a173d] via-[#1a0c28] to-[#0c0514] border-t-2 border-[#f59e0b]/80 shadow-[0_-8px_20px_rgba(0,0,0,0.8),inset_0_2px_4px_rgba(255,215,0,0.4)] flex flex-wrap items-center justify-between gap-3 sm:gap-4">
         {/* Left Side: Bet Per Line & Lines Selector */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
           {/* Bet per line chips */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <span className="text-[10px] uppercase font-bold text-zinc-400">Bet / Line:</span>
             <VegasChipRack
               values={[5, 10, 25, 50, 100]}
@@ -802,7 +801,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
         </div>
 
         {/* Right Side: MAX BET, AUTO SPIN, & BIG JUICY GREEN SPIN BUTTON */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
           {/* Max Bet */}
           <button
             type="button"
@@ -811,7 +810,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
               setActiveLines(5);
               setBetPerLine(100);
             }}
-            className="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-xs uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4)] active:scale-95 transition disabled:opacity-40"
+            className="flex-1 sm:flex-initial px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-xs uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4)] active:scale-95 transition disabled:opacity-40 text-center"
           >
             MAX BET
           </button>
@@ -825,13 +824,13 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
               setAutoSpin(next);
               if (next && !isAnySpinning) handleSpin();
             }}
-            className={`px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl border-2 font-black text-xs uppercase tracking-wider transition ${
+            className={`flex-1 sm:flex-initial px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl border-2 font-black text-xs uppercase tracking-wider transition text-center ${
               autoSpin
                 ? 'bg-red-600 border-white text-white shadow-[0_0_15px_#ef4444] animate-pulse'
                 : 'bg-white/10 border-white/20 text-zinc-300 hover:text-white'
             }`}
           >
-            {autoSpin ? 'STOP AUTO' : 'AUTO SPIN'}
+            {autoSpin ? 'STOP' : 'AUTO'}
           </button>
 
           {/* Big Green Glowing 3D SPIN Button */}
@@ -839,7 +838,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
             type="button"
             disabled={isAnySpinning || totalBet > bankroll}
             onClick={handleSpin}
-            className="px-6 py-2.5 sm:px-8 sm:py-3.5 rounded-2xl bg-gradient-to-b from-[#00e676] via-[#00c853] to-[#00873a] border-2 border-[#b9f6ca] text-white font-black text-sm sm:text-base uppercase tracking-widest shadow-[0_6px_20px_rgba(0,200,83,0.6),inset_0_2px_4px_rgba(255,255,255,0.8)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 flex items-center gap-2"
+            className="flex-[2] sm:flex-initial px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-2xl bg-gradient-to-b from-[#00e676] via-[#00c853] to-[#00873a] border-2 border-[#b9f6ca] text-white font-black text-xs sm:text-base uppercase tracking-widest shadow-[0_6px_20px_rgba(0,200,83,0.6),inset_0_2px_4px_rgba(255,255,255,0.8)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 flex items-center justify-center gap-1.5 sm:gap-2"
           >
             <Sparkles size={16} />
             <span>{isAnySpinning ? 'SPINNING...' : `SPIN (£${totalBet})`}</span>

@@ -213,9 +213,9 @@ export function VegasChipRack({
 }) {
   return (
     <div
-      className={`inline-flex items-center gap-2 p-2 rounded-2xl bg-black/70 border border-white/10 shadow-2xl backdrop-blur-md overflow-x-auto ${className}`}
+      className={`inline-flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl bg-black/70 border border-white/10 shadow-2xl backdrop-blur-md max-w-full overflow-x-auto touch-pan-x ${className}`}
     >
-      <span className="text-[10px] uppercase font-bold text-zinc-400 pl-1 pr-1 hidden sm:inline">
+      <span className="text-[10px] uppercase font-bold text-zinc-400 pl-1 pr-1 hidden sm:inline shrink-0">
         Chips:
       </span>
       {values.map((val) => (

@@ -2652,14 +2652,14 @@ export default function BotTrainerArena({
             {/* =====================================================
                 THE 3D OVAL / STADIUM POKER TABLE
                ===================================================== */}
-            <div className="relative mx-auto w-full max-w-4xl min-h-[580px] sm:min-h-[640px] md:min-h-[680px] rounded-[130px] sm:rounded-[190px] md:rounded-[230px] poker-table-rail p-4 sm:p-6 md:p-8 flex flex-col justify-between select-none">
+            <div className="relative mx-auto w-full max-w-4xl min-h-[520px] sm:min-h-[640px] md:min-h-[680px] rounded-[100px] sm:rounded-[190px] md:rounded-[230px] poker-table-rail p-3 sm:p-6 md:p-8 flex flex-col justify-between select-none">
               {/* Decorative Gold Diamond Rail Studs (Left, Right, Top-Left, Top-Right) */}
               <div className="hidden sm:block absolute left-2 top-1/2 -translate-y-1/2 w-2.5 h-4 rotate-45 bg-gradient-to-b from-[#ffe578] to-[#b48811] border border-black/60 shadow" />
               <div className="hidden sm:block absolute right-2 top-1/2 -translate-y-1/2 w-2.5 h-4 rotate-45 bg-gradient-to-b from-[#ffe578] to-[#b48811] border border-black/60 shadow" />
 
               {/* Inner Felt Surface inside the Leather Rail */}
               <div
-                className={`relative w-full h-full min-h-[520px] sm:min-h-[580px] md:min-h-[620px] rounded-[115px] sm:rounded-[170px] md:rounded-[205px] poker-table-rim ${feltGradientClass} flex items-center justify-center p-3 sm:p-4 select-none`}
+                className={`relative w-full h-full min-h-[460px] sm:min-h-[580px] md:min-h-[620px] rounded-[85px] sm:rounded-[170px] md:rounded-[205px] poker-table-rim ${feltGradientClass} flex items-center justify-center p-2 sm:p-4 select-none`}
               >
                 {/* Inner Betting Racetrack Line */}
                 <div className="absolute inset-4 sm:inset-7 rounded-[100px] sm:rounded-[145px] md:rounded-[180px] border-2 border-white/15 pointer-events-none" />

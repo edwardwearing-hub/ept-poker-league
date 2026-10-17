@@ -58,7 +58,7 @@ export default function Vegas3DTableArena({
 
             {/* LAYER 3: THE FELT TABLE BED */}
             <div
-              className={`relative w-full rounded-[1.5rem] min-h-[460px] sm:min-h-[500px] border-2 border-gold/50 shadow-[inset_0_0_60px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col justify-between p-4 sm:p-6 ${
+              className={`relative w-full rounded-[1.5rem] min-h-[410px] sm:min-h-[500px] border-2 border-gold/50 shadow-[inset_0_0_60px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col justify-between p-2.5 sm:p-6 ${
                 tableFeltImage ? 'bg-cover bg-center' : `bg-gradient-to-b ${feltThemeClasses}`
               }`}
               style={
@@ -114,10 +114,10 @@ export default function Vegas3DTableArena({
               <VegasFeltSilkscreen gameType={gameType} />
 
               {/* 3D ACCESSORY PROPS: TOP DEALER RAIL (Shoe, Sarah The Dealer, Chip Tray, Discard) */}
-              <div className="relative z-10 w-full flex items-center justify-between gap-2 border-b border-white/10 pb-3">
-                {/* 3D Brass Discard Rack (Top-Left) */}
+              <div className="relative z-10 w-full flex items-center justify-between gap-2 border-b border-white/10 pb-2 sm:pb-3">
+                {/* 3D Brass Discard Rack (Top-Left - hidden on extra small mobile screens) */}
                 {showDiscardRack ? (
-                  <div className="flex items-center gap-1.5 bg-gradient-to-r from-[#2a2415] to-[#15120a] border border-gold/50 px-2.5 py-1 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_2px_rgba(255,255,255,0.25)]">
+                  <div className="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-[#2a2415] to-[#15120a] border border-gold/50 px-2.5 py-1 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_2px_rgba(255,255,255,0.25)]">
                     <div className="w-4 h-6 rounded-sm bg-gradient-to-b from-[#ffd700] to-[#b38f00] border border-gold/80 shadow-sm flex items-center justify-center text-[8px] font-black text-black">
                       🗄️
                     </div>
@@ -130,9 +130,9 @@ export default function Vegas3DTableArena({
                 )}
 
                 {/* Sarah The Live Dealer Peeking Over The Table Rail (Center) */}
-                <div className="flex flex-col items-center -mt-6 sm:-mt-8">
+                <div className="flex flex-col items-center -mt-5 sm:-mt-8">
                   <div className="relative">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-t-full rounded-b-xl border-2 border-gold/80 overflow-hidden shadow-[0_0_15px_rgba(212,175,55,0.7)] bg-black">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-t-full rounded-b-xl border-2 border-gold/80 overflow-hidden shadow-[0_0_15px_rgba(212,175,55,0.7)] bg-black">
                       <img
                         src="/vegas/dealer_sarah.jpg"
                         alt="Sarah Head Dealer"
@@ -145,9 +145,9 @@ export default function Vegas3DTableArena({
                     </span>
                   </div>
 
-                  {/* 3D Chrome Dealer Chip Tray */}
+                  {/* 3D Chrome Dealer Chip Tray (Hidden on mobile screens to give cards room) */}
                   {showChipTray && (
-                    <div className="mt-1 flex items-center gap-1 sm:gap-2 px-2.5 py-1 rounded-xl bg-gradient-to-b from-zinc-700 via-zinc-900 to-black border-2 border-zinc-500 shadow-[inset_0_2px_6px_rgba(255,255,255,0.35),0_6px_16px_rgba(0,0,0,0.9)]">
+                    <div className="mt-1 hidden sm:flex items-center gap-1 sm:gap-2 px-2.5 py-1 rounded-xl bg-gradient-to-b from-zinc-700 via-zinc-900 to-black border-2 border-zinc-500 shadow-[inset_0_2px_6px_rgba(255,255,255,0.35),0_6px_16px_rgba(0,0,0,0.9)]">
                       {[
                         { bg: 'bg-red-600', val: '£5' },
                         { bg: 'bg-blue-600', val: '£10' },
@@ -176,18 +176,18 @@ export default function Vegas3DTableArena({
 
                 {/* 3D Acrylic Card Shoe (Top-Right) */}
                 {showShoe ? (
-                  <div className="flex items-center gap-2 bg-gradient-to-l from-white/15 to-black/70 backdrop-blur-md border border-white/30 px-3 py-1.5 rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1px_3px_rgba(255,255,255,0.4)]">
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-l from-white/15 to-black/70 backdrop-blur-md border border-white/30 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1px_3px_rgba(255,255,255,0.4)]">
                     <div className="flex flex-col items-end">
-                      <div className="text-[10px] font-mono uppercase font-black text-white flex items-center gap-1">
-                        <span>4-Deck Shoe</span>
+                      <div className="text-[9px] sm:text-[10px] font-mono uppercase font-black text-white flex items-center gap-1">
+                        <span className="hidden sm:inline">4-Deck </span>Shoe
                       </div>
-                      <div className="text-xs font-mono font-black text-gold">
+                      <div className="text-[10px] sm:text-xs font-mono font-black text-gold">
                         {shoeCardsRemaining} Cards
                       </div>
                     </div>
                     {/* Visual 3D acrylic shoe deck preview */}
-                    <div className="relative w-6 h-8 rounded-sm bg-gradient-to-tr from-blue-900 to-indigo-700 border border-white/40 shadow-inner flex items-center justify-center">
-                      <div className="w-1.5 h-6 bg-black/40 rounded-full" />
+                    <div className="relative w-4 h-6 sm:w-6 sm:h-8 rounded-sm bg-gradient-to-tr from-blue-900 to-indigo-700 border border-white/40 shadow-inner flex items-center justify-center">
+                      <div className="w-1 h-4 sm:w-1.5 sm:h-6 bg-black/40 rounded-full" />
                     </div>
                   </div>
                 ) : (

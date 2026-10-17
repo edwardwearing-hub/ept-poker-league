@@ -920,7 +920,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
         </div>
 
         {/* Center: Recessed Dark Velvet Chip Tray (10, 25, 50, 100, 250) */}
-        <div className="rounded-full bg-[#0a0a0d] border border-amber-600/40 p-1.5 shadow-[inset_0_4px_10px_rgba(0,0,0,0.9)] flex items-center gap-2 sm:gap-3">
+        <div className="rounded-full bg-[#0a0a0d] border border-amber-600/40 p-1.5 shadow-[inset_0_4px_10px_rgba(0,0,0,0.9)] flex items-center gap-1.5 sm:gap-3 max-w-full overflow-x-auto touch-pan-x">
           {[10, 25, 50, 100, 250].map((val) => (
             <VegasChip
               key={val}

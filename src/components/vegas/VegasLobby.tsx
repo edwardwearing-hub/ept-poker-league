@@ -439,25 +439,27 @@ export default function VegasLobby() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <button
               onClick={() => setSelectedGameId(null)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black/60 hover:bg-black/90 border border-white/10 hover:border-gold/50 text-xs font-black uppercase tracking-wider text-zinc-300 hover:text-gold transition shadow"
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl bg-black/60 hover:bg-black/90 border border-white/10 hover:border-gold/50 text-xs font-black uppercase tracking-wider text-zinc-300 hover:text-gold transition shadow"
             >
               <ArrowLeft size={14} />
-              <span>← Back to Casino Floor</span>
+              <span>← <span className="hidden sm:inline">Back to Casino Floor</span><span className="sm:hidden">Floor</span></span>
             </button>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               <Link
                 href={`/academy?tab=leaderboard&discipline=${getGameDiscipline(selectedGameId)}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-gold/20 to-yellow-500/20 text-gold border border-gold/40 hover:border-gold text-xs font-black uppercase tracking-wider hover:bg-gold/30 transition shadow"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500/20 via-gold/20 to-yellow-500/20 text-gold border border-gold/40 hover:border-gold text-xs font-black uppercase tracking-wider hover:bg-gold/30 transition shadow"
                 title={`Open the dedicated ${getDisciplineName(getGameDiscipline(selectedGameId))} Leaderboard`}
               >
                 <Trophy size={14} className="text-gold" />
-                <span>{getDisciplineName(getGameDiscipline(selectedGameId))} League →</span>
+                <span className="hidden sm:inline">{getDisciplineName(getGameDiscipline(selectedGameId))} League →</span>
+                <span className="sm:hidden">League 🏆</span>
               </Link>
 
+              {/* Theater Mode is only relevant on desktop (xl screen) where sidebar exists */}
               <button
                 onClick={() => setTheaterMode(!theaterMode)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 hover:bg-black/90 text-zinc-300 hover:text-gold border border-white/10 hover:border-gold/30 text-xs font-bold transition shadow"
+                className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 hover:bg-black/90 text-zinc-300 hover:text-gold border border-white/10 hover:border-gold/30 text-xs font-bold transition shadow"
                 title={theaterMode ? 'Switch to side-by-side view' : 'Expand table to full screen width'}
               >
                 {theaterMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
@@ -466,10 +468,11 @@ export default function VegasLobby() {
 
               <button
                 onClick={() => setTutorialGame(currentGame || null)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 text-gold border border-gold/40 text-xs font-bold hover:bg-gold/25 transition shadow"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gold/15 text-gold border border-gold/40 text-xs font-bold hover:bg-gold/25 transition shadow"
               >
                 <HelpCircle size={14} />
-                <span>How to Play</span>
+                <span className="hidden sm:inline">How to Play</span>
+                <span className="sm:hidden">Rules</span>
               </button>
             </div>
           </div>

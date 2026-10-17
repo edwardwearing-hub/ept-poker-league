@@ -270,21 +270,23 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
           </h3>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <Link
             href="/academy?tab=leaderboard&discipline=blackjack"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
             title="View Blackjack & Table Games League Standings"
           >
             <Trophy size={14} className="text-gold" />
-            <span>Table League</span>
+            <span className="hidden sm:inline">Table League</span>
+            <span className="sm:hidden">League</span>
           </Link>
           <button
             onClick={onOpenTutorial}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
           >
             <HelpCircle size={14} className="text-gold" />
-            <span>Rules & Tutorial</span>
+            <span className="hidden sm:inline">Rules & Tutorial</span>
+            <span className="sm:hidden">Rules</span>
           </button>
         </div>
       </div>
@@ -392,20 +394,20 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
           </div>
 
           {/* Baccarat Main Betting Ovals with 3D Chip Stacks (Solid Sharp Backplates) */}
-          <div className="grid grid-cols-3 gap-3 text-center relative z-10">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 text-center relative z-10">
             {/* Player Bet */}
             <div
               onClick={() => addBet('player')}
-              className={`p-4 rounded-2xl border-2 cursor-pointer transition-all select-none flex flex-col items-center justify-center relative shadow-xl ${
+              className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all select-none flex flex-col items-center justify-center relative shadow-xl ${
                 bets.player > 0
                   ? 'bg-blue-950 border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.7)]'
                   : 'bg-zinc-950/95 border-zinc-700 hover:border-blue-400 hover:bg-zinc-900'
               }`}
             >
-              <div className="text-sm font-black uppercase tracking-wider text-blue-300">
+              <div className="text-[11px] sm:text-sm font-black uppercase tracking-wider text-blue-300">
                 PLAYER (1:1)
               </div>
-              <div className="font-mono text-base font-black text-white mt-1">
+              <div className="font-mono text-xs sm:text-base font-black text-white mt-0.5 sm:mt-1">
                 £{bets.player.toLocaleString()}
               </div>
               {bets.player > 0 && (
@@ -418,16 +420,16 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
             {/* Tie Bet */}
             <div
               onClick={() => addBet('tie')}
-              className={`p-4 rounded-2xl border-2 cursor-pointer transition-all select-none flex flex-col items-center justify-center relative shadow-xl ${
+              className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all select-none flex flex-col items-center justify-center relative shadow-xl ${
                 bets.tie > 0
                   ? 'bg-emerald-950 border-emerald-400 shadow-[0_0_25px_rgba(52,211,153,0.7)]'
                   : 'bg-zinc-950/95 border-zinc-700 hover:border-emerald-400 hover:bg-zinc-900'
               }`}
             >
-              <div className="text-sm font-black uppercase tracking-wider text-emerald-300">
+              <div className="text-[11px] sm:text-sm font-black uppercase tracking-wider text-emerald-300">
                 TIE (8:1)
               </div>
-              <div className="font-mono text-base font-black text-white mt-1">
+              <div className="font-mono text-xs sm:text-base font-black text-white mt-0.5 sm:mt-1">
                 £{bets.tie.toLocaleString()}
               </div>
               {bets.tie > 0 && (
@@ -440,16 +442,16 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
             {/* Banker Bet */}
             <div
               onClick={() => addBet('banker')}
-              className={`p-4 rounded-2xl border-2 cursor-pointer transition-all select-none flex flex-col items-center justify-center relative shadow-xl ${
+              className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all select-none flex flex-col items-center justify-center relative shadow-xl ${
                 bets.banker > 0
                   ? 'bg-red-950 border-red-400 shadow-[0_0_25px_rgba(239,68,68,0.7)]'
                   : 'bg-zinc-950/95 border-zinc-700 hover:border-red-400 hover:bg-zinc-900'
               }`}
             >
-              <div className="text-sm font-black uppercase tracking-wider text-red-300">
-                BANKER (1:1 - 5%)
+              <div className="text-[11px] sm:text-sm font-black uppercase tracking-wider text-red-300">
+                BANKER (1:1)
               </div>
-              <div className="font-mono text-base font-black text-white mt-1">
+              <div className="font-mono text-xs sm:text-base font-black text-white mt-0.5 sm:mt-1">
                 £{bets.banker.toLocaleString()}
               </div>
               {bets.banker > 0 && (

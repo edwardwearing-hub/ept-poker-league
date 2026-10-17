@@ -254,21 +254,23 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
           </h3>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <Link
             href="/academy?tab=leaderboard&discipline=roulette-craps"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
             title="View Roulette & Craps League Standings"
           >
             <Trophy size={14} className="text-gold" />
-            <span>Dice League</span>
+            <span className="hidden sm:inline">Dice League</span>
+            <span className="sm:hidden">League</span>
           </Link>
           <button
             onClick={onOpenTutorial}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
           >
             <HelpCircle size={14} className="text-gold" />
-            <span>Rules & Tutorial</span>
+            <span className="hidden sm:inline">Rules & Tutorial</span>
+            <span className="sm:hidden">Rules</span>
           </button>
         </div>
       </div>
@@ -339,20 +341,20 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
       >
         <div className="space-y-4 relative z-10">
           {/* Number Boxes (Point Trackers) */}
-          <div className="grid grid-cols-6 gap-2 text-center font-black relative z-10">
+          <div className="grid grid-cols-6 gap-1 sm:gap-2 text-center font-black relative z-10">
             {[4, 5, 6, 8, 9, 10].map((num) => (
               <div
                 key={num}
-                className={`p-3 rounded-xl border-2 transition ${
+                className={`p-1.5 sm:p-3 rounded-xl border-2 transition ${
                   point === num
                     ? 'bg-gradient-to-b from-amber-400 to-yellow-500 text-black border-white shadow-[0_0_25px_#ffd700] scale-105'
                     : 'bg-black/60 text-white border-white/20'
                 }`}
               >
-                <div className="text-[10px] uppercase text-zinc-300">Point</div>
-                <div className="text-2xl font-mono">{num}</div>
+                <div className="text-[9px] sm:text-[10px] uppercase text-zinc-300">Point</div>
+                <div className="text-lg sm:text-2xl font-mono">{num}</div>
                 {point === num && (
-                  <div className="text-[9px] bg-black text-gold font-black uppercase px-1 rounded mt-1">
+                  <div className="text-[8px] sm:text-[9px] bg-black text-gold font-black uppercase px-1 rounded mt-0.5 sm:mt-1">
                     Active
                   </div>
                 )}

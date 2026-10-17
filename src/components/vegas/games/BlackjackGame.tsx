@@ -319,21 +319,23 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
           </h3>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <Link
             href="/academy?tab=leaderboard&discipline=blackjack"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
             title="View Blackjack & Table Games League Standings"
           >
             <Trophy size={14} className="text-gold" />
-            <span>Table League</span>
+            <span className="hidden sm:inline">Table League</span>
+            <span className="sm:hidden">League</span>
           </Link>
           <button
             onClick={onOpenTutorial}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
           >
             <HelpCircle size={14} className="text-gold" />
-            <span>Rules & Tutorial</span>
+            <span className="hidden sm:inline">Rules & Tutorial</span>
+            <span className="sm:hidden">Rules</span>
           </button>
         </div>
       </div>

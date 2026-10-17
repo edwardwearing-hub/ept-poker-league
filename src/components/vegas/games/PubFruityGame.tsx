@@ -1378,26 +1378,27 @@ export default function PubFruityGame({
         </div>
 
         {/* Controls / How to Play */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap shrink-0">
           <Link
             href="/academy?tab=leaderboard&discipline=slots"
-            className="px-3.5 py-2 rounded-xl bg-gold/15 hover:bg-gold/25 border-2 border-gold/50 text-gold font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5 active:scale-95"
+            className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-gold/15 hover:bg-gold/25 border-2 border-gold/50 text-gold font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5 active:scale-95"
             title="View Slots & Fruity League Standings"
           >
             <Trophy size={14} className="text-gold" />
-            <span>Fruity League</span>
+            <span className="hidden sm:inline">Fruity League</span>
+            <span className="sm:hidden">League</span>
           </Link>
           {onSwitchToVegas && (
             <button
               onClick={onSwitchToVegas}
-              className="px-3.5 py-2 rounded-xl bg-purple-950/90 hover:bg-purple-900 border-2 border-purple-400 text-purple-200 font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5 active:scale-95"
+              className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-purple-950/90 hover:bg-purple-900 border-2 border-purple-400 text-purple-200 font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5 active:scale-95"
             >
-              <span>🎰 Vegas 5-Line</span>
+              <span>🎰 <span className="hidden sm:inline">Vegas 5-Line</span><span className="sm:hidden">Vegas</span></span>
             </button>
           )}
           <button
             onClick={onOpenTutorial}
-            className="px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 font-bold text-xs transition shadow flex items-center gap-1"
+            className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 font-bold text-xs transition shadow flex items-center gap-1"
           >
             <HelpCircle size={14} />
             <span>Rules</span>
@@ -1419,14 +1420,14 @@ export default function PubFruityGame({
         {/* ============================================================== */}
         {/* 1. TOP GLASS: AUTHENTIC 5x5 MONOPOLY PERIMETER BOARD */}
         {/* ============================================================== */}
-        <div className="relative rounded-2xl bg-gradient-to-b from-[#0a140d] via-[#112417] to-[#061009] border-3 border-[#10b981] p-3 sm:p-4 shadow-[0_0_30px_rgba(16,185,129,0.35)] overflow-hidden">
+        <div className="relative rounded-2xl bg-gradient-to-b from-[#0a140d] via-[#112417] to-[#061009] border-3 border-[#10b981] p-2.5 sm:p-4 shadow-[0_0_30px_rgba(16,185,129,0.35)] overflow-hidden">
           
           {/* Top Marquee with Character Cast */}
           <div className="flex flex-wrap items-center justify-between pb-2 border-b-2 border-emerald-900/60 mb-3 gap-2">
             <div className="flex items-center gap-2">
               <span className="w-3.5 h-3.5 rounded-full bg-yellow-400 animate-ping shadow-[0_0_10px_#fde047]" />
               <span className="font-black text-xs sm:text-sm text-yellow-300 uppercase tracking-widest drop-shadow-[0_0_8px_#f59e0b]">
-                ★ MONOPOLY VEGAS STRIP: TOP GLASS BOARD ★
+                ★ MONOPOLY VEGAS STRIP ★
               </span>
             </div>
 
@@ -1439,8 +1440,8 @@ export default function PubFruityGame({
               <img src="/avatars/avatar_georgina_wearing_1772223035422.png" alt="Georgina" className="w-5 h-5 rounded-full object-cover border border-rose-400" title="Georgina (Lady Luck)" />
             </div>
 
-            <div className="font-mono text-xs text-amber-300 bg-red-950/90 px-3 py-1 rounded-xl border-2 border-yellow-400 shadow flex items-center gap-2">
-              <span>BOARD POT:</span>
+            <div className="font-mono text-xs text-amber-300 bg-red-950/90 px-2.5 sm:px-3 py-1 rounded-xl border-2 border-yellow-400 shadow flex items-center gap-2">
+              <span>POT:</span>
               <span className="font-black text-white text-sm">£{potCash}</span>
             </div>
           </div>
@@ -1449,10 +1450,10 @@ export default function PubFruityGame({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center relative z-10">
             
             {/* Left 9 Cols: The 5x5 Perimeter Monopoly Board */}
-            <div className="lg:col-span-9 bg-[#0b1c11]/90 rounded-2xl p-2 sm:p-3 border-2 border-emerald-500/60 relative shadow-2xl">
+            <div className="lg:col-span-9 bg-[#0b1c11]/90 rounded-2xl p-1.5 sm:p-3 border-2 border-emerald-500/60 relative shadow-2xl">
               
               {/* THE 5x5 MONOPOLY GRID */}
-              <div className="grid grid-cols-5 grid-rows-5 gap-1 sm:gap-1.5 relative min-h-[380px] sm:min-h-[440px]">
+              <div className="grid grid-cols-5 grid-rows-5 gap-1 sm:gap-1.5 relative min-h-[300px] sm:min-h-[380px] md:min-h-[440px]">
                 
                 {/* 16 PERIMETER SQUARES */}
                 {MONOPOLY_SQUARES.map((sq) => {
@@ -1935,21 +1936,21 @@ export default function PubFruityGame({
           </div>
 
           {/* Lower Deck: The Classic Square Backlit Push Buttons with State-Driven Illumination */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2 sm:gap-2.5">
+          <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-1.5 sm:gap-2.5">
             
             {/* 1. CANCEL / STEP */}
             <button
               type="button"
               onClick={handleCancel}
               disabled={!holdsAvailable && nudgesRemaining <= 0}
-              className={`p-2 sm:p-2.5 rounded-xl border-2 font-black text-[11px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] ${
+              className={`p-1.5 sm:p-2.5 rounded-xl border-2 font-black text-[10px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] ${
                 holdsAvailable || nudgesRemaining > 0
                   ? 'bg-gradient-to-b from-zinc-700 via-zinc-800 to-zinc-950 border-zinc-300 text-white shadow-[0_0_12px_rgba(255,255,255,0.3)]'
                   : 'bg-zinc-950/70 border-zinc-800 text-zinc-600 opacity-30 cursor-not-allowed'
               }`}
             >
               <span>CANCEL</span>
-              <span className="text-[9px] text-zinc-400">STEP</span>
+              <span className="text-[8px] sm:text-[9px] text-zinc-400">STEP</span>
             </button>
 
             {/* 2. HOLD / NUDGE 1 */}
@@ -1960,7 +1961,7 @@ export default function PubFruityGame({
                 if (nudgesRemaining > 0) handleNudge(0);
                 else toggleHold(0);
               }}
-              className={`p-2 sm:p-2.5 rounded-xl border-2 font-black text-[11px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] ${
+              className={`p-1.5 sm:p-2.5 rounded-xl border-2 font-black text-[10px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] ${
                 heldReels[0]
                   ? 'bg-yellow-400 border-white text-black shadow-[0_0_20px_#fde047]'
                   : holdsAvailable
@@ -1971,7 +1972,7 @@ export default function PubFruityGame({
               }`}
             >
               <span>{nudgesRemaining > 0 ? 'NUDGE 1' : 'HOLD 1'}</span>
-              <span className="text-[9px]">{heldReels[0] ? 'LOCKED' : nudgesRemaining > 0 ? 'STEP ▼' : 'REEL 1'}</span>
+              <span className="text-[8px] sm:text-[9px]">{heldReels[0] ? 'LOCKED' : nudgesRemaining > 0 ? 'STEP ▼' : 'REEL 1'}</span>
             </button>
 
             {/* 3. HOLD / NUDGE 2 */}
@@ -1982,7 +1983,7 @@ export default function PubFruityGame({
                 if (nudgesRemaining > 0) handleNudge(1);
                 else toggleHold(1);
               }}
-              className={`p-2 sm:p-2.5 rounded-xl border-2 font-black text-[11px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] ${
+              className={`p-1.5 sm:p-2.5 rounded-xl border-2 font-black text-[10px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] ${
                 heldReels[1]
                   ? 'bg-yellow-400 border-white text-black shadow-[0_0_20px_#fde047]'
                   : holdsAvailable
@@ -1993,7 +1994,7 @@ export default function PubFruityGame({
               }`}
             >
               <span>{nudgesRemaining > 0 ? 'NUDGE 2' : 'HOLD 2'}</span>
-              <span className="text-[9px]">{heldReels[1] ? 'LOCKED' : nudgesRemaining > 0 ? 'STEP ▼' : 'REEL 2'}</span>
+              <span className="text-[8px] sm:text-[9px]">{heldReels[1] ? 'LOCKED' : nudgesRemaining > 0 ? 'STEP ▼' : 'REEL 2'}</span>
             </button>
 
             {/* 4. HOLD / NUDGE 3 */}
@@ -2004,7 +2005,7 @@ export default function PubFruityGame({
                 if (nudgesRemaining > 0) handleNudge(2);
                 else toggleHold(2);
               }}
-              className={`p-2 sm:p-2.5 rounded-xl border-2 font-black text-[11px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] ${
+              className={`p-1.5 sm:p-2.5 rounded-xl border-2 font-black text-[10px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] ${
                 heldReels[2]
                   ? 'bg-yellow-400 border-white text-black shadow-[0_0_20px_#fde047]'
                   : holdsAvailable
@@ -2015,7 +2016,7 @@ export default function PubFruityGame({
               }`}
             >
               <span>{nudgesRemaining > 0 ? 'NUDGE 3' : 'HOLD 3'}</span>
-              <span className="text-[9px]">{heldReels[2] ? 'LOCKED' : nudgesRemaining > 0 ? 'STEP ▼' : 'REEL 3'}</span>
+              <span className="text-[8px] sm:text-[9px]">{heldReels[2] ? 'LOCKED' : nudgesRemaining > 0 ? 'STEP ▼' : 'REEL 3'}</span>
             </button>
 
             {/* 5. HI BUTTON */}
@@ -2023,7 +2024,7 @@ export default function PubFruityGame({
               type="button"
               disabled={!inFeatureBoard || isSpinning || isWalkingBoard || isRollingHiLo}
               onClick={() => handleHiLoGuess('hi')}
-              className={`p-2 sm:p-2.5 rounded-xl border-2 font-black text-[11px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] ${
+              className={`p-1.5 sm:p-2.5 rounded-xl border-2 font-black text-[10px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] ${
                 inFeatureBoard && !isSpinning && !isWalkingBoard && !isRollingHiLo
                   ? 'bg-gradient-to-b from-emerald-600 to-emerald-950 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.7)] animate-pulse'
                   : 'bg-zinc-950/70 border-zinc-800 text-zinc-600 opacity-30 cursor-not-allowed'
@@ -2033,7 +2034,7 @@ export default function PubFruityGame({
                 <ArrowUp size={14} />
                 <span>HI</span>
               </div>
-              <span className="text-[9px] text-emerald-200">GAMBLE</span>
+              <span className="text-[8px] sm:text-[9px] text-emerald-200">GAMBLE</span>
             </button>
 
             {/* 6. LO BUTTON */}
@@ -2041,7 +2042,7 @@ export default function PubFruityGame({
               type="button"
               disabled={!inFeatureBoard || isSpinning || isWalkingBoard || isRollingHiLo}
               onClick={() => handleHiLoGuess('lo')}
-              className={`p-2 sm:p-2.5 rounded-xl border-2 font-black text-[11px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] ${
+              className={`p-1.5 sm:p-2.5 rounded-xl border-2 font-black text-[10px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] ${
                 inFeatureBoard && !isSpinning && !isWalkingBoard && !isRollingHiLo
                   ? 'bg-gradient-to-b from-rose-600 to-rose-950 border-rose-400 text-white shadow-[0_0_15px_rgba(244,63,94,0.7)] animate-pulse'
                   : 'bg-zinc-950/70 border-zinc-800 text-zinc-600 opacity-30 cursor-not-allowed'
@@ -2051,7 +2052,7 @@ export default function PubFruityGame({
                 <ArrowDown size={14} />
                 <span>LO</span>
               </div>
-              <span className="text-[9px] text-rose-200">GAMBLE</span>
+              <span className="text-[8px] sm:text-[9px] text-rose-200">GAMBLE</span>
             </button>
 
             {/* 7. COLLECT / EXCHANGE BUTTON */}
@@ -2059,24 +2060,24 @@ export default function PubFruityGame({
               <button
                 type="button"
                 onClick={handleExchangeCollectCash}
-                className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-b from-amber-400 via-yellow-500 to-amber-700 border-2 border-yellow-200 text-black font-black text-[11px] sm:text-xs uppercase tracking-wider shadow-[0_0_20px_#f59e0b] active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] animate-pulse"
+                className="p-1.5 sm:p-2.5 rounded-xl bg-gradient-to-b from-amber-400 via-yellow-500 to-amber-700 border-2 border-yellow-200 text-black font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-[0_0_20px_#f59e0b] active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] animate-pulse"
               >
                 <span>COLLECT</span>
-                <span className="text-[9px] font-mono">£{exchangePending.amount}</span>
+                <span className="text-[8px] sm:text-[9px] font-mono">£{exchangePending.amount}</span>
               </button>
             ) : (
               <button
                 type="button"
                 disabled={!inFeatureBoard && potCash <= 0 || isWalkingBoard}
                 onClick={handleCollectBoard}
-                className={`p-2 sm:p-2.5 rounded-xl border-2 font-black text-[11px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] ${
+                className={`p-1.5 sm:p-2.5 rounded-xl border-2 font-black text-[10px] sm:text-xs uppercase tracking-wider active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] ${
                   inFeatureBoard && potCash > 0 && !isWalkingBoard
                     ? 'bg-gradient-to-b from-amber-400 via-yellow-500 to-amber-700 border-yellow-200 text-black shadow-[0_0_20px_#f59e0b] animate-bounce'
                     : 'bg-zinc-950/70 border-zinc-800 text-zinc-600 opacity-30 cursor-not-allowed'
                 }`}
               >
                 <span>COLLECT</span>
-                <span className="text-[9px] font-mono">£{potCash}</span>
+                <span className="text-[8px] sm:text-[9px] font-mono">£{potCash}</span>
               </button>
             )}
 
@@ -2085,56 +2086,56 @@ export default function PubFruityGame({
               <button
                 type="button"
                 onClick={handleExchangeToFeature}
-                className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-b from-emerald-500 via-teal-600 to-emerald-800 border-2 border-emerald-300 text-white font-black text-[11px] sm:text-xs uppercase tracking-widest shadow-[0_0_25px_#10b981] hover:brightness-110 active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] animate-bounce"
+                className="p-1.5 sm:p-2.5 rounded-xl bg-gradient-to-b from-emerald-500 via-teal-600 to-emerald-800 border-2 border-emerald-300 text-white font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-[0_0_25px_#10b981] hover:brightness-110 active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] animate-bounce"
               >
                 <div className="flex items-center gap-1">
                   <Flame size={14} />
                   <span>EXCHANGE</span>
                 </div>
-                <span className="text-[9px] font-mono">TO BOARD</span>
+                <span className="text-[8px] sm:text-[9px] font-mono">TO BOARD</span>
               </button>
             ) : skillStopperActive ? (
               <button
                 type="button"
                 onClick={handleStopSkillCash}
-                className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-b from-yellow-400 via-amber-500 to-red-600 border-2 border-white text-black font-black text-[11px] sm:text-xs uppercase tracking-widest shadow-[0_0_25px_#fde047] hover:brightness-110 active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] animate-pulse"
+                className="p-1.5 sm:p-2.5 rounded-xl bg-gradient-to-b from-yellow-400 via-amber-500 to-red-600 border-2 border-white text-black font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-[0_0_25px_#fde047] hover:brightness-110 active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] animate-pulse"
               >
                 <div className="flex items-center gap-1">
                   <Square size={14} />
                   <span>STOP</span>
                 </div>
-                <span className="text-[9px] font-mono">STOPPER</span>
+                <span className="text-[8px] sm:text-[9px] font-mono">STOPPER</span>
               </button>
             ) : reelRouletteActive ? (
               <button
                 type="button"
                 onClick={handleStopReelRoulette}
-                className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-b from-purple-500 via-indigo-600 to-purple-800 border-2 border-white text-white font-black text-[11px] sm:text-xs uppercase tracking-widest shadow-[0_0_25px_#a855f7] hover:brightness-110 active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] animate-pulse"
+                className="p-1.5 sm:p-2.5 rounded-xl bg-gradient-to-b from-purple-500 via-indigo-600 to-purple-800 border-2 border-white text-white font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-[0_0_25px_#a855f7] hover:brightness-110 active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] animate-pulse"
               >
                 <div className="flex items-center gap-1">
                   <Square size={14} />
                   <span>STOP</span>
                 </div>
-                <span className="text-[9px] font-mono">WHEEL</span>
+                <span className="text-[8px] sm:text-[9px] font-mono">WHEEL</span>
               </button>
             ) : repeaterActive ? (
               <button
                 type="button"
                 onClick={handleStopRepeater}
-                className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-b from-yellow-400 via-amber-500 to-yellow-600 border-2 border-white text-black font-black text-[11px] sm:text-xs uppercase tracking-widest shadow-[0_0_25px_#fde047] hover:brightness-110 active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] animate-pulse"
+                className="p-1.5 sm:p-2.5 rounded-xl bg-gradient-to-b from-yellow-400 via-amber-500 to-yellow-600 border-2 border-white text-black font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-[0_0_25px_#fde047] hover:brightness-110 active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] animate-pulse"
               >
                 <div className="flex items-center gap-1">
                   <Square size={14} />
                   <span>REPEAT</span>
                 </div>
-                <span className="text-[9px] font-mono">CHANCE</span>
+                <span className="text-[8px] sm:text-[9px] font-mono">CHANCE</span>
               </button>
             ) : (
               <button
                 type="button"
                 disabled={isSpinning || bankroll < stake || inFeatureBoard}
                 onClick={handleSpin}
-                className={`p-2 sm:p-2.5 rounded-xl border-2 font-black text-[11px] sm:text-xs uppercase tracking-widest active:scale-95 transition flex flex-col items-center justify-center min-h-[62px] ${
+                className={`p-1.5 sm:p-2.5 rounded-xl border-2 font-black text-[10px] sm:text-xs uppercase tracking-widest active:scale-95 transition flex flex-col items-center justify-center min-h-[56px] sm:min-h-[62px] ${
                   !isSpinning && bankroll >= stake && !inFeatureBoard
                     ? 'bg-gradient-to-b from-[#00e676] via-[#00c853] to-[#00873a] border-[#b9f6ca] text-white shadow-[0_0_25px_rgba(0,200,83,0.8)] hover:brightness-110 animate-pulse'
                     : 'bg-zinc-950/70 border-zinc-800 text-zinc-600 opacity-30 cursor-not-allowed'
@@ -2144,7 +2145,7 @@ export default function PubFruityGame({
                   <Sparkles size={14} />
                   <span>START</span>
                 </div>
-                <span className="text-[9px] font-mono">£{stake.toFixed(2)}</span>
+                <span className="text-[8px] sm:text-[9px] font-mono">£{stake.toFixed(2)}</span>
               </button>
             )}
           </div>

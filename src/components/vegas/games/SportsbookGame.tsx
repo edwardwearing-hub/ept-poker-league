@@ -303,21 +303,23 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
           </h3>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <Link
             href="/academy?tab=leaderboard&discipline=sportsbook"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
             title="View EPT Sportsbook League Standings"
           >
             <Trophy size={14} className="text-gold" />
-            <span>Sportsbook League</span>
+            <span className="hidden sm:inline">Sportsbook League</span>
+            <span className="sm:hidden">League</span>
           </Link>
           <button
             onClick={onOpenTutorial}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
           >
             <HelpCircle size={14} className="text-gold" />
-            <span>Rules & Tutorial</span>
+            <span className="hidden sm:inline">Rules & Tutorial</span>
+            <span className="sm:hidden">Rules</span>
           </button>
         </div>
       </div>
@@ -443,7 +445,7 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
         </div>
 
         {/* Right: Authentic 3D Thermal Paper Sportsbook Ticket */}
-        <div className="lg:col-span-4 relative select-none">
+        <div id="betslip" className="lg:col-span-4 relative select-none scroll-mt-20">
           {/* Jagged Serrated Perforations (Top Edge) */}
           <div className="w-full h-3 overflow-hidden leading-none flex">
             {Array.from({ length: 30 }).map((_, i) => (
@@ -632,6 +634,24 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
           </div>
         </div>
       </div>
+
+      {/* Mobile Floating Bet Slip Jump Button */}
+      {betSlip.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-50 lg:hidden animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <button
+            type="button"
+            onClick={() => {
+              document.getElementById('betslip')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black font-black text-xs uppercase shadow-[0_0_25px_rgba(245,158,11,0.9)] border-2 border-white active:scale-95 transition cursor-pointer"
+          >
+            <span>🎫 Ticket ({betSlip.length})</span>
+            <span>•</span>
+            <span>£{stake}</span>
+            <span>↓</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
