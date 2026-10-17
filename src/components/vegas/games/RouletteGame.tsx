@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { HelpCircle, Sparkles, Plus, Volume2, VolumeX, MessageSquare, Mic, MicOff } from 'lucide-react';
+import Link from 'next/link';
+import { HelpCircle, Sparkles, Plus, Volume2, VolumeX, MessageSquare, Mic, MicOff, Trophy } from 'lucide-react';
 import RouletteWheelVisual, { getPocketColor, ROULETTE_NUMBERS } from '../RouletteWheelVisual';
 import VegasChip, { VegasChipStack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
@@ -457,6 +458,15 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
           >
             {voiceOn ? <Mic size={15} /> : <MicOff size={15} />}
           </button>
+
+          <Link
+            href="/academy?tab=leaderboard&discipline=roulette-craps"
+            className="px-2.5 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5"
+            title="View Roulette & Craps League Standings"
+          >
+            <Trophy size={14} className="text-gold" />
+            <span className="hidden sm:inline">Wheel League</span>
+          </Link>
 
           <button
             onClick={onOpenTutorial}

@@ -55,6 +55,34 @@ import VegasGameCompanion from './VegasGameCompanion';
 
 type CategoryFilter = 'all' | 'table' | 'machine' | 'poker' | 'sports' | 'arcade';
 
+export function getGameDiscipline(gameId: string | null): string {
+  if (!gameId) return 'all';
+  if (['slots', 'pub-fruity'].includes(gameId)) return 'slots';
+  if (['blackjack', 'baccarat', 'ultimate-holdem', 'pai-gow', 'video-poker'].includes(gameId))
+    return 'blackjack';
+  if (['roulette', 'craps'].includes(gameId)) return 'roulette-craps';
+  if (['sportsbook'].includes(gameId)) return 'sportsbook';
+  if (['live-poker', 'poker', 'arena', 'bot-arena'].includes(gameId)) return 'poker';
+  return 'all';
+}
+
+export function getDisciplineName(discipline: string): string {
+  switch (discipline) {
+    case 'slots':
+      return 'Slots & Fruity';
+    case 'blackjack':
+      return 'Table Games';
+    case 'roulette-craps':
+      return 'Wheel & Dice';
+    case 'sportsbook':
+      return 'Sportsbook';
+    case 'poker':
+      return 'Poker Arena';
+    default:
+      return 'High Roller';
+  }
+}
+
 export default function VegasLobby() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
@@ -155,12 +183,20 @@ export default function VegasLobby() {
     window.dispatchEvent(new Event('storage'));
   };
 
-  // Handle Bankroll Update across all Vegas games with automatic bailout rule
-  const handleUpdateBankroll = (delta: number) => {
+  // Handle Bankroll Update across all Vegas games with automatic bailout rule & game tracking
+  const handleUpdateBankroll = (delta: number, gameId?: string) => {
     setTrackerStats((prev) => {
+      const gid = gameId || selectedGameId || 'casino';
+      const nextGameNet = { ...(prev.gameNetChips || {}) };
+      const nextGamePlays = { ...(prev.gamePlaysCount || {}) };
+      nextGameNet[gid] = (nextGameNet[gid] || 0) + delta;
+      nextGamePlays[gid] = (nextGamePlays[gid] || 0) + 1;
+
       const next: CareerTrackerStats = {
         ...prev,
         netChipsWon: (prev.netChipsWon || 0) + delta,
+        gameNetChips: nextGameNet,
+        gamePlaysCount: nextGamePlays,
       };
 
       const computedAfter = computeTotalAcademyChips(next);
@@ -410,6 +446,15 @@ export default function VegasLobby() {
             </button>
 
             <div className="flex items-center gap-2">
+              <Link
+                href={`/academy?tab=leaderboard&discipline=${getGameDiscipline(selectedGameId)}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-gold/20 to-yellow-500/20 text-gold border border-gold/40 hover:border-gold text-xs font-black uppercase tracking-wider hover:bg-gold/30 transition shadow"
+                title={`Open the dedicated ${getDisciplineName(getGameDiscipline(selectedGameId))} Leaderboard`}
+              >
+                <Trophy size={14} className="text-gold" />
+                <span>{getDisciplineName(getGameDiscipline(selectedGameId))} League →</span>
+              </Link>
+
               <button
                 onClick={() => setTheaterMode(!theaterMode)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 hover:bg-black/90 text-zinc-300 hover:text-gold border border-white/10 hover:border-gold/30 text-xs font-bold transition shadow"
@@ -530,27 +575,38 @@ export default function VegasLobby() {
         /* CASINO FLOOR LOBBY: Category Pills & 10 Game Cards */
         <div className="space-y-6">
           {/* Category Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 touch-momentum tabs-scrollbar">
-            {[
-              { id: 'all', label: 'All 10 Games' },
-              { id: 'arcade', label: 'Arcade Lounge 🕹️' },
-              { id: 'table', label: 'Table Classics' },
-              { id: 'machine', label: 'Slots & Video Machines' },
-              { id: 'poker', label: 'Poker & Carnival' },
-              { id: 'sports', label: 'Sportsbook' },
-            ].map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setCategoryFilter(cat.id as CategoryFilter)}
-                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition whitespace-nowrap cursor-pointer ${
-                  categoryFilter === cat.id
-                    ? 'bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]'
-                    : 'bg-black/60 text-zinc-400 hover:text-white border border-white/10'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 touch-momentum tabs-scrollbar flex-1">
+              {[
+                { id: 'all', label: 'All 10 Games' },
+                { id: 'arcade', label: 'Arcade Lounge 🕹️' },
+                { id: 'table', label: 'Table Classics' },
+                { id: 'machine', label: 'Slots & Video Machines' },
+                { id: 'poker', label: 'Poker & Carnival' },
+                { id: 'sports', label: 'Sportsbook' },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setCategoryFilter(cat.id as CategoryFilter)}
+                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition whitespace-nowrap cursor-pointer ${
+                    categoryFilter === cat.id
+                      ? 'bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]'
+                      : 'bg-black/60 text-zinc-400 hover:text-white border border-white/10'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            <Link
+              href="/academy?tab=leaderboard"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow shrink-0"
+              title="View all game leagues on the Academy Leaderboard"
+            >
+              <Trophy size={14} className="text-gold" />
+              <span>All Game Leagues →</span>
+            </Link>
           </div>
 
           {categoryFilter === 'arcade' ? (
@@ -641,19 +697,30 @@ export default function VegasLobby() {
                     </p>
                   </div>
 
-                  {/* Actions: Tutorial & Direct Play */}
-                  <div className="pt-3 border-t border-white/10 flex items-center gap-2.5">
+                  {/* Actions: Tutorial, League & Direct Play */}
+                  <div className="pt-3 border-t border-white/10 flex items-center gap-2">
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setTutorialGame(game);
                       }}
-                      className="flex-1 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-gold/30 text-xs font-bold text-zinc-300 hover:text-white transition flex items-center justify-center gap-1.5"
+                      className="py-2 px-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-gold/30 text-xs font-bold text-zinc-300 hover:text-white transition flex items-center justify-center gap-1"
+                      title="Tutorial & Rules"
                     >
-                      <HelpCircle size={14} className="text-gold" />
+                      <HelpCircle size={13} className="text-gold" />
                       <span>Tutorial</span>
                     </button>
+
+                    <Link
+                      href={`/academy?tab=leaderboard&discipline=${getGameDiscipline(game.id)}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="py-2 px-2.5 rounded-xl bg-gold/10 hover:bg-gold/20 border border-gold/30 hover:border-gold text-xs font-black uppercase tracking-wider text-gold hover:text-white transition flex items-center justify-center gap-1 shadow"
+                      title={`View ${getDisciplineName(getGameDiscipline(game.id))} League Leaderboard`}
+                    >
+                      <Trophy size={13} className="text-gold" />
+                      <span>League</span>
+                    </Link>
 
                     <button
                       type="button"

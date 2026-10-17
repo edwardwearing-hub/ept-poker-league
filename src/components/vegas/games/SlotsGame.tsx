@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { Sparkles, HelpCircle, Trophy, Volume2, VolumeX, Mic, MicOff, MessageSquare, Zap, Play, RotateCcw } from 'lucide-react';
 import { VegasChipRack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
@@ -469,6 +470,15 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
               £{bankroll.toLocaleString()}
             </span>
           </div>
+
+          <Link
+            href="/academy?tab=leaderboard&discipline=slots"
+            className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600/30 to-fuchsia-600/30 hover:bg-purple-600/50 border border-purple-400/60 text-yellow-300 font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5"
+            title="View Slots & Fruit Machine League Standings"
+          >
+            <Trophy size={14} className="text-yellow-300" />
+            <span className="hidden sm:inline">Slots League</span>
+          </Link>
 
           {onSwitchToPubFruity && (
             <button

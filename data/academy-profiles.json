@@ -6,6 +6,12 @@
     "showdownsWon": 0,
     "netChipsWon": 5000,
     "netBBWon": 0,
+    "gameNetChips": {
+      "slots": 5000
+    },
+    "gamePlaysCount": {
+      "slots": 12
+    },
     "bountiesClaimed": 0,
     "bountyCashWon": 0,
     "bankruptcyCount": 0,

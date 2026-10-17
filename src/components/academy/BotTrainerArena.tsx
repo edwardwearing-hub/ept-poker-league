@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import Link from 'next/link';
 import {
   Target,
   Zap,
@@ -2196,8 +2197,18 @@ export default function BotTrainerArena({
             </div>
           </div>
 
-          {/* Right: Eliminator Status + Unified Table Settings & Tools + Prominent Deal Hand CTA */}
+          {/* Right: Eliminator Status + Poker League Link + Unified Table Settings & Tools + Prominent Deal Hand CTA */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Quick Access to Poker League Leaderboard */}
+            <Link
+              href="/academy?tab=leaderboard&discipline=poker"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold hover:text-white transition shadow"
+              title="View Poker Academy League Standings"
+            >
+              <Trophy size={13} className="text-gold" />
+              <span className="hidden sm:inline">Poker League</span>
+            </Link>
+
             {/* Eliminator Tournament Alive Badge */}
             {config.gameMode === 'tournament-eliminator' && (
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gradient-to-r from-rose-950/70 to-zinc-900 border border-rose-500/50 shadow-[0_0_12px_rgba(244,63,94,0.2)]">

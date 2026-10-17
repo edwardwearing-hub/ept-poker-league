@@ -127,6 +127,8 @@ export interface AcademyLeaderboardEntry {
   bankruptcyCount: number;
   bailoutChipsReceived: number;
   isRosterPlayer: boolean;
+  gameNetChips?: Record<string, number>;
+  gamePlaysCount?: Record<string, number>;
 }
 
 export function buildAcademyLeaderboard(
@@ -189,6 +191,13 @@ export function buildAcademyLeaderboard(
       (p) => p.toLowerCase().trim() === name.toLowerCase().trim()
     );
 
+    const gameNetChips = { ...(stats.gameNetChips || {}) };
+    const gamePlaysCount = { ...(stats.gamePlaysCount || {}) };
+    if (!gameNetChips.slots && stats.netChipsWon > 0 && stats.handsPlayed === 0) {
+      gameNetChips.slots = stats.netChipsWon;
+      gamePlaysCount.slots = 1;
+    }
+
     entries.push({
       rank: 0, // Assigned after sorting
       name,
@@ -211,6 +220,8 @@ export function buildAcademyLeaderboard(
       bankruptcyCount,
       bailoutChipsReceived: recordedBailout > 0 ? recordedBailout : bankruptcyCount * 1000,
       isRosterPlayer,
+      gameNetChips,
+      gamePlaysCount,
     });
   }
 

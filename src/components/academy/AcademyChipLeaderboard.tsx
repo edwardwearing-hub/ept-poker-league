@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Trophy,
   Coins,
@@ -22,6 +23,8 @@ import {
   Users,
   Shield,
   HelpCircle,
+  Dices,
+  Gamepad2,
 } from 'lucide-react';
 import {
   AcademyLeaderboardEntry,
@@ -42,6 +45,243 @@ interface Props {
   onLaunchPresetDrill: (preset: ScenarioPreset) => void;
 }
 
+export type GameDiscipline =
+  | 'all'
+  | 'poker'
+  | 'slots'
+  | 'blackjack'
+  | 'roulette-craps'
+  | 'sportsbook';
+
+export interface DisciplineMeta {
+  id: GameDiscipline;
+  label: string;
+  shortLabel: string;
+  icon: string;
+  tagline: string;
+  description: string;
+  badge: string;
+  bgActive: string;
+  playUrl: string;
+  playLabel: string;
+}
+
+export const DISCIPLINE_TABS: DisciplineMeta[] = [
+  {
+    id: 'all',
+    label: 'Overall High Roller',
+    shortLabel: 'All Games',
+    icon: '👑',
+    badge: 'Master',
+    tagline: 'Combined Multi-Game Championship',
+    description:
+      'Master standings combining Poker Arena, Slot Machines, VIP Table Games, and Sportsbook wagering.',
+    bgActive: 'bg-gradient-to-r from-[#ffd700] via-[#cfb53b] to-amber-600 text-black font-black',
+    playUrl: '/vegas',
+    playLabel: 'Open Casino Floor',
+  },
+  {
+    id: 'poker',
+    label: 'Poker Academy League',
+    shortLabel: 'Poker Arena',
+    icon: '♠️',
+    badge: "Hold'em",
+    tagline: "AI Bot Arena & Virtual Coach Accuracy",
+    description:
+      "Tracked strictly across Hold'em Bot Arena sessions, GTO Decision Accuracy, and poker tournament earnings.",
+    bgActive: 'bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 text-white font-black',
+    playUrl: '/academy?tab=arena',
+    playLabel: 'Play Bot Arena',
+  },
+  {
+    id: 'slots',
+    label: 'Slots & Fruity League',
+    shortLabel: 'Slots & Fruity',
+    icon: '🎰',
+    badge: 'Jackpots',
+    tagline: 'Mega Wild Diamond & Authentic Pub Fruit Machines',
+    description:
+      'Standings ranked by net profit on Las Vegas 5-Line Slots and English Pub Fruit Machines.',
+    bgActive: 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white font-black',
+    playUrl: '/vegas?game=slots',
+    playLabel: 'Spin Slots Now',
+  },
+  {
+    id: 'blackjack',
+    label: 'Blackjack & Table Games',
+    shortLabel: 'Blackjack & Tables',
+    icon: '🃏',
+    badge: '21 Natural',
+    tagline: 'Vegas Blackjack, Baccarat & Table Classics',
+    description:
+      'Standings ranked by table card performance against AI Hostess & Dealer Sarah.',
+    bgActive: 'bg-gradient-to-r from-emerald-600 via-teal-600 to-green-500 text-white font-black',
+    playUrl: '/vegas?game=blackjack',
+    playLabel: 'Play Blackjack Table',
+  },
+  {
+    id: 'roulette-craps',
+    label: 'Roulette & Craps League',
+    shortLabel: 'Roulette & Craps',
+    icon: '🎲',
+    badge: 'Dice & Wheel',
+    tagline: 'European Single-Zero Wheel & Vegas Craps Dice',
+    description:
+      'Standings ranked by wheel spins and dice rolls on the high-roller casino felt.',
+    bgActive: 'bg-gradient-to-r from-amber-600 via-orange-600 to-yellow-500 text-black font-black',
+    playUrl: '/vegas?game=roulette',
+    playLabel: 'Spin Roulette Wheel',
+  },
+  {
+    id: 'sportsbook',
+    label: 'EPT Sportsbook League',
+    shortLabel: 'Sportsbook',
+    icon: '⚽',
+    badge: 'Handicappers',
+    tagline: 'Sports Wagering Odds, Slips & Multi-Leg Parlays',
+    description:
+      'Standings ranked by sports handicapping profit and multi-leg parlay cashouts.',
+    bgActive: 'bg-gradient-to-r from-cyan-600 via-blue-600 to-sky-500 text-white font-black',
+    playUrl: '/vegas?game=sportsbook',
+    playLabel: 'Place Sportsbook Bets',
+  },
+];
+
+export interface PlayerDisciplineStats {
+  netWon: number;
+  bankroll: number;
+  plays: number;
+  playsLabel: string;
+  primaryStatLabel: string;
+  primaryStatValue: string;
+  secondaryStatLabel: string;
+  secondaryStatValue: string;
+  isEligible: boolean;
+}
+
+export function getPlayerDisciplineStats(
+  entry: AcademyLeaderboardEntry,
+  discipline: GameDiscipline
+): PlayerDisciplineStats {
+  const gNet = entry.gameNetChips || {};
+  const gPlays = entry.gamePlaysCount || {};
+
+  if (discipline === 'slots') {
+    const net = (gNet.slots || 0) + (gNet['pub-fruity'] || 0);
+    const plays = (gPlays.slots || 0) + (gPlays['pub-fruity'] || 0);
+    return {
+      netWon: net,
+      bankroll: 10000 + net,
+      plays,
+      playsLabel: 'Spins',
+      primaryStatLabel: 'Slot Profit',
+      primaryStatValue: `${net >= 0 ? '+' : ''}£${net.toLocaleString()}`,
+      secondaryStatLabel: 'Spins Taken',
+      secondaryStatValue: `${plays} Spins`,
+      isEligible: plays > 0 || net !== 0,
+    };
+  }
+
+  if (discipline === 'blackjack') {
+    const net =
+      (gNet.blackjack || 0) +
+      (gNet.baccarat || 0) +
+      (gNet['ultimate-holdem'] || 0) +
+      (gNet['pai-gow'] || 0) +
+      (gNet['video-poker'] || 0);
+    const plays =
+      (gPlays.blackjack || 0) +
+      (gPlays.baccarat || 0) +
+      (gPlays['ultimate-holdem'] || 0) +
+      (gPlays['pai-gow'] || 0) +
+      (gPlays['video-poker'] || 0);
+    return {
+      netWon: net,
+      bankroll: 10000 + net,
+      plays,
+      playsLabel: 'Hands',
+      primaryStatLabel: 'Table Profit',
+      primaryStatValue: `${net >= 0 ? '+' : ''}£${net.toLocaleString()}`,
+      secondaryStatLabel: 'Hands Dealt',
+      secondaryStatValue: `${plays} Hands`,
+      isEligible: plays > 0 || net !== 0,
+    };
+  }
+
+  if (discipline === 'roulette-craps') {
+    const net = (gNet.roulette || 0) + (gNet.craps || 0);
+    const plays = (gPlays.roulette || 0) + (gPlays.craps || 0);
+    return {
+      netWon: net,
+      bankroll: 10000 + net,
+      plays,
+      playsLabel: 'Rounds',
+      primaryStatLabel: 'Wheel & Dice Net',
+      primaryStatValue: `${net >= 0 ? '+' : ''}£${net.toLocaleString()}`,
+      secondaryStatLabel: 'Rounds Played',
+      secondaryStatValue: `${plays} Rounds`,
+      isEligible: plays > 0 || net !== 0,
+    };
+  }
+
+  if (discipline === 'sportsbook') {
+    const net = gNet.sportsbook || 0;
+    const plays = gPlays.sportsbook || 0;
+    return {
+      netWon: net,
+      bankroll: 10000 + net,
+      plays,
+      playsLabel: 'Bets',
+      primaryStatLabel: 'Sportsbook Net',
+      primaryStatValue: `${net >= 0 ? '+' : ''}£${net.toLocaleString()}`,
+      secondaryStatLabel: 'Slips Settled',
+      secondaryStatValue: `${plays} Bets`,
+      isEligible: plays > 0 || net !== 0,
+    };
+  }
+
+  if (discipline === 'poker') {
+    const casinoNet =
+      (gNet.slots || 0) +
+      (gNet['pub-fruity'] || 0) +
+      (gNet.blackjack || 0) +
+      (gNet.baccarat || 0) +
+      (gNet['ultimate-holdem'] || 0) +
+      (gNet['pai-gow'] || 0) +
+      (gNet['video-poker'] || 0) +
+      (gNet.roulette || 0) +
+      (gNet.craps || 0) +
+      (gNet.sportsbook || 0);
+    const net = gNet.poker ?? (entry.netChipsWon - casinoNet);
+    const plays = entry.handsPlayed;
+    return {
+      netWon: net,
+      bankroll: 10000 + net,
+      plays,
+      playsLabel: 'Hands',
+      primaryStatLabel: 'Poker Net',
+      primaryStatValue: `${net >= 0 ? '+' : ''}£${net.toLocaleString()}`,
+      secondaryStatLabel: 'Coach Grade',
+      secondaryStatValue: `${entry.coachGrade}% Accuracy`,
+      isEligible: plays > 0 || net !== 0,
+    };
+  }
+
+  // All (Master combined)
+  const totalCasinoPlays = Object.values(gPlays).reduce((a, b) => a + b, 0);
+  return {
+    netWon: entry.netChipsWon,
+    bankroll: entry.chips,
+    plays: entry.handsPlayed + totalCasinoPlays,
+    playsLabel: 'Plays',
+    primaryStatLabel: 'Overall Profit',
+    primaryStatValue: `${entry.netChipsWon >= 0 ? '+' : ''}£${entry.netChipsWon.toLocaleString()}`,
+    secondaryStatLabel: 'Total Balance',
+    secondaryStatValue: `£${entry.chips.toLocaleString()}`,
+    isEligible: true,
+  };
+}
+
 type SortField = 'chips' | 'netChipsWon' | 'coachGrade' | 'handsPlayed';
 type LeagueDivision = 'challengers' | 'veterans';
 type ChallengerFilter = 'all' | 'veterans' | 'contenders';
@@ -50,8 +290,18 @@ export default function AcademyChipLeaderboard({
   activePlayerName,
   onLaunchPresetDrill,
 }: Props) {
+  const searchParams = useSearchParams();
+  const initialDiscipline = (searchParams.get('discipline') as GameDiscipline) || 'all';
+
   const [leaderboard, setLeaderboard] = useState<AcademyLeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [discipline, setDiscipline] = useState<GameDiscipline>(
+    ['all', 'poker', 'slots', 'blackjack', 'roulette-craps', 'sportsbook'].includes(
+      initialDiscipline
+    )
+      ? initialDiscipline
+      : 'all'
+  );
   const [sortField, setSortField] = useState<SortField>('chips');
   const [leagueDivision, setLeagueDivision] = useState<LeagueDivision>('challengers');
   const [challengerFilter, setChallengerFilter] = useState<ChallengerFilter>('all');
@@ -61,12 +311,37 @@ export default function AcademyChipLeaderboard({
   const [unclaimedGuestChips, setUnclaimedGuestChips] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
-  const [playerStanding, setPlayerStanding] = useState<{
-    entry: AcademyLeaderboardEntry | null;
-    behindLeaderChips: number;
-    nextRankEntry: AcademyLeaderboardEntry | null;
-    chipsToNextRank: number;
-  } | null>(null);
+
+  // Sync state if query param changes
+  useEffect(() => {
+    const param = searchParams.get('discipline') as GameDiscipline | null;
+    if (
+      param &&
+      ['all', 'poker', 'slots', 'blackjack', 'roulette-craps', 'sportsbook'].includes(param)
+    ) {
+      setDiscipline(param);
+    }
+  }, [searchParams]);
+
+  const activeDisciplineMeta = useMemo(() => {
+    return (
+      DISCIPLINE_TABS.find((d) => d.id === discipline) || DISCIPLINE_TABS[0]
+    );
+  }, [discipline]);
+
+  const handleSelectDiscipline = (newDisc: GameDiscipline) => {
+    setDiscipline(newDisc);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', 'leaderboard');
+      if (newDisc === 'all') {
+        url.searchParams.delete('discipline');
+      } else {
+        url.searchParams.set('discipline', newDisc);
+      }
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
 
   const isGuest =
     !activePlayerName ||
@@ -80,7 +355,7 @@ export default function AcademyChipLeaderboard({
         if (data && Array.isArray(data.leaderboard)) {
           let list: AcademyLeaderboardEntry[] = [...data.leaderboard];
 
-          // Check if local device has un-synced winnings (e.g. from slot machine)
+          // Check if local device has un-synced winnings (e.g. from slot machine or offline play)
           if (activePlayerName && !isGuest) {
             const localStats = loadTrackerStatsForPlayer(activePlayerName);
             const localChips = computeTotalAcademyChips(localStats);
@@ -96,6 +371,8 @@ export default function AcademyChipLeaderboard({
                 ...list[matchIdx],
                 chips: localChips,
                 netChipsWon: (localStats.netChipsWon || 0) + (localStats.bountyCashWon || 0),
+                gameNetChips: localStats.gameNetChips || list[matchIdx].gameNetChips,
+                gamePlaysCount: localStats.gamePlaysCount || list[matchIdx].gamePlaysCount,
               };
               // Re-sort with local chips
               list.sort((a, b) => {
@@ -113,9 +390,6 @@ export default function AcademyChipLeaderboard({
           }
 
           setLeaderboard(list);
-          if (data.playerStanding) {
-            setPlayerStanding(data.playerStanding);
-          }
         }
       })
       .catch((err) => console.error('Failed to load academy leaderboard:', err))
@@ -178,30 +452,6 @@ export default function AcademyChipLeaderboard({
     }
   };
 
-  const userEntry = useMemo(() => {
-    return leaderboard.find(
-      (e) => e.name.toLowerCase().trim() === activePlayerName.toLowerCase().trim()
-    );
-  }, [leaderboard, activePlayerName]);
-
-  // Total counts
-  const totalVeterans = useMemo(
-    () => leaderboard.filter((p) => p.isRosterPlayer).length,
-    [leaderboard]
-  );
-  const totalContenders = useMemo(
-    () => leaderboard.filter((p) => !p.isRosterPlayer).length,
-    [leaderboard]
-  );
-
-  // How many veterans has the user passed?
-  const veteransBeaten = useMemo(() => {
-    if (!userEntry) return 0;
-    return leaderboard.filter(
-      (p) => p.isRosterPlayer && p.chips < userEntry.chips
-    ).length;
-  }, [leaderboard, userEntry]);
-
   // 1. Filter by League Division & Sub-filter
   const divisionPlayers = useMemo(() => {
     if (leagueDivision === 'veterans') {
@@ -228,13 +478,42 @@ export default function AcademyChipLeaderboard({
     );
   }, [divisionPlayers, searchQuery]);
 
-  // 3. Sort players according to sortField
+  // 3. Attach Discipline Stats & Sort Players for Selected League
   const sortedPlayers = useMemo(() => {
-    const list = [...searchedPlayers].sort((a, b) => {
-      if (sortField === 'chips') return b.chips - a.chips;
-      if (sortField === 'netChipsWon') return b.netChipsWon - a.netChipsWon;
-      if (sortField === 'coachGrade') return b.coachGrade - a.coachGrade;
-      if (sortField === 'handsPlayed') return b.handsPlayed - a.handsPlayed;
+    const list = searchedPlayers.map((player) => {
+      const stats = getPlayerDisciplineStats(player, discipline);
+      return {
+        ...player,
+        disciplineStats: stats,
+      };
+    });
+
+    list.sort((a, b) => {
+      if (discipline === 'all') {
+        if (sortField === 'chips') return b.chips - a.chips;
+        if (sortField === 'netChipsWon') return b.netChipsWon - a.netChipsWon;
+        if (sortField === 'coachGrade') return b.coachGrade - a.coachGrade;
+        if (sortField === 'handsPlayed') return b.handsPlayed - a.handsPlayed;
+        return b.chips - a.chips;
+      }
+
+      if (discipline === 'poker') {
+        if (sortField === 'coachGrade') return b.coachGrade - a.coachGrade;
+        if (sortField === 'handsPlayed') return b.handsPlayed - a.handsPlayed;
+        if (b.disciplineStats.netWon !== a.disciplineStats.netWon) {
+          return b.disciplineStats.netWon - a.disciplineStats.netWon;
+        }
+        return b.coachGrade - a.coachGrade;
+      }
+
+      // Casino game leagues (slots, blackjack, roulette-craps, sportsbook)
+      // Rank by game-specific net profit first!
+      if (b.disciplineStats.netWon !== a.disciplineStats.netWon) {
+        return b.disciplineStats.netWon - a.disciplineStats.netWon;
+      }
+      if (b.disciplineStats.plays !== a.disciplineStats.plays) {
+        return b.disciplineStats.plays - a.disciplineStats.plays;
+      }
       return b.chips - a.chips;
     });
 
@@ -242,9 +521,58 @@ export default function AcademyChipLeaderboard({
       ...item,
       divisionRank: idx + 1,
     }));
-  }, [searchedPlayers, sortField]);
+  }, [searchedPlayers, discipline, sortField]);
 
   const top3 = sortedPlayers.slice(0, 3);
+
+  const userEntry = useMemo(() => {
+    return sortedPlayers.find(
+      (e) => e.name.toLowerCase().trim() === activePlayerName.toLowerCase().trim()
+    );
+  }, [sortedPlayers, activePlayerName]);
+
+  const userIdx = useMemo(() => {
+    return sortedPlayers.findIndex(
+      (e) => e.name.toLowerCase().trim() === activePlayerName.toLowerCase().trim()
+    );
+  }, [sortedPlayers, activePlayerName]);
+
+  const nextRankEntry = userIdx > 0 ? sortedPlayers[userIdx - 1] : null;
+  const chipsToNextRank =
+    nextRankEntry && userEntry
+      ? Math.max(
+          0,
+          (discipline === 'all'
+            ? nextRankEntry.chips
+            : nextRankEntry.disciplineStats.netWon) -
+            (discipline === 'all'
+              ? userEntry.chips
+              : userEntry.disciplineStats.netWon)
+        )
+      : 0;
+
+  // Total counts
+  const totalVeterans = useMemo(
+    () => leaderboard.filter((p) => p.isRosterPlayer).length,
+    [leaderboard]
+  );
+  const totalContenders = useMemo(
+    () => leaderboard.filter((p) => !p.isRosterPlayer).length,
+    [leaderboard]
+  );
+
+  const veteransBeaten = useMemo(() => {
+    if (!userEntry) return 0;
+    const userVal =
+      discipline === 'all'
+        ? userEntry.chips
+        : userEntry.disciplineStats.netWon;
+    return sortedPlayers.filter((p) => {
+      const pVal =
+        discipline === 'all' ? p.chips : p.disciplineStats.netWon;
+      return p.isRosterPlayer && pVal < userVal;
+    }).length;
+  }, [sortedPlayers, userEntry, discipline]);
 
   const getTierBadgeStyle = (tier: AcademyTrainingLevel) => {
     switch (tier) {
@@ -267,23 +595,25 @@ export default function AcademyChipLeaderboard({
         <div className="space-y-2 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/15 border border-gold/40 text-gold text-xs font-black uppercase tracking-widest">
             <Coins size={14} />
-            <span>Academy Bankroll & Dual-League Leaderboard</span>
+            <span>Academy Bankroll & Multi-Game Leagues</span>
           </div>
-          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-            E.P.T. Academy Chip Standings
+          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2.5">
+            <span>{activeDisciplineMeta.icon}</span>
+            <span>{activeDisciplineMeta.label}</span>
           </h2>
           <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-            Every trainee starts with a baseline £{BASE_ACADEMY_BANKROLL.toLocaleString()} Academy bankroll. Win pots in the Arena to climb the leaderboard, level up from Rookie to GTO Master, and benchmark your poker edge.
+            {activeDisciplineMeta.description} Every player starts with £
+            {BASE_ACADEMY_BANKROLL.toLocaleString()} baseline chips. Winnings are tracked across games with real-time league rankings.
           </p>
         </div>
 
         {/* Logged-in Player Quick Status Box */}
         {userEntry ? (
-          <div className="bg-black/70 border border-gold/40 rounded-xl p-4 flex flex-col items-center sm:items-start gap-2 shrink-0 min-w-[260px]">
+          <div className="bg-black/70 border border-gold/40 rounded-xl p-4 flex flex-col items-center sm:items-start gap-2 shrink-0 min-w-[270px]">
             <div className="text-[10px] text-zinc-400 uppercase font-bold flex items-center justify-between w-full">
-              <span>Your Standing:</span>
+              <span>{activeDisciplineMeta.shortLabel} Standing:</span>
               <span className="font-mono text-gold font-black">
-                Rank #{userEntry.rank} of {leaderboard.length}
+                Rank #{userEntry.divisionRank} of {sortedPlayers.length}
               </span>
             </div>
             <div className="flex items-center gap-3 w-full">
@@ -306,12 +636,18 @@ export default function AcademyChipLeaderboard({
                   )}
                 </div>
                 <div className="text-xs font-mono font-black text-gold">
-                  £{userEntry.chips.toLocaleString()} Chips
+                  {userEntry.disciplineStats.primaryStatLabel}:{' '}
+                  <span className="text-emerald-400 font-bold">
+                    {userEntry.disciplineStats.primaryStatValue}
+                  </span>
+                </div>
+                <div className="text-[10px] font-mono text-zinc-400">
+                  Total Bankroll: £{userEntry.chips.toLocaleString()}
                 </div>
               </div>
             </div>
 
-            {/* Veteran Benchmark Indicator for Contenders */}
+            {/* Benchmark Indicator */}
             {!userEntry.isRosterPlayer && (
               <div className="w-full text-[10px] font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-1 rounded-lg flex items-center justify-between">
                 <span className="flex items-center gap-1">
@@ -331,30 +667,44 @@ export default function AcademyChipLeaderboard({
                   <span>🤡</span> Bankrupt Status:
                 </span>
                 <span className="text-red-200">
-                  Felted ×{userEntry.bankruptcyCount} (+£{(userEntry.bailoutChipsReceived || userEntry.bankruptcyCount * 1000).toLocaleString()} loan)
+                  Felted ×{userEntry.bankruptcyCount} (+£
+                  {(
+                    userEntry.bailoutChipsReceived ||
+                    userEntry.bankruptcyCount * 1000
+                  ).toLocaleString()}{' '}
+                  loan)
                 </span>
               </div>
             )}
 
-            {playerStanding && playerStanding.chipsToNextRank > 0 && playerStanding.nextRankEntry && (
+            {chipsToNextRank > 0 && nextRankEntry && (
               <div className="text-[11px] text-zinc-300 bg-white/5 px-2.5 py-1 rounded-lg w-full border border-white/5">
                 <span className="text-emerald-400 font-bold">
-                  +£{playerStanding.chipsToNextRank.toLocaleString()}
+                  +£{chipsToNextRank.toLocaleString()}
                 </span>{' '}
-                to pass #{playerStanding.nextRankEntry.rank}{' '}
-                {playerStanding.nextRankEntry.name.split(' ')[0]}!
+                to pass #{nextRankEntry.divisionRank}{' '}
+                {nextRankEntry.name.split(' ')[0]}!
               </div>
             )}
 
-            <button
-              onClick={() => onLaunchPresetDrill('free-play')}
-              className="w-full mt-1 py-1.5 px-3 rounded-lg bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow hover:brightness-110 transition"
-            >
-              <Play size={12} fill="currentColor" /> Play in Arena
-            </button>
+            {discipline === 'poker' || discipline === 'all' ? (
+              <button
+                onClick={() => onLaunchPresetDrill('free-play')}
+                className="w-full mt-1 py-1.5 px-3 rounded-lg bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow hover:brightness-110 transition"
+              >
+                <Play size={12} fill="currentColor" /> Play in Bot Arena
+              </button>
+            ) : (
+              <Link
+                href={activeDisciplineMeta.playUrl}
+                className="w-full mt-1 py-1.5 px-3 rounded-lg bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow hover:brightness-110 transition text-center"
+              >
+                <Play size={12} fill="currentColor" /> {activeDisciplineMeta.playLabel} →
+              </Link>
+            )}
           </div>
         ) : isGuest ? (
-          <div className="bg-black/70 border border-amber-500/40 rounded-xl p-4 flex flex-col items-center sm:items-start gap-2 shrink-0 min-w-[260px]">
+          <div className="bg-black/70 border border-amber-500/40 rounded-xl p-4 flex flex-col items-center sm:items-start gap-2 shrink-0 min-w-[270px]">
             <div className="text-[10px] text-amber-400 uppercase font-black flex items-center gap-1">
               <span>👁️</span> Guest Trainee Mode
             </div>
@@ -369,6 +719,65 @@ export default function AcademyChipLeaderboard({
             </button>
           </div>
         ) : null}
+      </div>
+
+      {/* MULTI-GAME LEAGUE DISCIPLINE SELECTOR STRIP */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-black uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+            <Trophy size={14} className="text-gold" />
+            <span>Select Game League Championship:</span>
+          </span>
+          <span className="text-[10px] text-gold font-mono font-bold">
+            {activeDisciplineMeta.tagline}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {DISCIPLINE_TABS.map((tab) => {
+            const isSelected = discipline === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleSelectDiscipline(tab.id)}
+                className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between gap-1.5 relative overflow-hidden ${
+                  isSelected
+                    ? `${tab.bgActive} border-white/50 shadow-lg scale-[1.02] ring-1 ring-gold/40`
+                    : 'bg-black/60 hover:bg-white/5 border-white/10 text-zinc-400 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-lg">{tab.icon}</span>
+                  <span
+                    className={`text-[9px] font-mono font-black uppercase px-1.5 py-0.2 rounded ${
+                      isSelected
+                        ? 'bg-black/40 text-white border border-white/20'
+                        : 'bg-white/5 text-zinc-400 border border-white/10'
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
+                </div>
+                <div>
+                  <div
+                    className={`text-xs font-black tracking-tight leading-tight ${
+                      isSelected ? 'text-inherit' : 'text-zinc-200'
+                    }`}
+                  >
+                    {tab.shortLabel}
+                  </div>
+                  <div
+                    className={`text-[10px] truncate ${
+                      isSelected ? 'opacity-85' : 'text-zinc-500'
+                    }`}
+                  >
+                    {tab.label}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Sync Feedback Toast */}
@@ -399,7 +808,11 @@ export default function AcademyChipLeaderboard({
                 </span>
               </div>
               <p className="text-zinc-300 text-xs mt-0.5">
-                Your device has <strong className="text-gold font-mono">£{(userEntry?.chips || 0).toLocaleString()}</strong> total chips (including Slot Machine & Vegas play). Your updated position is shown below! Publish now to lock in your rank on the cloud server.
+                Your device has{' '}
+                <strong className="text-gold font-mono">
+                  £{(userEntry?.chips || 0).toLocaleString()}
+                </strong>{' '}
+                total chips (including Slot Machine & Vegas play). Your updated position is shown below! Publish now to lock in your rank on the cloud server.
               </p>
             </div>
           </div>
@@ -428,7 +841,8 @@ export default function AcademyChipLeaderboard({
                 </span>
               </div>
               <p className="text-zinc-300 text-xs mt-0.5">
-                You accumulated winnings on the Slot Machine during an unlinked session. Claim them now to add them directly to <strong className="text-gold">{isGuest ? 'your player profile' : activePlayerName}</strong>!
+                You accumulated winnings on the Slot Machine during an unlinked session. Claim them now to add them directly to{' '}
+                <strong className="text-gold">{isGuest ? 'your player profile' : activePlayerName}</strong>!
               </p>
             </div>
           </div>
@@ -524,13 +938,15 @@ export default function AcademyChipLeaderboard({
                   <Swords size={12} />
                   Open Benchmark Division
                 </span>
-                <span className="text-zinc-400 text-xs">All Registered Trainees</span>
+                <span className="text-zinc-400 text-xs">
+                  {activeDisciplineMeta.shortLabel} Division
+                </span>
               </div>
               <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                See How Well You Compare to EPT League Veterans! ⚔️
+                <span>See How You Rank in {activeDisciplineMeta.label}! ⚔️</span>
               </h3>
               <p className="text-xs sm:text-sm text-zinc-300 max-w-3xl leading-relaxed">
-                Every new player starts with a baseline £10,000 Academy bankroll. Put your decision making, pot control, and aggression to the test against the founding 11 EPT League players to see where you rank on the felt!
+                Every player starts with a baseline £10,000 bankroll. Compare your {activeDisciplineMeta.shortLabel} net profit and achievements directly against the founding 11 EPT League veterans.
               </p>
             </div>
 
@@ -602,10 +1018,10 @@ export default function AcademyChipLeaderboard({
                 <span className="text-zinc-400 text-xs">The 11 Original League Members</span>
               </div>
               <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                EPT Veterans Championship Leaderboard 🏆
+                EPT Veterans {activeDisciplineMeta.shortLabel} Championship 🏆
               </h3>
               <p className="text-xs sm:text-sm text-zinc-300 max-w-3xl leading-relaxed">
-                Exclusive standings for the founding 11 EPT League players. Tracked across all bot training arena sessions, tournament eliminators, and coach decision accuracy evaluations.
+                Exclusive standings for the founding 11 EPT League players in {activeDisciplineMeta.label}.
               </p>
             </div>
             <div className="text-right shrink-0 hidden md:block">
@@ -655,11 +1071,20 @@ export default function AcademyChipLeaderboard({
             </div>
 
             <div className="text-xl font-mono font-black text-zinc-200">
-              £{top3[1].chips.toLocaleString()}
+              {discipline === 'all'
+                ? `£${top3[1].chips.toLocaleString()}`
+                : `£${top3[1].disciplineStats.bankroll.toLocaleString()}`}
             </div>
             <div className="text-[11px] font-mono text-zinc-400 mt-0.5">
-              Net: {top3[1].netChipsWon >= 0 ? '+' : ''}£{top3[1].netChipsWon.toLocaleString()}
+              {top3[1].disciplineStats.primaryStatLabel}:{' '}
+              <span className="text-zinc-200 font-bold">
+                {top3[1].disciplineStats.primaryStatValue}
+              </span>
             </div>
+            <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
+              {top3[1].disciplineStats.secondaryStatValue}
+            </div>
+
             <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
               <span
                 className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border ${getTierBadgeStyle(
@@ -670,7 +1095,10 @@ export default function AcademyChipLeaderboard({
               </span>
               {top3[1].bankruptcyCount > 0 && (
                 <span
-                  title={`Bankrupt ${top3[1].bankruptcyCount}x! Bailed out by league with £${(top3[1].bailoutChipsReceived || top3[1].bankruptcyCount * 1000).toLocaleString()}`}
+                  title={`Bankrupt ${top3[1].bankruptcyCount}x! Bailed out by league with £${(
+                    top3[1].bailoutChipsReceived ||
+                    top3[1].bankruptcyCount * 1000
+                  ).toLocaleString()}`}
                   className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-red-950/90 text-red-300 border border-red-500/80 shadow-[0_0_8px_rgba(239,68,68,0.4)] flex items-center gap-1"
                 >
                   <span>🤡</span> Bankrupt ×{top3[1].bankruptcyCount}
@@ -685,7 +1113,11 @@ export default function AcademyChipLeaderboard({
               👑
             </div>
             <div className="mt-2 text-xs font-black uppercase tracking-widest text-gold mb-1">
-              {leagueDivision === 'veterans' ? 'Veteran Champion' : 'League Leader'}
+              {discipline === 'all'
+                ? leagueDivision === 'veterans'
+                  ? 'Veteran Champion'
+                  : 'High Roller Champion'
+                : `${activeDisciplineMeta.shortLabel} Champion`}
             </div>
             <div className="relative mb-2">
               <img
@@ -718,11 +1150,18 @@ export default function AcademyChipLeaderboard({
             </div>
 
             <div className="text-2xl font-mono font-black text-gold">
-              £{top3[0].chips.toLocaleString()}
+              {discipline === 'all'
+                ? `£${top3[0].chips.toLocaleString()}`
+                : `£${top3[0].disciplineStats.bankroll.toLocaleString()}`}
             </div>
             <div className="text-xs font-mono text-emerald-400 mt-0.5">
-              Net: {top3[0].netChipsWon >= 0 ? '+' : ''}£{top3[0].netChipsWon.toLocaleString()} ({top3[0].handsPlayed} hands)
+              {top3[0].disciplineStats.primaryStatLabel}:{' '}
+              <span className="font-bold">{top3[0].disciplineStats.primaryStatValue}</span>
             </div>
+            <div className="text-[11px] text-zinc-300 font-mono mt-0.5">
+              {top3[0].disciplineStats.secondaryStatValue}
+            </div>
+
             <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
               <span
                 className={`px-2.5 py-0.5 rounded text-[11px] font-black uppercase border ${getTierBadgeStyle(
@@ -733,7 +1172,10 @@ export default function AcademyChipLeaderboard({
               </span>
               {top3[0].bankruptcyCount > 0 && (
                 <span
-                  title={`Bankrupt ${top3[0].bankruptcyCount}x! Bailed out by league with £${(top3[0].bailoutChipsReceived || top3[0].bankruptcyCount * 1000).toLocaleString()}`}
+                  title={`Bankrupt ${top3[0].bankruptcyCount}x! Bailed out by league with £${(
+                    top3[0].bailoutChipsReceived ||
+                    top3[0].bankruptcyCount * 1000
+                  ).toLocaleString()}`}
                   className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-red-950/90 text-red-300 border border-red-500/80 shadow-[0_0_8px_rgba(239,68,68,0.4)] flex items-center gap-1"
                 >
                   <span>🤡</span> Bankrupt ×{top3[0].bankruptcyCount}
@@ -778,11 +1220,20 @@ export default function AcademyChipLeaderboard({
             </div>
 
             <div className="text-xl font-mono font-black text-amber-300">
-              £{top3[2].chips.toLocaleString()}
+              {discipline === 'all'
+                ? `£${top3[2].chips.toLocaleString()}`
+                : `£${top3[2].disciplineStats.bankroll.toLocaleString()}`}
             </div>
             <div className="text-[11px] font-mono text-zinc-400 mt-0.5">
-              Net: {top3[2].netChipsWon >= 0 ? '+' : ''}£{top3[2].netChipsWon.toLocaleString()}
+              {top3[2].disciplineStats.primaryStatLabel}:{' '}
+              <span className="text-amber-200 font-bold">
+                {top3[2].disciplineStats.primaryStatValue}
+              </span>
             </div>
+            <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
+              {top3[2].disciplineStats.secondaryStatValue}
+            </div>
+
             <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
               <span
                 className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border ${getTierBadgeStyle(
@@ -793,7 +1244,10 @@ export default function AcademyChipLeaderboard({
               </span>
               {top3[2].bankruptcyCount > 0 && (
                 <span
-                  title={`Bankrupt ${top3[2].bankruptcyCount}x! Bailed out by league with £${(top3[2].bailoutChipsReceived || top3[2].bankruptcyCount * 1000).toLocaleString()}`}
+                  title={`Bankrupt ${top3[2].bankruptcyCount}x! Bailed out by league with £${(
+                    top3[2].bailoutChipsReceived ||
+                    top3[2].bankruptcyCount * 1000
+                  ).toLocaleString()}`}
                   className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-red-950/90 text-red-300 border border-red-500/80 shadow-[0_0_8px_rgba(239,68,68,0.4)] flex items-center gap-1"
                 >
                   <span>🤡</span> Bankrupt ×{top3[2].bankruptcyCount}
@@ -813,14 +1267,14 @@ export default function AcademyChipLeaderboard({
               <Trophy className="text-gold" size={18} />
               <span>
                 {leagueDivision === 'veterans'
-                  ? 'Official EPT Veterans Championship Table'
-                  : 'Open Challenger Benchmarking Table'}
+                  ? `EPT Veterans ${activeDisciplineMeta.shortLabel} Standings`
+                  : `Open ${activeDisciplineMeta.shortLabel} Benchmarking Table`}
               </span>
             </h3>
             <p className="text-xs text-zinc-400 mt-0.5">
-              {leagueDivision === 'veterans'
-                ? 'Showing the 11 founding league players ranked by Academy performance.'
-                : 'All players and veterans ranked side-by-side with automatic real-time updates.'}
+              {discipline === 'all'
+                ? 'All games combined master bankroll. Ranked by overall chips & career performance.'
+                : `Specialized ${activeDisciplineMeta.label} standings. Ranked by net profit in ${activeDisciplineMeta.shortLabel}.`}
             </p>
           </div>
 
@@ -829,17 +1283,17 @@ export default function AcademyChipLeaderboard({
               Sort:
             </span>
             {[
-              { id: 'chips', label: 'Total Chips' },
+              { id: 'chips', label: 'Bankroll' },
               { id: 'netChipsWon', label: 'Net Profit' },
               { id: 'coachGrade', label: 'Coach Accuracy' },
-              { id: 'handsPlayed', label: 'Hands' },
+              { id: 'handsPlayed', label: 'Hands / Plays' },
             ].map((s) => (
               <button
                 key={s.id}
                 onClick={() => setSortField(s.id as SortField)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap ${
                   sortField === s.id
-                    ? 'bg-gold text-black shadow'
+                    ? 'bg-gold text-black shadow font-black'
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
@@ -856,11 +1310,25 @@ export default function AcademyChipLeaderboard({
               <tr className="border-b border-white/10 text-zinc-400 uppercase text-[10px] font-bold tracking-wider">
                 <th className="py-2.5 px-3">Rank</th>
                 <th className="py-2.5 px-3">Player / Division</th>
-                <th className="py-2.5 px-3">Bankroll (Chips)</th>
-                <th className="py-2.5 px-3">Net Profit</th>
+                <th className="py-2.5 px-3">
+                  {discipline === 'all'
+                    ? 'Bankroll (Chips)'
+                    : `${activeDisciplineMeta.shortLabel} Bankroll`}
+                </th>
+                <th className="py-2.5 px-3">
+                  {discipline === 'all' ? 'Net Profit' : `${activeDisciplineMeta.shortLabel} Net`}
+                </th>
                 <th className="py-2.5 px-3">Training Level</th>
-                <th className="py-2.5 px-3">Hands (Win %)</th>
-                <th className="py-2.5 px-3">Coach Accuracy</th>
+                <th className="py-2.5 px-3">
+                  {discipline === 'all' || discipline === 'poker'
+                    ? 'Hands (Win %)'
+                    : `${activeDisciplineMeta.shortLabel} Volume`}
+                </th>
+                <th className="py-2.5 px-3">
+                  {discipline === 'poker' || discipline === 'all'
+                    ? 'Coach Accuracy'
+                    : 'Game Activity'}
+                </th>
                 <th className="py-2.5 px-3">Trophies</th>
                 <th className="py-2.5 px-3 text-right">Action</th>
               </tr>
@@ -945,7 +1413,7 @@ export default function AcademyChipLeaderboard({
                                 <InfoTooltip
                                   title={`💥 Loser Badge: Bankrupt ×${entry.bankruptcyCount}`}
                                   description={`This player lost all their chips and went broke ${entry.bankruptcyCount} time${entry.bankruptcyCount > 1 ? 's' : ''}! The League Treasury bailed them out with £${(entry.bailoutChipsReceived || entry.bankruptcyCount * 1000).toLocaleString()} in emergency chips so they could keep playing.`}
-                                  example="Maintain solid pot-odds discipline and avoid high-variance punts!"
+                                  example="Maintain solid bankroll management and avoid high-variance punts!"
                                   size={10}
                                 >
                                   <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-red-950/90 border border-red-500/80 text-red-300 text-[9px] font-black uppercase tracking-tight shadow-[0_0_8px_rgba(239,68,68,0.4)] cursor-help">
@@ -969,14 +1437,28 @@ export default function AcademyChipLeaderboard({
                             ●
                           </span>
                           <span className="text-sm font-black text-gold">
-                            £{entry.chips.toLocaleString()}
+                            £
+                            {(discipline === 'all'
+                              ? entry.chips
+                              : entry.disciplineStats.bankroll
+                            ).toLocaleString()}
                           </span>
                         </div>
+                        {discipline !== 'all' && (
+                          <div className="text-[10px] text-zinc-500 font-mono">
+                            Total: £{entry.chips.toLocaleString()}
+                          </div>
+                        )}
                         {entry.bankruptcyCount > 0 && (
                           <div className="text-[10px] text-red-400 font-bold flex items-center gap-1 mt-0.5">
                             <span>⚠️ Bailed Out</span>
                             <span className="text-zinc-500 font-mono font-normal">
-                              (+£{(entry.bailoutChipsReceived || entry.bankruptcyCount * 1000).toLocaleString()})
+                              (+£
+                              {(
+                                entry.bailoutChipsReceived ||
+                                entry.bankruptcyCount * 1000
+                              ).toLocaleString()}
+                              )
                             </span>
                           </div>
                         )}
@@ -986,18 +1468,19 @@ export default function AcademyChipLeaderboard({
                       <td className="py-3 px-3">
                         <span
                           className={`font-bold ${
-                            entry.netChipsWon >= 0
+                            entry.disciplineStats.netWon >= 0
                               ? 'text-emerald-400'
                               : 'text-ept-red'
                           }`}
                         >
-                          {entry.netChipsWon >= 0 ? '+' : ''}£
-                          {entry.netChipsWon.toLocaleString()}
+                          {entry.disciplineStats.primaryStatValue}
                         </span>
-                        <div className="text-[10px] text-zinc-500">
-                          {entry.netBBWon >= 0 ? '+' : ''}
-                          {entry.netBBWon} BB
-                        </div>
+                        {discipline === 'poker' && (
+                          <div className="text-[10px] text-zinc-500">
+                            {entry.netBBWon >= 0 ? '+' : ''}
+                            {entry.netBBWon} BB
+                          </div>
+                        )}
                       </td>
 
                       {/* Level Tier */}
@@ -1018,19 +1501,44 @@ export default function AcademyChipLeaderboard({
                         </InfoTooltip>
                       </td>
 
-                      {/* Hands & Win % */}
+                      {/* Hands / Volume */}
                       <td className="py-3 px-3 text-zinc-300">
-                        <div>{entry.handsPlayed} Hands</div>
-                        <div className="text-[10px] text-zinc-500">
-                          {entry.winRatePercent}% Win Rate
-                        </div>
+                        {discipline === 'all' || discipline === 'poker' ? (
+                          <>
+                            <div>{entry.handsPlayed} Hands</div>
+                            <div className="text-[10px] text-zinc-500">
+                              {entry.winRatePercent}% Win Rate
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>{entry.disciplineStats.secondaryStatValue}</div>
+                            <div className="text-[10px] text-zinc-500">
+                              {entry.disciplineStats.plays > 0
+                                ? 'Active Tracker'
+                                : 'Awaiting First Play'}
+                            </div>
+                          </>
+                        )}
                       </td>
 
-                      {/* Coach Accuracy */}
+                      {/* Coach Accuracy / Activity */}
                       <td className="py-3 px-3">
-                        <span className="font-bold text-emerald-400">
-                          {entry.coachGrade}%
-                        </span>
+                        {discipline === 'all' || discipline === 'poker' ? (
+                          <span className="font-bold text-emerald-400">
+                            {entry.coachGrade}%
+                          </span>
+                        ) : (
+                          <span
+                            className={`font-bold ${
+                              entry.disciplineStats.plays > 0
+                                ? 'text-emerald-400'
+                                : 'text-zinc-600'
+                            }`}
+                          >
+                            {entry.disciplineStats.plays > 0 ? 'Active ⚡' : 'Idle —'}
+                          </span>
+                        )}
                       </td>
 
                       {/* Trophies */}

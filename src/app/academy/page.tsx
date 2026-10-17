@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import AcademyHub from '@/components/academy/AcademyHub';
 
 import type { Metadata } from 'next';
@@ -21,5 +21,9 @@ export const metadata: Metadata = {
 };
 
 export default function AcademyPage() {
-  return <AcademyHub defaultTab="arena" />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <AcademyHub defaultTab="arena" />
+    </Suspense>
+  );
 }

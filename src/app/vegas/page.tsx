@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import VegasLobby from '@/components/vegas/VegasLobby';
 
 import type { Metadata } from 'next';
@@ -21,5 +21,9 @@ export const metadata: Metadata = {
 };
 
 export default function VegasPage() {
-  return <VegasLobby />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <VegasLobby />
+    </Suspense>
+  );
 }

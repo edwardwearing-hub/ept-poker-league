@@ -173,6 +173,10 @@ export interface CareerTrackerStats {
   bankruptcyCount?: number; // Times player went bankrupt / lost all chips
   bailoutChipsReceived?: number; // Total bailout chips granted (e.g. 1,000 per bankruptcy)
 
+  // Discipline & Game-specific breakdown for multi-game leagues
+  gameNetChips?: Record<string, number>; // e.g. { slots: 5000, blackjack: 1200, poker: 800 }
+  gamePlaysCount?: Record<string, number>; // e.g. { slots: 42, blackjack: 18, poker: 50 }
+
   // Pre-flop counters
   vpipOpportunities: number;
   vpipCount: number;

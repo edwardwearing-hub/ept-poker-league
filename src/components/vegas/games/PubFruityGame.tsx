@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import {
   Sparkles,
   HelpCircle,
@@ -1378,6 +1379,14 @@ export default function PubFruityGame({
 
         {/* Controls / How to Play */}
         <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href="/academy?tab=leaderboard&discipline=slots"
+            className="px-3.5 py-2 rounded-xl bg-gold/15 hover:bg-gold/25 border-2 border-gold/50 text-gold font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5 active:scale-95"
+            title="View Slots & Fruity League Standings"
+          >
+            <Trophy size={14} className="text-gold" />
+            <span>Fruity League</span>
+          </Link>
           {onSwitchToVegas && (
             <button
               onClick={onSwitchToVegas}

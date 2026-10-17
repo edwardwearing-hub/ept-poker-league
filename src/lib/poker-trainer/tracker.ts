@@ -94,6 +94,8 @@ export function getInitialTrackerStats(): CareerTrackerStats {
     },
     byPosition,
     recentFeedback: [],
+    gameNetChips: {},
+    gamePlaysCount: {},
   };
 }
 
@@ -139,6 +141,8 @@ export function loadTrackerStatsForPlayer(playerName?: string | null): CareerTra
         handsByMode: { ...initial.handsByMode, ...(parsed.handsByMode || {}) },
         byPosition: { ...initial.byPosition, ...(parsed.byPosition || {}) },
         recentFeedback: Array.isArray(parsed.recentFeedback) ? parsed.recentFeedback : [],
+        gameNetChips: { ...(initial.gameNetChips || {}), ...(parsed.gameNetChips || {}) },
+        gamePlaysCount: { ...(initial.gamePlaysCount || {}), ...(parsed.gamePlaysCount || {}) },
       };
     } catch {
       return getInitialTrackerStats();
@@ -158,6 +162,8 @@ export function loadTrackerStatsForPlayer(playerName?: string | null): CareerTra
       handsByMode: { ...initial.handsByMode, ...(parsed.handsByMode || {}) },
       byPosition: { ...initial.byPosition, ...(parsed.byPosition || {}) },
       recentFeedback: Array.isArray(parsed.recentFeedback) ? parsed.recentFeedback : [],
+      gameNetChips: { ...(initial.gameNetChips || {}), ...(parsed.gameNetChips || {}) },
+      gamePlaysCount: { ...(initial.gamePlaysCount || {}), ...(parsed.gamePlaysCount || {}) },
     };
   } catch {
     return getInitialTrackerStats();
@@ -223,6 +229,22 @@ export function transferGuestChipsToPlayer(targetPlayerName: string): {
         playerStats.bailoutChipsReceived =
           (playerStats.bailoutChipsReceived || 0) + (guestStats.bailoutChipsReceived || 0);
       }
+
+      // Transfer game-specific breakdowns
+      const targetGameNet = { ...(playerStats.gameNetChips || {}) };
+      const targetGamePlays = { ...(playerStats.gamePlaysCount || {}) };
+      for (const [gid, amount] of Object.entries(guestStats.gameNetChips || {})) {
+        targetGameNet[gid] = (targetGameNet[gid] || 0) + amount;
+      }
+      for (const [gid, count] of Object.entries(guestStats.gamePlaysCount || {})) {
+        targetGamePlays[gid] = (targetGamePlays[gid] || 0) + count;
+      }
+      if (Object.keys(guestStats.gameNetChips || {}).length === 0 && guestNet > 0) {
+        targetGameNet['slots'] = (targetGameNet['slots'] || 0) + guestNet;
+        targetGamePlays['slots'] = (targetGamePlays['slots'] || 0) + 1;
+      }
+      playerStats.gameNetChips = targetGameNet;
+      playerStats.gamePlaysCount = targetGamePlays;
 
       saveTrackerStatsForPlayer(playerStats, targetPlayerName);
       // Clear guest session now that it is safely linked

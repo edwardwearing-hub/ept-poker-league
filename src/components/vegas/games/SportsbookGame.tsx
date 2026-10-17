@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { HelpCircle, Trophy, Sparkles, Plus, Check, Trash2, ArrowRight } from 'lucide-react';
 import { VegasChipRack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
@@ -302,13 +303,23 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
           </h3>
         </div>
 
-        <button
-          onClick={onOpenTutorial}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
-        >
-          <HelpCircle size={14} className="text-gold" />
-          <span>Rules & Tutorial</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/academy?tab=leaderboard&discipline=sportsbook"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
+            title="View EPT Sportsbook League Standings"
+          >
+            <Trophy size={14} className="text-gold" />
+            <span>Sportsbook League</span>
+          </Link>
+          <button
+            onClick={onOpenTutorial}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+          >
+            <HelpCircle size={14} className="text-gold" />
+            <span>Rules & Tutorial</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Sportsbook Grid: LED Fixtures Board (Left 8 cols) + Physical Thermal Bet Slip (Right 4 cols) */}
