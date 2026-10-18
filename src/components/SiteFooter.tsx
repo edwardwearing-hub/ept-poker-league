@@ -183,8 +183,8 @@ export default function SiteFooter() {
                         <BadBeatReportButton />
                         <KonamiArcadePadButton />
                     </div>
-                    <div className="text-[11px] text-zinc-600 font-mono hidden md:block">
-                        Tip: A classic 1986 10-key arcade cheat unlocks High Roller Mode
+                    <div className="text-[11px] text-zinc-500 font-mono">
+                        💡 Clue: Enter the legendary 8-bit cheat code to unlock High Roller Mode
                     </div>
                 </div>
 

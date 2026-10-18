@@ -304,11 +304,15 @@ export function KonamiArcadePadButton() {
                         </button>
 
                         <div className="text-[10px] font-mono font-black uppercase tracking-widest text-gold mb-1">
-                            🕹️ E.P.T. 16-Bit Master Controller
+                            🕹️ E.P.T. Retro Arcade Pad
                         </div>
-                        <h3 className="text-base font-black uppercase tracking-wider text-white mb-2">
+                        <h3 className="text-base font-black uppercase tracking-wider text-white mb-1.5">
                             Vault Override Sequence
                         </h3>
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-3 rounded-full bg-gold/10 border border-gold/30 text-[11px] font-mono text-gold">
+                            <span>💡 Clue:</span>
+                            <span className="font-bold text-white">Legendary 8-bit cheat code</span>
+                        </div>
 
                         {/* 10-Slot Encrypted Input Display (No Spoilers!) */}
                         <div
