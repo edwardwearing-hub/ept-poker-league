@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { HelpCircle, Play, RotateCcw, Sparkles, Trophy } from 'lucide-react';
+import { HelpCircle, Play, RotateCcw, Sparkles, Trophy, Brain } from 'lucide-react';
 import VegasCard, { CardModel } from '../VegasCard';
 import VegasAiDealer from '../VegasAiDealer';
 import { VegasChipRack, VegasChipStack } from '../VegasChip';
@@ -10,6 +10,7 @@ import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
 import { playCardSound, playChipSound, playWinSound, playJackpotSound } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
+import { getBlackjackAdvice } from '@/lib/vegas/VegasStrategyEngine';
 
 interface Props {
   bankroll: number;
@@ -77,6 +78,11 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
     'Welcome to the Blackjack table, darling. Place your chips and let us see if you can reach 21!'
   );
   const [splashWin, setSplashWin] = useState<number | null>(null);
+  const [splashDetails, setSplashDetails] = useState<{
+    subtitle?: string;
+    winDetail?: string;
+    badge?: string;
+  }>({});
 
   const playerHand = calculateHandValue(playerCards);
   const fullDealerHand = calculateHandValue(dealerCards);
@@ -123,6 +129,11 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
       } else if (initialPlayer.isBlackjack) {
         const winAmount = Math.floor(bet * 1.5);
         playJackpotSound();
+        setSplashDetails({
+          subtitle: `Natural Blackjack! Dealt ${p1.rank}${p1.suit} ${p2.rank}${p2.suit}`,
+          winDetail: `Paid 3 to 2 on your £${bet} wager (+£${winAmount.toLocaleString()})`,
+          badge: '3:2 Payout',
+        });
         setSplashWin(winAmount);
         setOutcomeMessage(`Natural Blackjack! Paid 3:2 (+£${winAmount.toLocaleString()})! 🎉`);
         setDealerDialogue('Natural Blackjack! Outstanding cards, darling! Paying 3 to 2 on your bet.');
@@ -208,6 +219,11 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
     const pVal = calculateHandValue(currentHand);
     if (dVal.isBust) {
       playWinSound();
+      setSplashDetails({
+        subtitle: `Dealer Busts with ${dVal.total}!`,
+        winDetail: `Dealer drew over 21 against your ${pVal.total} • 1:1 Payout (+£${activeWager.toLocaleString()})`,
+        badge: 'Dealer Bust',
+      });
       setSplashWin(activeWager);
       setOutcomeMessage(`Dealer Busts with ${dVal.total}! You Win (+£${activeWager.toLocaleString()})! 🎉`);
       setDealerDialogue(`Dealer busts with ${dVal.total}! Outstanding victory, darling! The chips are yours.`);
@@ -222,6 +238,11 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
       });
     } else if (pVal.total > dVal.total) {
       playWinSound();
+      setSplashDetails({
+        subtitle: `Player Hand Wins!`,
+        winDetail: `Your total of ${pVal.total} beats Dealer's ${dVal.total} • Won £${activeWager.toLocaleString()}`,
+        badge: 'Player 1:1',
+      });
       setSplashWin(activeWager);
       setOutcomeMessage(`You Win! ${pVal.total} beats Dealer's ${dVal.total} (+£${activeWager.toLocaleString()})!`);
       setDealerDialogue(`Splendid play! Your ${pVal.total} beats my ${dVal.total}. Winnings sent to your stack.`);
@@ -300,7 +321,14 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
   return (
     <div className="bg-gradient-to-b from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden space-y-6">
       {/* Big Win Splash Banner */}
-      <VegasWinSplash winAmount={splashWin} title="BLACKJACK WIN!" onComplete={() => setSplashWin(null)} />
+      <VegasWinSplash
+        winAmount={splashWin}
+        title="BLACKJACK WIN!"
+        subtitle={splashDetails.subtitle}
+        winDetail={splashDetails.winDetail}
+        badge={splashDetails.badge}
+        onComplete={() => setSplashWin(null)}
+      />
 
       {/* Top Header & Rule Shortcut */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
@@ -352,6 +380,41 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
             : 'Settling Hand'
         }
       />
+
+      {/* Live Basic Strategy Coach Advice HUD */}
+      {gameState === 'player-turn' && playerCards.length >= 2 && dealerCards.length >= 1 && (
+        <div className="bg-gradient-to-r from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 p-3 sm:p-4 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
+              <Brain size={16} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase font-mono font-black text-emerald-300">
+                  Basic Strategy Advisor
+                </span>
+                <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
+                  ⚡ Mathematically Proven
+                </span>
+              </div>
+              {(() => {
+                const adv = getBlackjackAdvice(playerCards, dealerCards[0]);
+                return (
+                  <>
+                    <div className="font-bold text-white text-xs mt-0.5">{adv.headline}</div>
+                    <p className="text-[11px] text-zinc-300 leading-snug">{adv.explanation}</p>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+          <div className="hidden sm:block text-right shrink-0">
+            <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 font-black text-xs font-mono">
+              REC: {getBlackjackAdvice(playerCards, dealerCards[0]).action}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* 3D Tilted Casino Table Arena with Padded Leather Armrest, Mahogany Racetrack, 3D Shoe, and Dealer Chip Tray */}
       <Vegas3DTableArena

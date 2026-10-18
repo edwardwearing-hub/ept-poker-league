@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { HelpCircle, Play, RotateCcw, Sparkles, Wand2 } from 'lucide-react';
+import Link from 'next/link';
+import { HelpCircle, Play, RotateCcw, Sparkles, Wand2, Trophy, Brain } from 'lucide-react';
 import VegasCard, { CardModel } from '../VegasCard';
 import VegasAiDealer from '../VegasAiDealer';
 import { VegasChipRack, VegasChipStack } from '../VegasChip';
@@ -133,6 +134,7 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
     'Welcome to Pai Gow, darling. Set your five-card high hand to outrank your two-card low hand, or play the House Way!'
   );
   const [splashWin, setSplashWin] = useState<number | null>(null);
+  const [splashDetails, setSplashDetails] = useState<{ subtitle?: string; winDetail?: string; badge?: string }>({});
 
   const handleDeal = () => {
     if (bet > bankroll) return;
@@ -222,6 +224,11 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
       onUpdateBankroll(win);
       playWinSound();
       setSplashWin(win);
+      setSplashDetails({
+        badge: '2-0 CLEAN SWEEP',
+        subtitle: 'Won Both High (5-Card) & Low (2-Card) Hands',
+        winDetail: `High: ${pHigh.desc} beats ${dHigh.desc} • Low: ${pLow.desc} beats ${dLow.desc} (Paid 1:1 less 5% comm)`,
+      });
       setMessage(`🎉 WON BOTH HANDS! High: ${pHigh.desc} beats ${dHigh.desc} • Low: ${pLow.desc} beats ${dLow.desc} (+£${win})!`);
       setDealerDialogue(`Superb play, darling! Both your hands outranked mine. Take your winnings (+£${win})!`);
       addGameHistory({
@@ -260,7 +267,14 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
   return (
     <div className="bg-gradient-to-b from-teal-950/80 via-black to-zinc-950 border border-teal-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden space-y-6">
       {/* Big Win Splash Banner */}
-      <VegasWinSplash winAmount={splashWin} title="PAI GOW WIN!" onComplete={() => setSplashWin(null)} />
+      <VegasWinSplash
+        winAmount={splashWin}
+        title="PAI GOW WIN!"
+        subtitle={splashDetails.subtitle}
+        winDetail={splashDetails.winDetail}
+        badge={splashDetails.badge}
+        onComplete={() => setSplashWin(null)}
+      />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
@@ -279,13 +293,22 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
           </h3>
         </div>
 
-        <button
-          onClick={onOpenTutorial}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
-        >
-          <HelpCircle size={14} className="text-gold" />
-          <span>Rules & Tutorial</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/academy?tab=leaderboard&discipline=blackjack"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-xs font-bold text-gold transition"
+          >
+            <Trophy size={14} />
+            <span>Leaderboard</span>
+          </Link>
+          <button
+            onClick={onOpenTutorial}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+          >
+            <HelpCircle size={14} className="text-gold" />
+            <span>Rules & Tutorial</span>
+          </button>
+        </div>
       </div>
 
       {/* AI Dealer Sarah */}
@@ -300,6 +323,38 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
             : 'Settling Hand'
         }
       />
+
+      {/* Live Pai Gow House Way Strategy Advisor HUD */}
+      {step === 'setting' && (
+        <div className="bg-gradient-to-r from-teal-950/80 via-black to-zinc-950 border border-teal-500/40 p-3 sm:p-4 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-teal-500/20 border border-teal-400/40 flex items-center justify-center text-teal-300 shrink-0">
+              <Brain size={16} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase font-mono font-black text-teal-300">
+                  House Way Strategy Advisor
+                </span>
+                <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
+                  ⚡ 41% Push Defense
+                </span>
+              </div>
+              <div className="font-bold text-white text-xs mt-0.5">
+                Optimal 5-Card High & 2-Card Low Split Applied
+              </div>
+              <p className="text-[11px] text-zinc-300 leading-snug">
+                Splitting by official casino House Way protects your 2-card hand while ensuring your 5-card hand remains strictly stronger. This minimizes house advantage to under 2.8%.
+              </p>
+            </div>
+          </div>
+          <div className="hidden sm:block text-right shrink-0">
+            <span className="px-3 py-1.5 rounded-xl bg-teal-500/20 border border-teal-400/50 text-teal-200 font-black text-xs font-mono">
+              STATUS: BALANCED
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* 3D Tilted Pai Gow Poker Table Arena */}
       <Vegas3DTableArena

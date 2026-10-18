@@ -61,6 +61,7 @@ import {
   evaluateHand,
   evaluateHeroDecision,
   getPotLimitMaxTotalBet,
+  getLiveCoachRecommendation,
 } from '@/lib/poker-trainer/engine';
 import { computeDerivedMetrics } from '@/lib/poker-trainer/tracker';
 import {
@@ -818,6 +819,8 @@ export default function BotTrainerArena({
         Math.min(seatParticipants[0].chips, Math.max(bb * 2.5, Math.round(initialPot * 0.5)))
       );
       setHandSummaryBanner(null);
+      setLatestFeedback(null);
+      setCurrentHandFeedback([]);
       setActingPlayerId('hero');
       setIsProcessingBots(false);
       setActionTimeline(initialEvents);
@@ -904,6 +907,8 @@ export default function BotTrainerArena({
     setHandNumber(nextHandNum);
     setButtonOffset(nextBtnOffset);
     setHandSummaryBanner(null);
+    setLatestFeedback(null);
+    setCurrentHandFeedback([]);
     setActionTimeline(initialEvents);
 
     const heroPlayer = seatParticipants[0];
@@ -1095,10 +1100,13 @@ export default function BotTrainerArena({
     if (!hero || hero.cards.length < 2 || street === 'Waiting') return null;
     const handEval = evaluateHand([...hero.cards, ...communityCards]);
     const drawInfo = analyzeDrawsAndTexture(hero.cards, communityCards);
+    const activeBettors = activeOpponents.filter((opp) => opp.currentBet > 0 || opp.isAllIn);
+    const effectiveOpps =
+      street === 'Pre-flop' ? Math.max(1, activeBettors.length) : Math.max(1, activeOpponents.length);
     const equity = estimateHeroEquity(
       hero.cards,
       communityCards,
-      Math.max(1, activeOpponents.length)
+      effectiveOpps
     );
 
     let bountyBonus = 0;
@@ -1126,6 +1134,19 @@ export default function BotTrainerArena({
       notation,
     };
   }, [hero, communityCards, street, activeOpponents, config.gameMode, callAmount, pot]);
+
+  const liveCoachRec = useMemo(() => {
+    if (!hero || hero.cards.length < 2 || street === 'Waiting' || street === 'Showdown' || hero.folded) return null;
+    return getLiveCoachRecommendation({
+      hero,
+      pot,
+      callAmount,
+      communityCards,
+      street,
+      activeOpponents,
+      config,
+    });
+  }, [hero, pot, callAmount, communityCards, street, activeOpponents, config]);
 
   const resolveHandOutcome = (
     updatedPlayers: TrainerPlayer[],
@@ -1783,6 +1804,20 @@ export default function BotTrainerArena({
       const stillActive = workingPlayers.filter((p) => !p.folded);
       const heroUpdated = workingPlayers.find((p) => p.isHero)!;
 
+      // If any bot bet or raised above Hero's current bet, return action to Hero to respond!
+      if (currentHighBet > heroUpdated.currentBet && !heroUpdated.folded && !heroUpdated.isAllIn) {
+        setIsProcessingBots(false);
+        setActingPlayerId('hero');
+        const toCall = currentHighBet - heroUpdated.currentBet;
+        setCustomRaiseAmount(
+          Math.min(
+            heroUpdated.chips,
+            Math.max(toCall + config.bigBlind, Math.round(currentHighBet * 2.2))
+          )
+        );
+        return;
+      }
+
       if (stillActive.length === 1 || street === 'River' || heroUpdated.isAllIn) {
         const workingDeck = [...deck];
         const finalBoard = [...communityCards];
@@ -1825,6 +1860,7 @@ export default function BotTrainerArena({
       setPlayers(resetStreetPlayers);
       setPot(workingPot);
       setStreet(nextStreet);
+      setLatestFeedback(null);
 
       setActionTimeline((prev) => [
         ...prev,
@@ -2889,20 +2925,17 @@ export default function BotTrainerArena({
                               </div>
                             )}
 
-                            {/* Animated Casino Chip Bet Stack Tossed Toward Center Pot */}
-                            {(bot.currentBet > 0 ||
-                              (!bot.folded && bot.totalCommitted > 0)) && (
+                            {/* Active Street Bet Stack in Front of Bot (Swept into Center Pot between Streets) */}
+                            {bot.currentBet > 0 && street !== 'Showdown' && (
                               <div
-                                key={`chip-${bot.id}-${street}-${
-                                  bot.currentBet || bot.totalCommitted
-                                }`}
+                                key={`chip-${bot.id}-${street}-${bot.currentBet}`}
                                 className={`absolute ${seatCoords.chipClass} z-30 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/85 border border-sky-400/50 shadow-lg animate-chip-toss whitespace-nowrap`}
                               >
                                 <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-b from-sky-400 to-blue-700 border border-dashed border-white flex items-center justify-center text-[7px] font-black text-white shadow">
                                   ●
                                 </span>
                                 <span className="text-[11px] font-mono font-black text-white">
-                                  £{bot.currentBet > 0 ? bot.currentBet : bot.totalCommitted}
+                                  £{bot.currentBet}
                                 </span>
                               </div>
                             )}
@@ -2999,20 +3032,17 @@ export default function BotTrainerArena({
                        ========================================== */}
                     {hero && (
                       <div className="absolute bottom-2.5 sm:bottom-3 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
-                        {/* Hero's Current Street Chip Bet in Front of Pod */}
-                        {(hero.currentBet > 0 ||
-                          (!hero.folded && hero.totalCommitted > 0)) && (
+                        {/* Hero's Current Street Chip Bet in Front of Pod (Swept into Center Pot between Streets) */}
+                        {hero.currentBet > 0 && street !== 'Showdown' && (
                           <div
-                            key={`hero-chip-${street}-${
-                              hero.currentBet || hero.totalCommitted
-                            }`}
+                            key={`hero-chip-${street}-${hero.currentBet}`}
                             className="mb-2 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/85 border border-gold/60 shadow-lg animate-chip-toss"
                           >
                             <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-b from-amber-300 to-yellow-600 border border-dashed border-black flex items-center justify-center text-[7px] font-black text-black">
                               ●
                             </span>
                             <span className="text-xs font-mono font-black text-gold">
-                              £{hero.currentBet > 0 ? hero.currentBet : hero.totalCommitted}
+                              £{hero.currentBet}
                             </span>
                           </div>
                         )}
@@ -3627,13 +3657,35 @@ export default function BotTrainerArena({
                         <span className="text-gold font-bold">Table Ready:</span> Click <strong className="text-gold">Deal Hand</strong> above to start and receive real-time coach advice on every street.
                       </div>
                     ) : hero && !hero.folded && actingPlayerId === 'hero' ? (
-                      <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-200">
-                        <div className="font-bold flex items-center gap-1.5 text-xs text-emerald-300 mb-0.5">
-                          <span>🎯</span>
-                          <span>Your Turn to Act ({hero.position})</span>
-                        </div>
-                        <div className="text-[11px] text-zinc-300">
-                          Review your Win Chance vs Call Price above, then choose Fold, Check/Call, or Raise. Coach grading will evaluate your decision instantly.
+                      <div className="space-y-2 animate-in fade-in duration-200">
+                        <div className="p-3 rounded-xl bg-gradient-to-r from-amber-950/40 via-black to-zinc-950 border border-gold/40 space-y-2 shadow-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 font-bold text-xs text-gold">
+                              <span>🎯</span>
+                              <span>COACH LIVE ADVICE ({hero.position})</span>
+                            </div>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-gold text-black font-black uppercase shadow">
+                              {liveCoachRec?.recommendedAction || 'Your Move'}
+                            </span>
+                          </div>
+                          {liveCoachRec ? (
+                            <>
+                              <div className="text-xs font-black text-white">
+                                {liveCoachRec.headline}
+                              </div>
+                              <div className="text-[11px] text-zinc-300 leading-relaxed">
+                                {liveCoachRec.explanation}
+                              </div>
+                              <div className="pt-1.5 border-t border-white/10 text-[10px] text-gold/90 font-mono flex items-center gap-1.5">
+                                <span>💡</span>
+                                <span><strong>Coach Tip:</strong> {liveCoachRec.strategicTip}</span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-[11px] text-zinc-300">
+                              Review your Win Chance vs Call Price above, then choose Fold, Check/Call, or Raise. Coach grading will evaluate your decision instantly.
+                            </div>
+                          )}
                         </div>
                       </div>
                     ) : hero && hero.folded ? (

@@ -100,6 +100,7 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
   const [isParlay, setIsParlay] = useState(true);
   const [simulating, setSimulating] = useState(false);
   const [splashWin, setSplashWin] = useState<number | null>(null);
+  const [splashDetails, setSplashDetails] = useState<{ subtitle?: string; winDetail?: string; badge?: string }>({});
   const [settledResult, setSettledResult] = useState<{
     won: boolean;
     totalReturn: number;
@@ -188,6 +189,12 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
           onUpdateBankroll(totalWin);
           playWinSound();
           setSplashWin(totalWin);
+          const winningPicks = betSlip.map((b) => `${b.pickName} (${b.odds}x)`).join(' • ');
+          setSplashDetails({
+            badge: `${parlayMultiplier.toFixed(2)}x PARLAY`,
+            subtitle: `All ${betSlip.length} Legs Won! Stake £${stake.toLocaleString()}`,
+            winDetail: winningPicks,
+          });
           setSettledResult({
             won: true,
             totalReturn: totalWin,
@@ -240,6 +247,24 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
           if (singlesWinTotal > stake) {
             playWinSound();
             setSplashWin(singlesWinTotal);
+            const winningPicks = betSlip
+              .filter((pick) => {
+                const match = updatedFixtures.find((f) => f.id === pick.fixtureId)!;
+                const score = match.simulatedScore!;
+                if (pick.outcomeType === 'home' && score.home > score.away) return true;
+                if (pick.outcomeType === 'draw' && score.home === score.away) return true;
+                if (pick.outcomeType === 'away' && score.away > score.home) return true;
+                if (pick.outcomeType === 'over' && score.home + score.away > 2.5) return true;
+                if (pick.outcomeType === 'under' && score.home + score.away < 2.5) return true;
+                return false;
+              })
+              .map((b) => `${b.pickName} (${b.odds}x)`);
+
+            setSplashDetails({
+              badge: 'SINGLES WIN',
+              subtitle: `Winning Singles Returns (+£${singlesWinTotal.toLocaleString()})`,
+              winDetail: winningPicks.join(' • '),
+            });
           }
           setSettledResult({
             won: singlesWinTotal > stake,
@@ -283,7 +308,14 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
       />
 
       {/* Big Win Splash Banner */}
-      <VegasWinSplash winAmount={splashWin} title="SPORTSBOOK CASHOUT!" onComplete={() => setSplashWin(null)} />
+      <VegasWinSplash
+        winAmount={splashWin}
+        title="SPORTSBOOK CASHOUT!"
+        subtitle={splashDetails.subtitle}
+        winDetail={splashDetails.winDetail}
+        badge={splashDetails.badge}
+        onComplete={() => setSplashWin(null)}
+      />
 
       {/* Header with Stadium LED Ticker */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4 relative z-10">

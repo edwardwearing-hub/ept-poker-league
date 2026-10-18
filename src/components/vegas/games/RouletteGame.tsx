@@ -61,6 +61,11 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   const [history, setHistory] = useState<(number | string)[]>([35, 1, 20, 4, 24, 28, 12, 6]);
   const [outcomeMessage, setOutcomeMessage] = useState<string | null>('Place your chips upon the felt!');
   const [splashWin, setSplashWin] = useState<number | null>(null);
+  const [splashDetails, setSplashDetails] = useState<{
+    subtitle?: string;
+    winDetail?: string;
+    badge?: string;
+  }>({});
   const [sessionNet, setSessionNet] = useState<number>(0);
 
   // Live AI Dealer Sarah State
@@ -333,12 +338,38 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
     const colorLabel = color.toUpperCase();
     if (netResult > 0) {
       playWinSound();
+
+      // Collect specific winning hits to explain how the player won
+      const winningHits: string[] = [];
+      if (numberBets[winningNumber]) {
+        winningHits.push(`Straight Up #${winningNumber} (Paid 35:1)`);
+      }
+      if (isNum && numVal > 0) {
+        const col = numVal % 3 === 0 ? 1 : numVal % 3 === 2 ? 2 : 3;
+        if (columnBets[col]) winningHits.push(`Column ${col} (Paid 2:1)`);
+      }
+      if (isNum && numVal >= 1 && numVal <= 12 && dozenBets['1st12']) winningHits.push(`1st 12 (Paid 2:1)`);
+      if (isNum && numVal >= 13 && numVal <= 24 && dozenBets['2nd12']) winningHits.push(`2nd 12 (Paid 2:1)`);
+      if (isNum && numVal >= 25 && numVal <= 36 && dozenBets['3rd12']) winningHits.push(`3rd 12 (Paid 2:1)`);
+      if (color === 'red' && outsideBets.red) winningHits.push(`Red (Paid 1:1)`);
+      if (color === 'black' && outsideBets.black) winningHits.push(`Black (Paid 1:1)`);
+      if (isNum && numVal > 0 && numVal % 2 === 0 && outsideBets.even) winningHits.push(`Even (Paid 1:1)`);
+      if (isNum && numVal > 0 && numVal % 2 !== 0 && outsideBets.odd) winningHits.push(`Odd (Paid 1:1)`);
+      if (isNum && numVal >= 1 && numVal <= 18 && outsideBets.low) winningHits.push(`1-18 Low (Paid 1:1)`);
+      if (isNum && numVal >= 19 && numVal <= 36 && outsideBets.high) winningHits.push(`19-36 High (Paid 1:1)`);
+
+      setSplashDetails({
+        subtitle: `Ball landed on #${winningNumber} ${colorLabel}`,
+        winDetail: winningHits.length > 0 ? winningHits.join(' • ') : `Won £${netResult.toLocaleString()}`,
+        badge: `#${winningNumber} ${colorLabel}`,
+      });
+
       setSplashWin(netResult);
       setOutcomeMessage(`Ball landed on #${winningNumber} (${colorLabel})! You won £${netResult.toLocaleString()}! 🎉`);
       addGameHistory({
         gameId: 'roulette',
         headline: `Ball landed on #${winningNumber} (${colorLabel})`,
-        detail: `Won £${netResult.toLocaleString()} on spin`,
+        detail: winningHits.length > 0 ? winningHits.join(' • ') : `Won £${netResult.toLocaleString()} on spin`,
         delta: netResult,
         badge: `#${winningNumber} ${colorLabel}`,
       });
@@ -398,7 +429,14 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   return (
     <div className="relative w-full rounded-[2rem] bg-gradient-to-b from-[#1b1b1e] via-[#0f0f12] to-[#08080a] p-2 sm:p-3 shadow-[0_20px_50px_rgba(0,0,0,0.9)] border-4 border-[#282830] select-none overflow-hidden font-sans">
       {/* Big Win Splash Fireworks */}
-      <VegasWinSplash winAmount={splashWin} title="ROULETTE HIT!" onComplete={() => setSplashWin(null)} />
+      <VegasWinSplash
+        winAmount={splashWin}
+        title="ROULETTE HIT!"
+        subtitle={splashDetails.subtitle}
+        winDetail={splashDetails.winDetail}
+        badge={splashDetails.badge}
+        onComplete={() => setSplashWin(null)}
+      />
 
       {/* 1. TOP MOBILE-CASINO HUD STATUS BAR */}
       <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-2xl bg-black/70 border border-white/10 mb-2.5 text-white">

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CoachFeedback,
@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   ShieldAlert,
   Flame,
+  Loader2,
 } from 'lucide-react';
 
 export interface HandDebriefData {
@@ -76,6 +77,65 @@ export default function HandDebriefModal({
 
   const heroWon = heroNetChips > 0;
   const heroNetBB = Number((heroNetChips / blinds.bb).toFixed(1));
+
+  const [aiCoachReport, setAiCoachReport] = useState<{
+    source: 'ai' | 'fallback';
+    headline: string;
+    analysis: string;
+    keyTakeaway: string;
+    recommendedDrill: string;
+  } | null>(null);
+  const [isLoadingAi, setIsLoadingAi] = useState<boolean>(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoadingAi(true);
+
+    fetch('/api/academy/coach-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: 'hand_debrief',
+        handNumber,
+        gameMode,
+        blinds,
+        heroCards,
+        heroPosition,
+        communityCards,
+        potWon,
+        winnerNames,
+        winningHandDesc,
+        heroNetChips,
+        heroFolded,
+        decisions: decisions.map((d) => ({
+          street: d.street,
+          actionTaken: d.actionTaken,
+          recommendedAction: d.recommendedAction,
+          grade: d.grade,
+          evDelta: d.evDelta,
+          headline: d.headline,
+          explanation: d.explanation,
+          leakCategory: d.leakCategory,
+        })),
+      }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((result) => {
+        if (isMounted && result) {
+          setAiCoachReport(result);
+        }
+      })
+      .catch((err) => {
+        console.warn('AI Coach debrief fetch error:', err);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingAi(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [handNumber, gameMode, heroNetChips, heroFolded, decisions]);
 
   // Compute Overall Hand Grade from Hero's decisions
   const computeOverallGrade = (): { grade: DecisionGrade; label: string; score: number } => {
@@ -275,6 +335,85 @@ export default function HandDebriefModal({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* AI Master Coach Hand Retrospective */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-black border border-indigo-500/30 relative overflow-hidden space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300">
+                  <Brain size={16} />
+                </div>
+                <h4 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <span>AI Master Coach Breakdown</span>
+                  <Sparkles size={13} className="text-amber-400" />
+                </h4>
+              </div>
+
+              {isLoadingAi ? (
+                <span className="flex items-center gap-1.5 text-[11px] font-mono text-indigo-300 bg-indigo-950/60 border border-indigo-500/30 px-2.5 py-1 rounded-full animate-pulse">
+                  <Loader2 size={12} className="animate-spin" />
+                  Analyzing hand dynamics...
+                </span>
+              ) : aiCoachReport?.source === 'ai' ? (
+                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950/60 border border-emerald-500/40 px-2.5 py-0.5 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                  🤖 Gemini AI Powered
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-sky-300 bg-sky-950/60 border border-sky-500/40 px-2.5 py-0.5 rounded-full">
+                  ⚡ Local Engine Verified (Failsafe)
+                </span>
+              )}
+            </div>
+
+            {isLoadingAi ? (
+              <div className="space-y-2 py-2">
+                <div className="h-4 bg-white/5 rounded-md animate-pulse w-3/4" />
+                <div className="h-3 bg-white/5 rounded-md animate-pulse w-full" />
+                <div className="h-3 bg-white/5 rounded-md animate-pulse w-5/6" />
+              </div>
+            ) : (
+              <div className="space-y-3 pt-1">
+                <div>
+                  <h5 className="text-sm font-bold text-amber-300">
+                    {aiCoachReport?.headline || 'Hand Completed'}
+                  </h5>
+                  <p className="text-xs text-zinc-300 leading-relaxed mt-1">
+                    {aiCoachReport?.analysis}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+                  {aiCoachReport?.keyTakeaway && (
+                    <div className="p-3 rounded-xl bg-black/60 border border-amber-500/30 flex items-start gap-2">
+                      <Lightbulb size={15} className="text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-amber-400 block">
+                          Key Strategic Takeaway
+                        </span>
+                        <span className="text-zinc-200 text-[11px] leading-snug">
+                          {aiCoachReport.keyTakeaway}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {aiCoachReport?.recommendedDrill && (
+                    <div className="p-3 rounded-xl bg-black/60 border border-indigo-500/30 flex items-start gap-2">
+                      <Target size={15} className="text-indigo-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-indigo-400 block">
+                          Recommended Practice Drill
+                        </span>
+                        <span className="text-zinc-200 text-[11px] leading-snug">
+                          {aiCoachReport.recommendedDrill}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Section: What You Could Have Done Better (Mistakes & Leaks) */}

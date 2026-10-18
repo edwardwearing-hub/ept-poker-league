@@ -43,6 +43,7 @@ import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getActivePlayerName } from '@/lib/poker-trainer/tracker';
 import { fetchDealerComment } from '@/lib/vegas/VegasAiService';
 import VegasWinSplash from '../VegasWinSplash';
+import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 
 interface Props {
   bankroll: number;
@@ -524,9 +525,16 @@ export default function PubFruityGame({
   const [pendingJackpotWin, setPendingJackpotWin] = useState<number>(0);
   const repeaterTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Retro Amber LED Dot-Matrix Display & Oracle Future Predictions
+  const [spinsUntilBoard, setSpinsUntilBoard] = useState<number>(4);
+  const [dotMatrixCycle, setDotMatrixCycle] = useState<number>(0);
+
   // Win splash popup & messages
   const [winAmount, setWinAmount] = useState<number>(0);
   const [winTitle, setWinTitle] = useState<string>('');
+  const [winSubtitle, setWinSubtitle] = useState<string | undefined>(undefined);
+  const [winDetail, setWinDetail] = useState<string | undefined>(undefined);
+  const [winBadge, setWinBadge] = useState<string | undefined>(undefined);
   const [tickerMessage, setTickerMessage] = useState<string>(
     'MONOPOLY VEGAS STRIP • ROLL AROUND THE PARK • HIT 8 ON TRAIL OR EXCHANGE TO ENTER'
   );
@@ -534,6 +542,14 @@ export default function PubFruityGame({
     'Right then, mate! The high rollers are on the Monopoly board! Roll around the park and aim for Boardwalk!'
   );
   const [isAiThinking, setIsAiThinking] = useState<boolean>(false);
+
+  // Periodically cycle the retro dot-matrix message board between status, tips, and future predictions
+  useEffect(() => {
+    const cycleTimer = setInterval(() => {
+      setDotMatrixCycle((prev) => prev + 1);
+    }, 3500);
+    return () => clearInterval(cycleTimer);
+  }, []);
 
   // Helper to get visible 3 symbols for a reel tape at position
   const getReelSymbols = (reelIdx: number, centerIdx: number): PubSymbol[] => {
@@ -636,6 +652,9 @@ export default function PubFruityGame({
         const hanPayout = centerSym.payout3 * stake;
         playWinSound();
         setWinTitle('🔥 HOLD AFTER NUDGE (HAN) EXPLOIT! 🔥');
+        setWinSubtitle(`Repeated 3x ${centerSym.name} on the payline`);
+        setWinDetail(`Hold After Nudge exploit paid ${centerSym.payout3}x stake (+£${hanPayout})`);
+        setWinBadge('⚡ HAN EXPLOIT');
         setWinAmount(hanPayout);
         onUpdateBankroll(hanPayout);
         setTotalOut((prev) => prev + hanPayout);
@@ -720,8 +739,11 @@ export default function PubFruityGame({
         playPubFeatureFanfare();
         playJackpotSound();
         const jackpotWin = 100 * stake;
-        setWinAmount(jackpotWin);
         setWinTitle('🏆 £100 TROPHY DIRECT JACKPOT! 🏆');
+        setWinSubtitle('3x EPT Vegas Trophies lined up on the payline');
+        setWinDetail(`Top payout: 100x stake (+£${jackpotWin})`);
+        setWinBadge('🏆 DIRECT JACKPOT');
+        setWinAmount(jackpotWin);
         onUpdateBankroll(jackpotWin);
         setTotalOut((prev) => prev + jackpotWin);
         triggerRepeaterChance(jackpotWin);
@@ -847,8 +869,11 @@ export default function PubFruityGame({
     const { amount, description } = exchangePending;
     onUpdateBankroll(amount);
     setTotalOut((prev) => prev + amount);
-    setWinAmount(amount);
     setWinTitle('🍻 WINLINE CASH COLLECTED! 🍻');
+    setWinSubtitle(`Matched ${description}`);
+    setWinDetail(`Reel winline paid +£${amount}`);
+    setWinBadge('💰 WINLINE');
+    setWinAmount(amount);
     setTickerMessage(`COLLECTED £${amount} (${description})! READY TO SPIN!`);
     addGameHistory({
       gameId: 'pub-fruity',
@@ -974,6 +999,9 @@ export default function PubFruityGame({
       const payout = c0.payout3 * stake;
       playWinSound();
       setWinTitle('🍻 NUDGED TO PERFECTION! 🍻');
+      setWinSubtitle(`3x ${c0.name} aligned via manual nudges`);
+      setWinDetail(`Payline combo paid ${c0.payout3}x stake (+£${payout})`);
+      setWinBadge('🍻 NUDGE WIN');
       setWinAmount(payout);
       onUpdateBankroll(payout);
       setTotalOut((prev) => prev + payout);
@@ -1045,24 +1073,33 @@ export default function PubFruityGame({
 
         if (isWin) {
           playPubHiLoBeep(true);
-          const steps = Math.floor(Math.random() * 3) + 1;
+          triggerHaptic('deal');
+          const steps = nextRoll;
+          setTickerMessage(`★ HI-LO ROLLED ${nextRoll}! ADVANCING ${nextRoll} SQUARES AROUND THE STRIP! ★`);
           animateTokenWalk(steps, nextRoll);
         } else {
-          playPubHiLoBeep(false);
           if (extraLives > 0) {
+            playPubHiLoBeep(false);
+            triggerHaptic('deal');
             setExtraLives((prev) => prev - 1);
             setTickerMessage(`WRONG GUESS (${nextRoll})! EXTRA LIFE SAVED YOUR MONOPOLY RUN! ❤️`);
           } else {
-            const finalAward = Math.max(potCash, 1 * stake);
-            onUpdateBankroll(finalAward);
-            setTotalOut((prev) => prev + finalAward);
-            playWinSound();
-            setWinTitle('BAR CLOSED! COLLECTING BOARD POT');
-            setWinAmount(finalAward);
+            // Authentic Pub Fruit Machine: LOSE EVERYTHING COLLECTED!
+            triggerHaptic('bust');
+            playPubHiLoBeep(false);
+            const lostPot = potCash;
+            setPotCash(0);
             setInFeatureBoard(false);
             setCashLadderStep(-1);
-            setTickerMessage(`FEATURE OVER! BANKED £${finalAward} FROM THE TOP GLASS!`);
-            triggerAiComment('feature_lost', `Player stepped off Hi-Lo but banked £${finalAward}!`);
+            setTickerMessage(`☠️ BUSTED! WRONG GUESS (${nextRoll}) — LOST ALL £${lostPot} COLLECTED POT! BAR CLOSED.`);
+            addGameHistory({
+              gameId: 'pub-fruity',
+              headline: 'Busted on Feature Board',
+              detail: `Wrong guess (${nextRoll}) • Lost all £${lostPot} collected pot`,
+              delta: 0,
+              badge: '💀 BUSTED',
+            });
+            triggerAiComment('feature_lost', `Player went bust on Hi-Lo and lost all £${lostPot} collected cash! That's the pub fruit machine for you, mate!`);
           }
         }
       }
@@ -1081,12 +1118,14 @@ export default function PubFruityGame({
       currPos = (currPos + 1) % MONOPOLY_SQUARES.length;
       setBoardPosition(currPos);
       playWheelTick();
+      triggerHaptic('step');
 
       // Passing GO reward (£2 pocket money!)
       if (prev === 15 && currPos === 0) {
         const goBonus = 2 * stake;
         setPotCash((p) => p + goBonus);
         playWinSound();
+        triggerHaptic('win');
         setTickerMessage(`★ PASSED GO! COLLECTED £${goBonus} POCKET MONEY! ★`);
       }
 
@@ -1104,17 +1143,21 @@ export default function PubFruityGame({
     const sq = MONOPOLY_SQUARES[pos];
     setCashLadderStep((prev) => Math.min(prev + 1, CASH_LADDER.length - 1));
     setTickerMessage(`LANDED ON [${sq.title}] (${sq.subtext})!`);
+    triggerHaptic('deal');
 
     if (sq.type === 'cash' || sq.type === 'go' || sq.type === 'parking') {
       const added = sq.val * stake;
       setPotCash((prev) => prev + added);
       playWinSound();
+      triggerHaptic('win');
     } else if (sq.type === 'nudge') {
       setNudgesRemaining((prev) => prev + sq.val);
       playPubFeatureFanfare();
+      triggerHaptic('win');
     } else if (sq.type === 'life') {
       setExtraLives((prev) => prev + 1);
       playPubFeatureFanfare();
+      triggerHaptic('win');
     } else if (sq.type === 'skill') {
       launchSkillStopper();
     } else if (sq.type === 'roulette') {
@@ -1129,8 +1172,74 @@ export default function PubFruityGame({
       const jWin = 100 * stake;
       setPotCash((prev) => prev + jWin);
       playJackpotSound();
+      triggerHaptic('jackpot');
       setTickerMessage('💥 £100 BOARDWALK JACKPOT HIT! 💥');
       triggerRepeaterChance(jWin);
+    }
+  };
+
+  // 50/50 Win or Bust Gamble on Upper Board
+  const handleWinOrBust = () => {
+    if (
+      !inFeatureBoard ||
+      isWalkingBoard ||
+      isRollingHiLo ||
+      skillStopperActive ||
+      reelRouletteActive ||
+      repeaterActive
+    )
+      return;
+
+    // 50/50 gamble
+    const won = Math.random() < 0.5;
+
+    if (won) {
+      // Pick a random positive cash square from the board
+      const cashSquares = MONOPOLY_SQUARES.filter((s) => s.val > 0);
+      const chosen = cashSquares[Math.floor(Math.random() * cashSquares.length)];
+      const wonPrize = chosen.val * stake;
+      const totalCashout = potCash + wonPrize;
+
+      onUpdateBankroll(totalCashout);
+      setTotalOut((prev) => prev + totalCashout);
+      playJackpotSound();
+      triggerHaptic('jackpot');
+
+      setWinTitle('⚡ 50/50 WIN OR BUST: JACKPOT! ⚡');
+      setWinSubtitle(`Gamble Succeeded! Won ${chosen.title} (${chosen.priceTag})`);
+      setWinDetail(`Won £${wonPrize} random board award + £${potCash} pot = £${totalCashout} Cashed Out!`);
+      setWinBadge('⚡ 50/50 WINNER');
+      setWinAmount(totalCashout);
+
+      setInFeatureBoard(false);
+      setPotCash(0);
+      setCashLadderStep(-1);
+      setTickerMessage(`🎉 50/50 WON! HIT ${chosen.title} (+£${wonPrize}) + £${potCash} POT! BANKED £${totalCashout}!`);
+      addGameHistory({
+        gameId: 'pub-fruity',
+        headline: 'Win or Bust: 50/50 Won!',
+        detail: `Hit ${chosen.title} (+£${wonPrize}) • Banked £${totalCashout}`,
+        delta: totalCashout,
+        badge: '⚡ 50/50 WIN',
+      });
+      triggerAiComment('big_win', `Cor blimey! Took the 50/50 Win or Bust gamble and won £${totalCashout}! High roller moves!`);
+    } else {
+      // BUST: Lose everything!
+      const lostPot = potCash;
+      triggerHaptic('bust');
+      playPubHiLoBeep(false);
+      setPotCash(0);
+      setInFeatureBoard(false);
+      setCashLadderStep(-1);
+      setTickerMessage(`💀 50/50 BUSTED! LOST ALL £${lostPot} ACCUMULATED POT! TOTAL WIPEOUT!`);
+      addGameHistory({
+        gameId: 'pub-fruity',
+        headline: 'Win or Bust: Busted!',
+        detail: `Lost all £${lostPot} collected cashpot`,
+        delta: 0,
+        badge: '💀 BUSTED',
+      });
+      triggerAiComment('feature_lost', `Gave it a go on 50/50 Win or Bust and lost £${lostPot}! Better luck next time, guv'nor!`);
     }
   };
 
@@ -1138,14 +1247,24 @@ export default function PubFruityGame({
   const handleHazardSquare = () => {
     if (extraLives > 0) {
       setExtraLives((prev) => prev - 1);
+      triggerHaptic('deal');
       setTickerMessage('GO TO JAIL TRAP! EXTRA LIFE SAVED YOU FROM ARREST! ❤️');
     } else {
-      const consolation = 1 * stake;
-      onUpdateBankroll(consolation);
-      setTotalOut((prev) => prev + consolation);
+      // Sent to Jail without extra life = lose collected money!
+      triggerHaptic('bust');
+      playPubHiLoBeep(false);
+      const lostPot = potCash;
+      setPotCash(0);
       setInFeatureBoard(false);
       setCashLadderStep(-1);
-      setTickerMessage('☠️ SENT TO JAIL! COLLECTED £1 CONSOLATION PRIZE.');
+      setTickerMessage(`☠️ SENT TO JAIL! HAZARD PIT WIPED ALL £${lostPot} COLLECTED CASH! BUSTED.`);
+      addGameHistory({
+        gameId: 'pub-fruity',
+        headline: 'Arrested in Jail Hazard',
+        detail: `Lost all £${lostPot} collected cashpot`,
+        delta: 0,
+        badge: '☠️ ARRESTED',
+      });
     }
   };
 
@@ -1274,6 +1393,9 @@ export default function PubFruityGame({
     if (wonRepeat) {
       playJackpotSound();
       setWinTitle('🍾 REPEAT CHANCE WON! JACKPOT DOUBLED! 🍾');
+      setWinSubtitle('Jackpot Repeater successfully stopped on YES');
+      setWinDetail(`Awarded repeat payout +£${pendingJackpotWin}!`);
+      setWinBadge('🍾 REPEATER HIT');
       setWinAmount(pendingJackpotWin);
       onUpdateBankroll(pendingJackpotWin);
       setTotalOut((prev) => prev + pendingJackpotWin);
@@ -1291,6 +1413,9 @@ export default function PubFruityGame({
     onUpdateBankroll(potCash);
     setTotalOut((prev) => prev + potCash);
     setWinTitle('🍻 CASHPOT COLLECTED! 🍻');
+    setWinSubtitle('High-Roller Monopoly Feature Banked');
+    setWinDetail(`Collected +£${potCash} accrued around the board`);
+    setWinBadge('🏦 CASHPOT');
     setWinAmount(potCash);
     setInFeatureBoard(false);
     setCashLadderStep(-1);
@@ -1309,6 +1434,9 @@ export default function PubFruityGame({
       {winAmount > 0 && (
         <VegasWinSplash
           title={winTitle}
+          subtitle={winSubtitle}
+          winDetail={winDetail}
+          badge={winBadge}
           winAmount={winAmount}
           onComplete={() => setWinAmount(0)}
         />
@@ -1455,21 +1583,46 @@ export default function PubFruityGame({
               {/* THE 5x5 MONOPOLY GRID */}
               <div className="grid grid-cols-5 grid-rows-5 gap-1 sm:gap-1.5 relative min-h-[300px] sm:min-h-[380px] md:min-h-[440px]">
                 
-                {/* 16 PERIMETER SQUARES */}
+                {/* 16 PERIMETER LIGHT-UP WINDOWS */}
                 {MONOPOLY_SQUARES.map((sq) => {
                   const isActive = inFeatureBoard && boardPosition === sq.id;
+                  const isChasing = inFeatureBoard && isWalkingBoard && Math.abs(boardPosition - sq.id) <= 1;
 
                   return (
                     <div
                       key={sq.id}
-                      className={`${sq.row} ${sq.col} relative rounded-xl border flex flex-col justify-between overflow-hidden transition-all duration-200 ${
+                      className={`${sq.row} ${sq.col} relative rounded-xl border flex flex-col justify-between overflow-hidden transition-all duration-150 ${
                         isActive
-                          ? 'bg-gradient-to-b from-yellow-300 via-amber-300 to-yellow-500 text-black border-white shadow-[0_0_25px_#fde047] scale-105 z-30 font-black ring-3 ring-yellow-400'
+                          ? 'bg-gradient-to-b from-yellow-200 via-amber-300 to-yellow-500 text-black border-2 border-white shadow-[0_0_35px_#fde047,inset_0_0_15px_rgba(255,255,255,0.9)] scale-105 z-30 font-black ring-4 ring-yellow-400'
+                          : isChasing
+                          ? 'bg-gradient-to-b from-amber-200 via-yellow-300 to-amber-400 text-black border-yellow-300 shadow-[0_0_20px_#f59e0b] scale-102 z-20 font-bold'
                           : sq.isCorner
-                          ? 'bg-gradient-to-b from-[#1f2937] via-[#111827] to-[#0f172a] text-white border-yellow-500/40 shadow'
-                          : 'bg-[#fefce8]/95 text-zinc-900 border-zinc-400/80 shadow-md hover:brightness-105'
+                          ? 'bg-gradient-to-b from-[#1e293b] via-[#0f172a] to-[#020617] text-white border-yellow-500/50 shadow-[inset_0_2px_8px_rgba(255,215,0,0.15)]'
+                          : 'bg-[#fffbeb] text-zinc-900 border-zinc-400/90 shadow-[inset_0_1px_4px_rgba(255,255,255,0.9),0_2px_6px_rgba(0,0,0,0.35)] hover:brightness-105'
                       }`}
                     >
+                      {/* Dual Corner Filament Bulb Indicators for Light-Up Window Look */}
+                      <div className="absolute top-0.5 left-0.5 right-0.5 flex justify-between px-1 pointer-events-none z-30">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full transition-all ${
+                            isActive
+                              ? 'bg-yellow-200 shadow-[0_0_8px_#fde047] animate-ping'
+                              : isChasing
+                              ? 'bg-amber-400 shadow-[0_0_6px_#f59e0b]'
+                              : 'bg-black/35 border border-white/20'
+                          }`}
+                        />
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full transition-all ${
+                            isActive
+                              ? 'bg-yellow-200 shadow-[0_0_8px_#fde047] animate-ping'
+                              : isChasing
+                              ? 'bg-amber-400 shadow-[0_0_6px_#f59e0b]'
+                              : 'bg-black/35 border border-white/20'
+                          }`}
+                        />
+                      </div>
+
                       {/* Top Monopoly Property Color Banner */}
                       <div className={`h-2 sm:h-2.5 w-full ${sq.colorBar} border-b border-black/40`} />
 
@@ -1482,7 +1635,7 @@ export default function PubFruityGame({
 
                       {/* Card Content */}
                       <div className="p-1 flex flex-col items-center justify-center flex-1 text-center">
-                        <div className={`text-[8px] sm:text-[9.5px] font-black uppercase tracking-tight leading-tight line-clamp-1 ${isActive ? 'text-black' : sq.isCorner ? 'text-yellow-300' : 'text-zinc-950'}`}>
+                        <div className={`text-[8px] sm:text-[9.5px] font-black uppercase tracking-tight leading-tight line-clamp-1 ${isActive ? 'text-black drop-shadow-sm' : sq.isCorner ? 'text-yellow-300' : 'text-zinc-950'}`}>
                           {sq.title}
                         </div>
 
@@ -1509,7 +1662,7 @@ export default function PubFruityGame({
                       {/* Bottom Price Tag */}
                       <div className={`py-0.5 px-1 text-[7.5px] sm:text-[8.5px] font-mono font-black text-center border-t border-black/15 ${
                         isActive
-                          ? 'bg-yellow-400 text-black'
+                          ? 'bg-yellow-400 text-black shadow-inner'
                           : sq.isCorner
                           ? 'bg-black/60 text-yellow-300'
                           : 'bg-zinc-200 text-zinc-900'
@@ -1655,24 +1808,44 @@ export default function PubFruityGame({
                     </div>
                   )}
 
-                  {/* Bottom Courtyard Bar: Collect Cashpot */}
-                  <div className="pt-1.5 border-t border-emerald-800/60 flex items-center justify-between">
+                  {/* Bottom Courtyard Bar: Collect Cashpot & Win or Bust */}
+                  <div className="pt-1.5 border-t border-emerald-800/60 flex items-center justify-between gap-1.5 flex-wrap">
                     <div className="text-[9px] font-mono text-zinc-300">
                       POT: <span className="font-black text-yellow-300">£{potCash}</span>
                     </div>
-                    <button
-                      type="button"
-                      disabled={!inFeatureBoard || potCash <= 0 || isWalkingBoard}
-                      onClick={handleCollectBoard}
-                      className={`px-3 py-1 rounded-lg border font-black text-[10px] uppercase tracking-wider active:scale-95 transition flex items-center gap-1 ${
-                        inFeatureBoard && potCash > 0 && !isWalkingBoard
-                          ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-black border-white shadow-[0_0_12px_#f59e0b] animate-bounce'
-                          : 'bg-zinc-900 border-zinc-800 text-zinc-600 opacity-30 cursor-not-allowed'
-                      }`}
-                    >
-                      <Coins size={12} />
-                      <span>COLLECT POT</span>
-                    </button>
+
+                    <div className="flex items-center gap-1.5">
+                      {/* WIN OR BUST 50/50 BUTTON */}
+                      <button
+                        type="button"
+                        disabled={!inFeatureBoard || isWalkingBoard || isRollingHiLo || skillStopperActive || reelRouletteActive || repeaterActive}
+                        onClick={handleWinOrBust}
+                        className={`px-2 sm:px-2.5 py-1 rounded-lg border-2 font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider active:scale-95 transition flex items-center gap-1 ${
+                          inFeatureBoard && !isWalkingBoard && !isRollingHiLo && !skillStopperActive && !reelRouletteActive && !repeaterActive
+                            ? 'bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 text-black border-yellow-300 shadow-[0_0_15px_#f59e0b] animate-pulse hover:brightness-110'
+                            : 'bg-zinc-900 border-zinc-800 text-zinc-600 opacity-30 cursor-not-allowed'
+                        }`}
+                        title="50/50 Gamble: Either win a random award off the board or lose everything!"
+                      >
+                        <Flame size={12} className="text-red-950 fill-red-900" />
+                        <span>WIN OR BUST (50/50)</span>
+                      </button>
+
+                      {/* COLLECT POT BUTTON */}
+                      <button
+                        type="button"
+                        disabled={!inFeatureBoard || potCash <= 0 || isWalkingBoard}
+                        onClick={handleCollectBoard}
+                        className={`px-2 sm:px-2.5 py-1 rounded-lg border font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider active:scale-95 transition flex items-center gap-1 ${
+                          inFeatureBoard && potCash > 0 && !isWalkingBoard
+                            ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-black border-white shadow-[0_0_12px_#f59e0b] animate-bounce'
+                            : 'bg-zinc-900 border-zinc-800 text-zinc-600 opacity-30 cursor-not-allowed'
+                        }`}
+                      >
+                        <Coins size={12} />
+                        <span>COLLECT</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1721,22 +1894,77 @@ export default function PubFruityGame({
         </div>
 
         {/* ============================================================== */}
-        {/* 2. CENTER: RETRO 14-SEGMENT RED DOT-MATRIX LED BANNER */}
+        {/* 2. CENTER: RETRO 5x7 AMBER DOT-MATRIX LED MESSAGE BOARD & ORACLE */}
         {/* ============================================================== */}
-        <div className="my-3 px-4 py-2.5 rounded-xl bg-black border-2 border-red-700 shadow-[inset_0_2px_10px_rgba(0,0,0,1)] flex items-center justify-between gap-3 overflow-hidden">
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
-            <span className="text-[10px] font-mono font-black uppercase text-red-500">
-              LED MESSAGE:
-            </span>
-          </div>
-          <div className="font-mono font-black text-xs sm:text-sm text-red-400 tracking-wider text-center truncate drop-shadow-[0_0_8px_#ef4444]">
-            {tickerMessage}
-          </div>
-          <div className="text-[10px] font-mono text-zinc-500 shrink-0 hidden sm:block">
-            MPU4 CATEGORY C • RTP 80%
-          </div>
-        </div>
+        {(() => {
+          let displayedMsg = tickerMessage;
+          const isSpecialEvent =
+            tickerMessage &&
+            (tickerMessage.includes('★') ||
+              tickerMessage.includes('🎉') ||
+              tickerMessage.includes('☠️') ||
+              tickerMessage.includes('💥') ||
+              tickerMessage.includes('💀'));
+
+          if (!isSpecialEvent) {
+            if (holdsAvailable) {
+              displayedMsg = '★ HOLDS ACTIVE! PRESS [HOLD 1-3] TO LOCK WINLINE ICONS! ★';
+            } else if (nudgesRemaining > 0) {
+              displayedMsg = `>>> ${nudgesRemaining} NUDGES LOADED! USE STEPPER BUTTONS BELOW TO STEP REELS <<<`;
+            } else if (inFeatureBoard) {
+              displayedMsg = '★ MONOPOLY BOARD ACTIVE • GUESS HI/LO TO ADVANCE • RISK [WIN OR BUST] 50/50! ★';
+            } else {
+              const oracleTips = [
+                `🔮 ORACLE PREDICTION: IN ${spinsUntilBoard} SPINS YOU WILL GET ON THE BOARD! 🔮`,
+                '🔮 ORACLE: NUDGE POTENTIAL DETECTED ON REEL 2! 🔮',
+                '🔮 TIP: 3x EDWARD BOSSES TRIGGER DIRECT BOARD ENTRY! 🔮',
+                '🔮 TIP: USE WIN OR BUST ON UPPER BOARD FOR 50/50 RANDOM JACKPOT! 🔮',
+                '🔮 ORACLE: REPEAT CHANCE READY TO STRIKE! 🔮',
+              ];
+              displayedMsg = oracleTips[dotMatrixCycle % oracleTips.length];
+            }
+          }
+
+          return (
+            <div className="my-3 px-3 sm:px-4 py-2.5 rounded-2xl bg-[#0d0903] border-3 border-amber-600/90 shadow-[inset_0_2px_15px_rgba(0,0,0,1),0_0_20px_rgba(245,158,11,0.25)] relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-2.5">
+              {/* Dot-matrix scanline background pattern */}
+              <div
+                className="absolute inset-0 pointer-events-none opacity-20"
+                style={{
+                  backgroundImage:
+                    'radial-gradient(#f59e0b 1px, transparent 1px), radial-gradient(#d97706 1px, transparent 1px)',
+                  backgroundSize: '4px 4px',
+                  backgroundPosition: '0 0, 2px 2px',
+                }}
+              />
+
+              {/* Left Label: Dot Matrix Mode Indicator */}
+              <div className="flex items-center gap-2 shrink-0 relative z-10">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_10px_#fde047] animate-ping" />
+                <span className="text-[10px] font-mono font-black uppercase text-amber-500 tracking-wider">
+                  DOT-MATRIX:
+                </span>
+                {spinsUntilBoard <= 2 && (
+                  <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] font-mono font-bold border border-amber-400/40 animate-pulse">
+                    ORACLE ACTIVE
+                  </span>
+                )}
+              </div>
+
+              {/* Scrolling / Marquee Amber LED Text */}
+              <div className="font-mono font-black text-xs sm:text-sm text-amber-300 tracking-widest text-center truncate drop-shadow-[0_0_8px_#f59e0b] relative z-10 px-2 py-0.5 rounded bg-black/50 border border-amber-500/30 w-full sm:w-auto flex-1">
+                {displayedMsg}
+              </div>
+
+              {/* Right Hardware Specs */}
+              <div className="text-[9.5px] font-mono text-amber-600/90 shrink-0 hidden md:flex items-center gap-2 relative z-10">
+                <span>MPU4 CATEGORY C</span>
+                <span>•</span>
+                <span>5x7 DOTS</span>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ============================================================== */}
         {/* 3. LOWER GLASS: 3 MECHANICAL STEPPER REELS WITH RECOIL PHYSICS */}

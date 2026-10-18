@@ -429,11 +429,25 @@ export function estimateHeroEquity(
 
   // Pre-flop equity estimation
   if (communityCards.length === 0) {
-    const score = getPreflopHandPercentileScore(holeCards[0], holeCards[1]);
-    // Heads-up equity ranges from ~32% (72o) to ~85% (AA)
-    const huEquity = 31 + (score / 100) * 54;
+    const isPair = holeCards[0].value === holeCards[1].value;
+    const isSuited = holeCards[0].suit === holeCards[1].suit;
+    const high = Math.max(holeCards[0].value, holeCards[1].value);
+    const low = Math.min(holeCards[0].value, holeCards[1].value);
+
+    let huEquity: number;
+    if (isPair) {
+      // Pocket pairs range from ~50% (22) to ~85% (AA)
+      huEquity = 50 + (high / 14) * 35;
+    } else if (isSuited) {
+      // Suited holdings: AKs ~67%, AQs ~65%, 76s ~46%, etc.
+      huEquity = 33 + (high / 14) * 23 + (low / 14) * 11;
+    } else {
+      // Offsuit holdings: AKo ~64%, AQo ~61%, 72o ~32%
+      huEquity = 29 + (high / 14) * 22 + (low / 14) * 12;
+    }
+
     // Adjust for multiway opponents
-    const multiwayFactor = Math.pow(0.84, activeOpps - 1);
+    const multiwayFactor = Math.pow(0.85, activeOpps - 1);
     return Math.round(Math.max(12, Math.min(88, huEquity * multiwayFactor)));
   }
 
@@ -560,7 +574,15 @@ export function evaluateHeroDecision(params: {
 
   const handEval = evaluateHand([...hero.cards, ...communityCards]);
   const drawInfo = analyzeDrawsAndTexture(hero.cards, communityCards);
-  const equity = estimateHeroEquity(hero.cards, communityCards, activeOpponents.length);
+
+  // When facing an open-raise pre-flop, measure equity primarily against active bettors, not unacted table seats
+  const activeBettors = activeOpponents.filter((opp) => opp.currentBet > 0 || opp.isAllIn);
+  const effectiveOpponentsCount =
+    street === 'Pre-flop'
+      ? Math.max(1, activeBettors.length)
+      : Math.max(1, activeOpponents.length);
+
+  const equity = estimateHeroEquity(hero.cards, communityCards, effectiveOpponentsCount);
   const preflopScore = getPreflopHandPercentileScore(hero.cards[0], hero.cards[1]);
   const notation = getPreflopHandNotation(hero.cards[0], hero.cards[1]);
   const bb = config.bigBlind;
@@ -641,7 +663,9 @@ export function evaluateHeroDecision(params: {
   // ------------------------------------------
   else if (street === 'Pre-flop') {
     const posThreshold = POSITION_OPEN_THRESHOLDS[hero.position];
-    const isUnopenedOrLimp = callAmount <= bb;
+    const highestOppBet = activeOpponents.length > 0 ? Math.max(...activeOpponents.map((o) => o.currentBet)) : bb;
+    const isPotRaised = highestOppBet > bb || callAmount > bb;
+    const isUnopenedOrLimp = !isPotRaised && callAmount <= bb;
 
     if (isUnopenedOrLimp) {
       if (preflopScore >= posThreshold) {
@@ -720,8 +744,15 @@ export function evaluateHeroDecision(params: {
       }
     } else {
       // Facing a Pre-Flop Raise / All-In
-      const shouldContinue = equity >= effectiveRequiredEquity || preflopScore >= posThreshold + 6;
       const should3Bet = preflopScore >= 78;
+      // Hands defending against a raise require real playability (pairs, suited holdings, or high broadway cards)
+      const isPair = hero.cards[0].value === hero.cards[1].value;
+      const isSuited = hero.cards[0].suit === hero.cards[1].suit;
+      const hasDefendableStrength =
+        preflopScore >= 38 || isPair || (isSuited && preflopScore >= 28);
+      const shouldContinue =
+        should3Bet ||
+        (hasDefendableStrength && (equity >= effectiveRequiredEquity || preflopScore >= posThreshold + 4));
 
       recommendedAction = should3Bet ? '3-Bet Raise' : shouldContinue ? 'Call' : 'Fold';
 
@@ -793,7 +824,14 @@ export function evaluateHeroDecision(params: {
 
     if (callAmount === 0) {
       // Unopened post-flop action (Check vs Bet)
-      const isStrongOrGoodDraw = equity >= 54 || drawInfo.totalOuts >= 8;
+      const isOOP = hero.position === 'SB' || hero.position === 'BB';
+      // On the River, one-pair hands are showdown value — checking is standard unless holds monster (two-pair+)
+      const shouldCheckRiver = street === 'River' && handEval.rankCategory <= 2;
+      // Out of position with marginal holding: checking to the aggressor is standard
+      const shouldCheckOOP = isOOP && equity <= 68 && handEval.rankCategory <= 2;
+      const isStrongOrGoodDraw =
+        !shouldCheckRiver && !shouldCheckOOP && (equity >= 54 || drawInfo.totalOuts >= 8);
+
       recommendedAction = isStrongOrGoodDraw ? 'Bet (50%–75% Pot)' : 'Check';
 
       if (action === 'raise' || action === 'all-in') {
@@ -844,6 +882,20 @@ export function evaluateHeroDecision(params: {
           headline = 'The Georgina Trap (Slowplay Check)';
           explanation = `Checking a monster (${handEval.bestFiveDescription}, ${equity}% equity) disguises your strength to induce bluffs on the next street.`;
           strategicTip = 'Trapping works best against aggressive bluffers like Luke Daly or Edward Wearing—just be sure to bet big on the river!';
+        } else if (street === 'River') {
+          // On the River, checking for showdown value / pot control is standard!
+          grade = equity >= 60 ? 'B' : 'A+';
+          evDelta = +0.3;
+          headline = 'River Showdown Value / Pot Control Check';
+          explanation = `Checking on the river with ${handEval.bestFiveDescription} (${equity}% equity) takes a cheap showdown safely without risking an expensive raise.`;
+          strategicTip = 'Checking medium-to-strong pairs on the river is solid poker: it catches bluffs and avoids paying off better hands.';
+        } else if (hero.position === 'SB' || hero.position === 'BB' || equity <= 68) {
+          // Out of position or pot control check on flop or turn
+          grade = 'B';
+          evDelta = +0.3;
+          headline = 'Out-of-Position Pot Control Check';
+          explanation = `Checking ${handEval.bestFiveDescription} (${equity}% equity) keeps the pot controlled and allows you to evaluate opponent aggression.`;
+          strategicTip = 'Checking to the pre-flop aggressor or checking for pot control avoids bloating the pot while out of position.';
         } else {
           grade = 'C';
           evDelta = -0.9;
@@ -856,7 +908,9 @@ export function evaluateHeroDecision(params: {
     } else {
       // Facing a Post-Flop Bet!
       const isProfitableContinue = equity >= effectiveRequiredEquity;
-      const isRaiseWorthy = equity >= 68 || (drawInfo.totalOuts >= 12 && street !== 'River');
+      const isValueMadeHand = handEval.rankCategory >= 3 || (handEval.rankCategory === 2 && equity >= 58);
+      const isMonsterDraw = drawInfo.totalOuts >= 10 && street !== 'River';
+      const isRaiseWorthy = isValueMadeHand || equity >= 62 || isMonsterDraw;
 
       recommendedAction = isRaiseWorthy
         ? 'Raise for Value / Combo Draw'
@@ -905,16 +959,15 @@ export function evaluateHeroDecision(params: {
         if (isRaiseWorthy) {
           grade = 'A+';
           evDelta = +2.4;
-          headline = 'High-Power Post-Flop Raise!';
-          explanation = `Raising with ${handEval.bestFiveDescription}${drawSummary} (${equity}% equity) builds a massive pot while you have a commanding equity edge.`;
-          strategicTip = 'Fast-playing monsters and monster combo draws (12+ outs) maximizes expected value.';
+          headline = isValueMadeHand || equity >= 60 ? 'High-Power Value Raise!' : 'Aggressive Semi-Bluff Combo Raise!';
+          explanation = `Raising with ${handEval.bestFiveDescription}${drawSummary} (${equity}% equity) builds a massive pot while you hold a commanding equity edge.`;
+          strategicTip = 'Fast-playing strong hands and monster combo draws (10+ outs) maximizes expected value.';
         } else {
           grade = 'D';
           evDelta = -1.7;
-          leakCategory = 'calling-without-odds';
+          leakCategory = 'positional-looseness';
           headline = 'Over-Aggressive Post-Flop Bluff Raise';
           explanation = `Raising with ${handEval.bestFiveDescription} (${equity}% equity) folds out all worse hands and isolates yourself against the top of the opponent's range.`;
-          strategicTip = 'Only bluff-raise post-flop when you hold strong blockers or high-equity semi-bluff outs.';
         }
       }
     }
@@ -940,6 +993,92 @@ export function evaluateHeroDecision(params: {
     strategicTip,
     gameMode: config.gameMode,
     leakCategory,
+  };
+}
+
+export interface LiveCoachRecommendation {
+  recommendedAction: string;
+  actionType: 'fold' | 'check' | 'call' | 'bet' | 'raise' | 'all-in';
+  headline: string;
+  explanation: string;
+  strategicTip: string;
+  suggestedAmount?: number;
+}
+
+export function getLiveCoachRecommendation(params: {
+  hero: TrainerPlayer;
+  pot: number;
+  callAmount: number;
+  communityCards: Card[];
+  street: Street;
+  activeOpponents: TrainerPlayer[];
+  config: ScenarioConfig;
+}): LiveCoachRecommendation {
+  const { hero, pot, callAmount, communityCards, street, activeOpponents, config } = params;
+
+  // 1. Probe to determine coach's optimal recommended action
+  const probeAction = callAmount === 0 ? 'check' : 'call';
+  const probeFeedback = evaluateHeroDecision({
+    hero,
+    action: probeAction,
+    betAmount: callAmount,
+    potBeforeAction: pot,
+    callAmount,
+    communityCards,
+    street,
+    activeOpponents,
+    config,
+  });
+
+  const recLower = probeFeedback.recommendedAction.toLowerCase();
+  let actionType: LiveCoachRecommendation['actionType'] = 'check';
+  let targetAction: 'fold' | 'check' | 'call' | 'raise' | 'all-in' = 'check';
+
+  if (recLower.includes('all-in') || recLower.includes('push')) {
+    actionType = 'all-in';
+    targetAction = 'all-in';
+  } else if (recLower.includes('raise') || recLower.includes('bet')) {
+    actionType = street === 'Pre-flop' ? 'raise' : callAmount === 0 ? 'bet' : 'raise';
+    targetAction = 'raise';
+  } else if (recLower.includes('call')) {
+    actionType = 'call';
+    targetAction = 'call';
+  } else if (recLower.includes('fold')) {
+    actionType = 'fold';
+    targetAction = 'fold';
+  }
+
+  let suggestedAmount: number | undefined;
+  if (actionType === 'bet' || actionType === 'raise') {
+    if (street === 'Pre-flop') {
+      suggestedAmount = Math.min(hero.chips, Math.round(Math.max(config.bigBlind * 2.5, callAmount + config.bigBlind * 2.5)));
+    } else {
+      suggestedAmount = Math.min(hero.chips, Math.max(config.bigBlind * 2, Math.round((pot * 0.6) / 5) * 5));
+    }
+  } else if (actionType === 'call') {
+    suggestedAmount = Math.min(hero.chips, callAmount);
+  }
+
+  // 2. Evaluate with the recommended target action to generate prospective coaching guidance
+  const finalFeedback = evaluateHeroDecision({
+    hero,
+    action: targetAction,
+    betAmount: suggestedAmount ?? (targetAction === 'call' ? callAmount : 0),
+    potBeforeAction: pot,
+    callAmount,
+    communityCards,
+    street,
+    activeOpponents,
+    config,
+  });
+
+  return {
+    recommendedAction: probeFeedback.recommendedAction,
+    actionType,
+    headline: finalFeedback.headline,
+    explanation: finalFeedback.explanation,
+    strategicTip: finalFeedback.strategicTip,
+    suggestedAmount,
   };
 }
 

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { HelpCircle, Play, RotateCcw, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { HelpCircle, Play, RotateCcw, Sparkles, Brain, Trophy } from 'lucide-react';
 import VegasCard, { CardModel } from '../VegasCard';
 import VegasAiDealer from '../VegasAiDealer';
 import { VegasChipRack, VegasChipStack } from '../VegasChip';
@@ -9,6 +10,7 @@ import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
 import { playCardSound, playChipSound, playWinSound, playJackpotSound } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
+import { getUltimateHoldemAdvice } from '@/lib/vegas/VegasStrategyEngine';
 
 interface Props {
   bankroll: number;
@@ -115,6 +117,11 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
     'Welcome to Ultimate Texas Hold’em, darling. A 4x pre-flop raise carries a huge mathematical edge with strong cards!'
   );
   const [splashWin, setSplashWin] = useState<number | null>(null);
+  const [splashDetails, setSplashDetails] = useState<{
+    subtitle?: string;
+    winDetail?: string;
+    badge?: string;
+  }>({});
 
   const totalAnteBlind = baseBet * 2;
   const activeWager = totalAnteBlind + tripsBet + baseBet * playMultiplier;
@@ -260,6 +267,12 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
       } else {
         playWinSound();
       }
+      const payoutSummary = messages.filter((m) => m.includes('Won') || m.includes('Bonus') || m.includes('WIN')).join(' • ');
+      setSplashDetails({
+        subtitle: `You Win with ${pScore.name}!`,
+        winDetail: payoutSummary || `${pScore.name} beats Dealer's ${dScore.name}`,
+        badge: pScore.name,
+      });
       setSplashWin(net);
       addGameHistory({
         gameId: 'ultimate-holdem',
@@ -302,7 +315,14 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
   return (
     <div className="bg-gradient-to-b from-rose-950/80 via-black to-zinc-950 border border-rose-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden space-y-6">
       {/* Big Win Splash Banner */}
-      <VegasWinSplash winAmount={splashWin} title="ULTIMATE HOLD'EM WIN!" onComplete={() => setSplashWin(null)} />
+      <VegasWinSplash
+        winAmount={splashWin}
+        title="ULTIMATE HOLD'EM WIN!"
+        subtitle={splashDetails.subtitle}
+        winDetail={splashDetails.winDetail}
+        badge={splashDetails.badge}
+        onComplete={() => setSplashWin(null)}
+      />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
@@ -321,13 +341,22 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
           </h3>
         </div>
 
-        <button
-          onClick={onOpenTutorial}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
-        >
-          <HelpCircle size={14} className="text-gold" />
-          <span>Rules & Tutorial</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/vegas?tab=arcade#leaderboard"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-xs font-bold text-gold transition"
+          >
+            <Trophy size={14} />
+            <span>Leaderboard</span>
+          </Link>
+          <button
+            onClick={onOpenTutorial}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+          >
+            <HelpCircle size={14} className="text-gold" />
+            <span>Rules & Tutorial</span>
+          </button>
+        </div>
       </div>
 
       {/* AI Glamorous Dealer Sarah Header */}
@@ -342,6 +371,41 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
             : 'Player Decision'
         }
       />
+
+      {/* Live GTO Coach Advice HUD */}
+      {street !== 'betting' && street !== 'showdown' && (
+        <div className="bg-gradient-to-r from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 p-3 sm:p-4 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shrink-0">
+              <Brain size={16} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase font-mono font-black text-indigo-300">
+                  Live Coach Insight
+                </span>
+                <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
+                  ⚡ GTO Optimal
+                </span>
+              </div>
+              {(() => {
+                const adv = getUltimateHoldemAdvice(street, playerCards, boardCards);
+                return (
+                  <>
+                    <div className="font-bold text-white text-xs mt-0.5">{adv.headline}</div>
+                    <p className="text-[11px] text-zinc-300 leading-snug">{adv.explanation}</p>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+          <div className="hidden sm:block text-right shrink-0">
+            <span className="px-3 py-1.5 rounded-xl bg-indigo-500/20 border border-indigo-400/50 text-indigo-200 font-black text-xs font-mono">
+              REC: {getUltimateHoldemAdvice(street, playerCards, boardCards).action}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* 3D Tilted Ultimate Texas Hold'em Table Arena */}
       <Vegas3DTableArena
@@ -427,7 +491,7 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
       )}
 
       {/* Betting Spots HUD with 3D Chips */}
-      <div className="grid grid-cols-3 gap-3 text-center">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
         <div className="bg-black/70 p-3 rounded-2xl border border-white/10 flex flex-col items-center justify-center relative">
           <span className="text-[10px] text-zinc-400 font-bold uppercase">Ante</span>
           <div className="font-mono text-gold font-black text-sm mt-0.5">£{baseBet}</div>
@@ -449,6 +513,26 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
           <div className="font-mono text-amber-300 font-black text-sm mt-0.5">£{tripsBet}</div>
           <div className="mt-1">
             <VegasChipStack amount={tripsBet} size="xs" />
+          </div>
+        </div>
+
+        <div className={`p-3 rounded-2xl border flex flex-col items-center justify-center relative ${
+          playMultiplier > 0
+            ? 'bg-rose-950/80 border-rose-500/80 shadow-[0_0_20px_rgba(244,63,94,0.4)]'
+            : 'bg-black/40 border-dashed border-white/10'
+        }`}>
+          <span className="text-[10px] text-rose-300 font-bold uppercase">
+            Play Wager {playMultiplier > 0 ? `(${playMultiplier}x)` : ''}
+          </span>
+          <div className="font-mono text-rose-400 font-black text-sm mt-0.5">
+            {playMultiplier > 0 ? `£${baseBet * playMultiplier}` : '—'}
+          </div>
+          <div className="mt-1">
+            {playMultiplier > 0 ? (
+              <VegasChipStack amount={baseBet * playMultiplier} size="xs" />
+            ) : (
+              <span className="text-[10px] text-zinc-500 font-mono">No Bet</span>
+            )}
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { HelpCircle, RotateCcw, Sparkles, Trophy } from 'lucide-react';
+import { HelpCircle, RotateCcw, Sparkles, Trophy, Brain } from 'lucide-react';
 import VegasCard, { CardModel } from '../VegasCard';
 import VegasAiDealer from '../VegasAiDealer';
 import { VegasChipRack, VegasChipStack } from '../VegasChip';
@@ -10,6 +10,7 @@ import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
 import { playCardSound, playChipSound, playWinSound } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
+import { getBaccaratAdvice } from '@/lib/vegas/VegasStrategyEngine';
 
 interface Props {
   bankroll: number;
@@ -67,6 +68,7 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
     'B', 'P', 'B', 'B', 'T', 'P', 'B', 'P', 'B', 'B', 'P', 'B'
   ]);
   const [splashWin, setSplashWin] = useState<number | null>(null);
+  const [splashDetails, setSplashDetails] = useState<{ subtitle?: string; winDetail?: string; badge?: string }>({});
 
   const totalWager = Object.values(bets).reduce((a, b) => a + b, 0);
   const playerScore = calculateBaccaratHand(playerCards);
@@ -205,6 +207,38 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
         if (net > 0) {
           playWinSound();
           setSplashWin(net);
+
+          const winParts: string[] = [];
+          if (winner === 'P' && bets.player > 0) {
+            winParts.push(`Player Bet (${pScore} vs ${bScore}) Paid 1:1 (+£${bets.player.toLocaleString()})`);
+          }
+          if (winner === 'B' && bets.banker > 0) {
+            winParts.push(`Banker Bet (${bScore} vs ${pScore}) Paid 1:1 less 5% comm (+£${Math.floor(bets.banker * 0.95).toLocaleString()})`);
+          }
+          if (winner === 'T' && bets.tie > 0) {
+            winParts.push(`Tie Bet at ${pScore} Paid 8:1 (+£${(bets.tie * 8).toLocaleString()})`);
+          }
+          if (bets['player-pair'] > 0 && pHand[0].rank === pHand[1].rank) {
+            winParts.push(`Player Pair (${pHand[0].rank}) Paid 11:1 (+£${(bets['player-pair'] * 11).toLocaleString()})`);
+          }
+          if (bets['banker-pair'] > 0 && bHand[0].rank === bHand[1].rank) {
+            winParts.push(`Banker Pair (${bHand[0].rank}) Paid 11:1 (+£${(bets['banker-pair'] * 11).toLocaleString()})`);
+          }
+
+          let badge = 'BACCARAT WIN';
+          if (winner === 'T') {
+            badge = 'TIE 8:1';
+          } else if (isNatural) {
+            badge = winner === 'P' ? `PLAYER NATURAL ${pScore}` : `BANKER NATURAL ${bScore}`;
+          } else {
+            badge = winner === 'P' ? `PLAYER ${pScore} WINS` : `BANKER ${bScore} WINS`;
+          }
+
+          setSplashDetails({
+            badge,
+            subtitle: winner === 'P' ? `Player takes the coup ${pScore} to ${bScore}` : winner === 'B' ? `Banker takes the coup ${bScore} to ${pScore}` : `Tie coup at ${pScore}`,
+            winDetail: winParts.join(' • '),
+          });
         }
 
         if (winner === 'P') {
@@ -251,7 +285,14 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
   return (
     <div className="bg-gradient-to-b from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden space-y-6">
       {/* Big Win Splash Banner */}
-      <VegasWinSplash winAmount={splashWin} title="BACCARAT WIN!" onComplete={() => setSplashWin(null)} />
+      <VegasWinSplash
+        winAmount={splashWin}
+        title="BACCARAT WIN!"
+        subtitle={splashDetails.subtitle}
+        winDetail={splashDetails.winDetail}
+        badge={splashDetails.badge}
+        onComplete={() => setSplashWin(null)}
+      />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
@@ -297,6 +338,39 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
         gameTitle="Baccarat"
         status={dealing ? 'Dealing Tableau' : 'Awaiting Wager'}
       />
+
+      {/* Live Baccarat Strategy Coach Advice HUD */}
+      <div className="bg-gradient-to-r from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 p-3 sm:p-4 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-lg">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shrink-0">
+            <Brain size={16} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase font-mono font-black text-indigo-300">
+                Baccarat Odds Advisor
+              </span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
+                ⚡ Lowest House Edge
+              </span>
+            </div>
+            {(() => {
+              const adv = getBaccaratAdvice();
+              return (
+                <>
+                  <div className="font-bold text-white text-xs mt-0.5">{adv.headline}</div>
+                  <p className="text-[11px] text-zinc-300 leading-snug">{adv.explanation}</p>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+        <div className="hidden sm:block text-right shrink-0">
+          <span className="px-3 py-1.5 rounded-xl bg-red-500/20 border border-red-500/50 text-red-200 font-black text-xs font-mono">
+            REC: {getBaccaratAdvice().action}
+          </span>
+        </div>
+      </div>
 
       {/* Macau / Evolution Style Bead Road Scoreboard */}
       <div className="bg-black/80 p-3 sm:p-4 rounded-2xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs shadow-xl">

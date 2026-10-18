@@ -1,29 +1,36 @@
 import type { Metadata } from 'next';
-import { getLeaderboardData, getGlobalStats } from "@/lib/data";
+import { getLeaderboardData, getGlobalStats, getGameHistory, getGazetteReports } from "@/lib/data";
 import TVPresentationClient from "@/components/presentation/TVPresentationClient";
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-    title: 'TV Final Table Broadcast & Presentation',
-    description: 'Broadcast-ready TV presentation view showcasing full-screen chip counts, player cards, and championship stakes for game night.',
+    title: 'TV Final Table Broadcast & Ongoing Player Presentation',
+    description: 'Broadcast-ready TV presentation showcasing auto-looping player league reports, 16+ career stats, session logs, and live tournament blind clock.',
     openGraph: {
-        title: 'TV Final Table Broadcast | E.P.T. 2026',
-        description: 'Broadcast-ready TV presentation view showcasing chip counts, player cards, and championship stakes.',
+        title: 'TV Final Table Broadcast & Player Showcase | E.P.T. 2026',
+        description: 'Auto-looping player league reports, career stats, and live championship broadcast.',
         images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'EPT TV Final Table' }],
     },
 };
 
 export default async function PresentationPage() {
-    const [players, stats] = await Promise.all([
+    const [players, stats, history, reports] = await Promise.all([
         getLeaderboardData(),
-        getGlobalStats()
+        getGlobalStats(),
+        getGameHistory(),
+        getGazetteReports()
     ]);
 
     return (
         <div className="animate-in fade-in duration-500 font-sans pb-16">
-            <TVPresentationClient players={players} totalPot={stats.totalPot || 0} />
+            <TVPresentationClient
+                players={players}
+                totalPot={stats.totalPot || 0}
+                history={history}
+                reports={reports}
+            />
         </div>
     );
 }

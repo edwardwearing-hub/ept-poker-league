@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { HelpCircle, RotateCcw, Dices, Sparkles, Trophy } from 'lucide-react';
+import { HelpCircle, RotateCcw, Dices, Sparkles, Trophy, Brain } from 'lucide-react';
 import VegasAiDealer from '../VegasAiDealer';
 import CrapsDiceVisual from '../CrapsDiceVisual';
 import { VegasChipRack, VegasChipStack } from '../VegasChip';
@@ -10,6 +10,7 @@ import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
 import { playChipSound, playDiceSound, playWinSound } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
+import { getCrapsAdvice } from '@/lib/vegas/VegasStrategyEngine';
 
 interface Props {
   bankroll: number;
@@ -40,6 +41,7 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
     'Welcome to the Craps pit, darling! Place your bet on the Pass Line and shoot the dice!'
   );
   const [splashWin, setSplashWin] = useState<number | null>(null);
+  const [splashDetails, setSplashDetails] = useState<{ subtitle?: string; winDetail?: string; badge?: string }>({});
 
   const totalActiveBets = Object.values(bets).reduce((a, b) => a + b, 0);
 
@@ -213,9 +215,43 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
           onUpdateBankroll(totalNet);
         }
 
+        // Table Felt Chip Sweeping: Automatically sweep one-roll bets and resolved line bets
+        setBets((prev) => {
+          const next = { ...prev };
+          // Single-roll proposition bets always resolve & sweep
+          next.field = 0;
+          next.any7 = 0;
+          if (sum === 7 || sum === 6) next.hard6 = 0;
+          if (sum === 7 || sum === 8) next.hard8 = 0;
+          // When Come Out roll resolves or Point is hit / seven-out, sweep resolved line bets
+          if (point === null && (sum === 7 || sum === 11 || sum === 2 || sum === 3 || sum === 12)) {
+            next.pass = 0;
+            next['dont-pass'] = 0;
+          } else if (point !== null && (sum === point || sum === 7)) {
+            next.pass = 0;
+            next['dont-pass'] = 0;
+          }
+          return next;
+        });
+
         if (totalNet > 0) {
           playWinSound();
           setSplashWin(totalNet);
+
+          const winningParts = messages.filter((m) => m.includes('+£') || m.includes('Wins') || m.includes('Hit'));
+          const winDetail = winningParts.length > 0 ? winningParts.join(' • ') : `Shooter rolled ${sum} on the felt`;
+          const badge =
+            sum === point
+              ? `POINT ${point} HIT`
+              : (sum === 7 || sum === 11) && point === null
+              ? `NATURAL ${sum}`
+              : `ROLLED ${sum}`;
+
+          setSplashDetails({
+            badge,
+            subtitle: `Shooter rolled ${sum} (${finalD1} + ${finalD2})`,
+            winDetail,
+          });
         }
 
         const summaryText = messages.join(' • ');
@@ -223,7 +259,7 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
 
         addGameHistory({
           gameId: 'craps',
-          headline: `Shooter Rolled ${sum} (${d1} + ${d2})`,
+          headline: `Shooter Rolled ${sum} (${finalD1} + ${finalD2})`,
           detail: summaryText || `Rolled ${sum}`,
           delta: totalNet,
           badge: sum === 7 ? 'Seven' : sum === 11 ? 'Yo 11' : point === sum ? 'Point Hit' : `Roll ${sum}`,
@@ -235,7 +271,14 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
   return (
     <div className="bg-gradient-to-b from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden space-y-6">
       {/* Big Win Splash Banner */}
-      <VegasWinSplash winAmount={splashWin} title="CRAPS WIN!" onComplete={() => setSplashWin(null)} />
+      <VegasWinSplash
+        winAmount={splashWin}
+        title="CRAPS WIN!"
+        subtitle={splashDetails.subtitle}
+        winDetail={splashDetails.winDetail}
+        badge={splashDetails.badge}
+        onComplete={() => setSplashWin(null)}
+      />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
@@ -281,6 +324,39 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
         gameTitle="Craps"
         status={point === null ? 'Come Out Roll' : `Point is ${point}`}
       />
+
+      {/* Live Craps Strategy Coach Advice HUD */}
+      <div className="bg-gradient-to-r from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 p-3 sm:p-4 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-lg">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
+            <Brain size={16} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase font-mono font-black text-emerald-300">
+                Shooter Odds Advisor
+              </span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
+                ⚡ Zero Edge Strategy
+              </span>
+            </div>
+            {(() => {
+              const adv = getCrapsAdvice(point);
+              return (
+                <>
+                  <div className="font-bold text-white text-xs mt-0.5">{adv.headline}</div>
+                  <p className="text-[11px] text-zinc-300 leading-snug">{adv.explanation}</p>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+        <div className="hidden sm:block text-right shrink-0">
+          <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 font-black text-xs font-mono">
+            REC: {getCrapsAdvice(point).action}
+          </span>
+        </div>
+      </div>
 
       {/* Point Puck Bar & 3D Dice Throw Arena */}
       <div className="flex flex-col sm:flex-row items-center justify-between bg-black/70 p-4 rounded-2xl border border-white/10 gap-4 shadow-xl">

@@ -9,6 +9,8 @@ import { notFound } from 'next/navigation';
 import HijackWrapper from "@/components/HijackWrapper";
 import AttackButton from "@/components/AttackButton";
 import PlayerAcademyCoachingProfile from "@/components/scouting/PlayerAcademyCoachingProfile";
+import WantedVideo from "@/components/WantedVideo";
+import { getAvatarFilename } from "@/lib/avatars";
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -63,8 +65,34 @@ export default async function PlayerProfile({ params }: Props) {
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-4 sm:gap-8 items-center md:items-start relative z-10">
-                        <div className="h-20 w-20 sm:h-32 sm:w-32 rounded-full bg-charcoal-dark border-4 border-gold/20 flex items-center justify-center text-3xl sm:text-5xl font-bold text-zinc-600 shrink-0">
-                            {player.name.charAt(0)}
+                        {/* Dual Media Showcase: AI Video + 8-Bit Character */}
+                        <div className="flex items-center gap-3 shrink-0">
+                            <div className="relative h-28 w-28 sm:h-40 sm:w-40 rounded-2xl bg-charcoal-dark border-4 border-gold/60 overflow-hidden shadow-[0_0_30px_rgba(212,175,55,0.35)]">
+                                <WantedVideo
+                                    playerName={player.name}
+                                    className="absolute inset-0 w-full h-full object-cover object-top z-10"
+                                />
+                                <img
+                                    src={getAvatarFilename(player.name)}
+                                    alt={player.name}
+                                    className="w-full h-full object-cover object-top"
+                                />
+                                <span className="absolute top-2 left-2 z-20 px-2 py-0.5 rounded bg-black/80 border border-gold/40 text-[9px] font-mono font-black uppercase tracking-wider text-gold">
+                                    🎬 AI Video
+                                </span>
+                            </div>
+
+                            <div className="relative h-24 w-24 sm:h-36 sm:w-32 rounded-2xl bg-zinc-950 border-2 border-amber-400/50 overflow-hidden shadow-lg">
+                                <img
+                                    src={getAvatarFilename(player.name)}
+                                    alt={`${player.name} 8-Bit Character`}
+                                    className="w-full h-full object-cover object-top"
+                                    style={{ imageRendering: 'pixelated' }}
+                                />
+                                <span className="absolute bottom-1.5 inset-x-1.5 z-20 px-1.5 py-0.5 rounded bg-black/85 border border-amber-400/40 text-[8px] font-mono font-black uppercase tracking-wider text-amber-300 text-center">
+                                    👾 8-Bit Avatar
+                                </span>
+                            </div>
                         </div>
 
                         <div className="text-center md:text-left w-full">
@@ -170,8 +198,15 @@ export default async function PlayerProfile({ params }: Props) {
                                             {player.archNemesis.knockouts} Eliminating KOs
                                         </span>
                                     </div>
-                                    <div className="text-xl font-black text-white mb-1">
-                                        {player.archNemesis.name}
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <img
+                                            src={getAvatarFilename(player.archNemesis.name)}
+                                            alt={player.archNemesis.name}
+                                            className="w-10 h-10 rounded-lg border border-ept-red/50 object-cover bg-zinc-900"
+                                        />
+                                        <div className="text-xl font-black text-white">
+                                            {player.archNemesis.name}
+                                        </div>
                                     </div>
                                     <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-white/10">
                                         <span className="text-zinc-400">Head-to-Head Record:</span>
@@ -184,6 +219,13 @@ export default async function PlayerProfile({ params }: Props) {
                                 <div className="p-4 bg-ept-red/10 border border-ept-red/20 rounded-lg">
                                     <div className="text-xs font-bold uppercase tracking-widest text-ept-red mb-2">My Nemesis</div>
                                     <div className="flex items-center gap-3">
+                                        {player.rivalPlayer && player.rivalPlayer !== 'None' && (
+                                            <img
+                                                src={getAvatarFilename(player.rivalPlayer)}
+                                                alt={player.rivalPlayer}
+                                                className="w-10 h-10 rounded-lg border border-ept-red/40 object-cover bg-zinc-900"
+                                            />
+                                        )}
                                         <span className="text-lg font-bold text-white">{player.rivalPlayer || "None"}</span>
                                     </div>
                                 </div>
@@ -193,7 +235,16 @@ export default async function PlayerProfile({ params }: Props) {
                             <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
                                 <div className="text-xs font-bold uppercase tracking-widest text-green-500 mb-1">My Pigeon (Favorite Target)</div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-base font-bold text-white">{player.bulliedPlayer || "None"}</span>
+                                    <div className="flex items-center gap-3">
+                                        {player.bulliedPlayer && player.bulliedPlayer !== 'None' && (
+                                            <img
+                                                src={getAvatarFilename(player.bulliedPlayer)}
+                                                alt={player.bulliedPlayer}
+                                                className="w-9 h-9 rounded-lg border border-green-500/40 object-cover bg-zinc-900"
+                                            />
+                                        )}
+                                        <span className="text-base font-bold text-white">{player.bulliedPlayer || "None"}</span>
+                                    </div>
                                     <span className="text-xs font-mono text-green-400 font-bold">Exploited Target</span>
                                 </div>
                             </div>

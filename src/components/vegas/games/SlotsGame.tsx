@@ -6,6 +6,7 @@ import { Sparkles, HelpCircle, Trophy, Volume2, VolumeX, Mic, MicOff, MessageSqu
 import { VegasChipRack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import { playSlotTick, playSlotStop, playWinSound, playJackpotSound, isSoundEnabled, setSoundEnabled } from '@/lib/vegas/VegasAudio';
+import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getActivePlayerName } from '@/lib/poker-trainer/tracker';
 import { fetchDealerComment } from '@/lib/vegas/VegasAiService';
@@ -129,11 +130,19 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
   const [winningLines, setWinningLines] = useState<WinningLine[]>([]);
   const [outcomeMessage, setOutcomeMessage] = useState<string | null>(null);
   const [splashWin, setSplashWin] = useState<number | null>(null);
+  const [splashDetails, setSplashDetails] = useState<{
+    subtitle?: string;
+    winDetail?: string;
+    badge?: string;
+  }>({});
   const [isJackpotSplash, setIsJackpotSplash] = useState(false);
   const [jackpotPool, setJackpotPool] = useState(78540);
   const [autoSpin, setAutoSpin] = useState(false);
   const autoSpinRef = useRef(false);
   autoSpinRef.current = autoSpin;
+  const [isTurbo, setIsTurbo] = useState(false);
+  const [isAnticipation, setIsAnticipation] = useState(false);
+  const [recoilCol, setRecoilCol] = useState<number | null>(null);
 
   // Audio & Dealer AI
   const [soundOn, setSoundOn] = useState(true);
@@ -203,6 +212,21 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
 
   const isAnySpinning = spinningCols[0] || spinningCols[1] || spinningCols[2];
 
+  // Ref to keep handleSpin fresh for keyboard listeners
+  const handleSpinRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        handleSpinRef.current();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // MAIN SPIN FUNCTION
   const handleSpin = () => {
     if (isAnySpinning || totalBet > bankroll) {
@@ -213,12 +237,14 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
     // Pull lever animation
     setLeverPulled(true);
     setTimeout(() => setLeverPulled(false), 350);
+    triggerHaptic('deal');
 
     setSpinningCols([true, true, true]);
     setWinningLines([]);
     setOutcomeMessage(null);
     setSplashWin(null);
     setIsJackpotSplash(false);
+    setIsAnticipation(false);
 
     // Initial deduction of total wager
     onUpdateBankroll(-totalBet);
@@ -230,6 +256,17 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
       [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()],
     ];
 
+    // Check if anticipation should trigger on Reel 3
+    const hasAnticipation =
+      !isTurbo &&
+      (targetMatrix[0][1].id === targetMatrix[1][1].id ||
+        targetMatrix[0][0].id === targetMatrix[1][0].id ||
+        targetMatrix[0][2].id === targetMatrix[1][2].id);
+
+    const r1Stop = isTurbo ? 200 : 600;
+    const r2Stop = isTurbo ? 350 : 1100;
+    const r3Stop = isTurbo ? 500 : hasAnticipation ? 2400 : 1600;
+
     // Reel 1 Spin Loop
     const timer1 = setInterval(() => {
       playSlotTick();
@@ -238,7 +275,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
         prev[1],
         prev[2],
       ]);
-    }, 60);
+    }, isTurbo ? 40 : 60);
 
     // Reel 2 Spin Loop
     const timer2 = setInterval(() => {
@@ -247,7 +284,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
         [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()],
         prev[2],
       ]);
-    }, 60);
+    }, isTurbo ? 40 : 60);
 
     // Reel 3 Spin Loop
     const timer3 = setInterval(() => {
@@ -256,30 +293,45 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
         prev[1],
         [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()],
       ]);
-    }, 60);
+    }, isTurbo ? 40 : 60);
 
-    // 1. Reel 1 Stops at 650ms
+    // 1. Reel 1 Stops
     setTimeout(() => {
       clearInterval(timer1);
       setReelGrid((prev) => [targetMatrix[0], prev[1], prev[2]]);
       setSpinningCols([false, true, true]);
       playSlotStop();
-    }, 650);
+      triggerHaptic('tick');
+      setRecoilCol(0);
+      setTimeout(() => setRecoilCol(null), 120);
+    }, r1Stop);
 
-    // 2. Reel 2 Stops at 1150ms
+    // 2. Reel 2 Stops
     setTimeout(() => {
       clearInterval(timer2);
       setReelGrid((prev) => [targetMatrix[0], targetMatrix[1], prev[2]]);
       setSpinningCols([false, false, true]);
       playSlotStop();
-    }, 1150);
+      triggerHaptic('tick');
+      setRecoilCol(1);
+      setTimeout(() => setRecoilCol(null), 120);
 
-    // 3. Reel 3 Stops at 1650ms & Evaluate Winnings
+      if (hasAnticipation) {
+        setIsAnticipation(true);
+        triggerHaptic('anticipation');
+      }
+    }, r2Stop);
+
+    // 3. Reel 3 Stops & Evaluate Winnings
     setTimeout(() => {
       clearInterval(timer3);
+      setIsAnticipation(false);
       setReelGrid(targetMatrix);
       setSpinningCols([false, false, false]);
       playSlotStop();
+      triggerHaptic('tick');
+      setRecoilCol(2);
+      setTimeout(() => setRecoilCol(null), 120);
 
       // EVALUATE PAYLINES
       // Lines definitions:
@@ -381,7 +433,13 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
 
       if (hasJackpot) {
         playJackpotSound();
+        triggerHaptic('jackpot');
         setIsJackpotSplash(true);
+        setSplashDetails({
+          subtitle: '🚨 3x MEGA DIAMOND PROGRESSIVE JACKPOT! 🚨',
+          winDetail: 'Diamonds aligned across center payline for maximum casino progressive payout!',
+          badge: 'JACKPOT',
+        });
         setSplashWin(grossPayout);
         setOutcomeMessage(`🚨 MEGA PROGRESSIVE JACKPOT! WON £${grossPayout.toLocaleString()}! 🚨`);
         onUpdateBankroll(grossPayout);
@@ -396,18 +454,29 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
         askSarahAi('big_win', { netDelta: grossPayout, wager: totalBet });
       } else if (grossPayout > 0) {
         playWinSound();
-        if (netDelta > 150) setSplashWin(grossPayout);
+        triggerHaptic(grossPayout >= totalBet * 5 ? 'big_win' : 'win');
+        const lineBreakdown = wins
+          .map((w) => `Line ${w.lineIndex + 1}: 3x ${w.symbol.icon} ${w.symbol.name} (${w.multiplier}x)`)
+          .join(' • ');
+
+        setSplashDetails({
+          subtitle: `${wins.length} Winning Payline(s) Matched`,
+          winDetail: lineBreakdown,
+          badge: `${wins.length} Lines Hit`,
+        });
+        setSplashWin(grossPayout);
         setOutcomeMessage(`Winner! ${wins.length} Payline(s) Hit • Won £${grossPayout.toLocaleString()}! 🎉`);
         onUpdateBankroll(grossPayout);
         addGameHistory({
           gameId: 'slots',
           headline: `Slot Win: £${grossPayout.toLocaleString()}`,
-          detail: `${wins.map((w) => `${w.symbol.icon} (${w.multiplier}x)`).join(', ')} • Net ${netDelta >= 0 ? '+' : ''}£${netDelta}`,
+          detail: lineBreakdown,
           delta: grossPayout,
           badge: `${wins.length} Lines Hit`,
         });
         askSarahAi(netDelta >= 200 ? 'big_win' : 'spin_win', { netDelta, wager: totalBet });
       } else {
+        triggerHaptic('bust');
         setOutcomeMessage('No winning lines. Pull again or try 5 lines!');
         addGameHistory({
           gameId: 'slots',
@@ -427,10 +496,14 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
           } else {
             setAutoSpin(false);
           }
-        }, 1800);
+        }, isTurbo ? 650 : 1800);
       }
-    }, 1650);
+    }, r3Stop);
   };
+
+  useEffect(() => {
+    handleSpinRef.current = handleSpin;
+  });
 
   return (
     <div className="relative w-full rounded-[2.5rem] bg-gradient-to-b from-[#1b1424] via-[#110c18] to-[#08050c] p-2 sm:p-4 shadow-[0_25px_60px_rgba(0,0,0,0.95)] border-4 border-[#3c1d56] select-none overflow-hidden font-sans">
@@ -438,6 +511,9 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
       <VegasWinSplash
         winAmount={splashWin}
         title={isJackpotSplash ? '🚨 PROGRESSIVE JACKPOT! 🚨' : 'SLOT MACHINE HIT!'}
+        subtitle={splashDetails.subtitle}
+        winDetail={splashDetails.winDetail}
+        badge={splashDetails.badge}
         isJackpot={isJackpotSplash}
         onComplete={() => setSplashWin(null)}
       />
@@ -660,11 +736,27 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
             <div className="grid grid-cols-3 gap-2 sm:gap-4 relative z-10">
               {[0, 1, 2].map((colIdx) => {
                 const isSpinning = spinningCols[colIdx];
+                const isReelAnticipating = colIdx === 2 && isAnticipation;
+                const isRecoil = recoilCol === colIdx;
+
                 return (
                   <div
                     key={colIdx}
-                    className="relative bg-gradient-to-b from-[#181124] via-[#221633] to-[#181124] rounded-xl border-2 border-zinc-700/80 shadow-[inset_0_2px_8px_rgba(255,255,255,0.1),0_8px_20px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col justify-between py-2 sm:py-3 divide-y divide-white/5"
+                    className={`relative bg-gradient-to-b from-[#181124] via-[#221633] to-[#181124] rounded-xl border-2 shadow-[inset_0_2px_8px_rgba(255,255,255,0.1),0_8px_20px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col justify-between py-2 sm:py-3 divide-y divide-white/5 transition-all duration-150 ${
+                      isRecoil ? 'translate-y-2 scale-[0.98]' : 'translate-y-0 scale-100'
+                    } ${
+                      isReelAnticipating
+                        ? 'border-yellow-400 shadow-[0_0_35px_#fde047] ring-2 ring-yellow-400 animate-pulse'
+                        : 'border-zinc-700/80'
+                    }`}
                   >
+                    {isReelAnticipating && (
+                      <div className="absolute top-1 inset-x-0 z-40 flex justify-center pointer-events-none">
+                        <span className="px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black text-[8px] font-black tracking-widest uppercase shadow animate-bounce">
+                          SUSPENSE!
+                        </span>
+                      </div>
+                    )}
                     {/* Chrome Separator Bevel */}
                     <div className="absolute inset-y-0 right-0 w-1 bg-gradient-to-r from-transparent to-white/15 pointer-events-none" />
 
@@ -800,8 +892,26 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
           </div>
         </div>
 
-        {/* Right Side: MAX BET, AUTO SPIN, & BIG JUICY GREEN SPIN BUTTON */}
+        {/* Right Side: TURBO, MAX BET, AUTO SPIN, & BIG JUICY GREEN SPIN BUTTON */}
         <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
+          {/* Turbo Toggle */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsTurbo((prev) => !prev);
+              triggerHaptic('tick');
+            }}
+            className={`flex-1 sm:flex-initial px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl border-2 font-black text-xs uppercase tracking-wider transition flex items-center justify-center gap-1.5 text-center ${
+              isTurbo
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-500 border-yellow-200 text-black shadow-[0_0_15px_#f59e0b]'
+                : 'bg-white/10 border-white/20 text-zinc-300 hover:text-white'
+            }`}
+            title="Turbo Spin Mode (High speed mechanical reel spins)"
+          >
+            <Zap size={13} className={isTurbo ? 'fill-black' : ''} />
+            <span>{isTurbo ? 'TURBO ON' : 'TURBO'}</span>
+          </button>
+
           {/* Max Bet */}
           <button
             type="button"
@@ -839,9 +949,13 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
             disabled={isAnySpinning || totalBet > bankroll}
             onClick={handleSpin}
             className="flex-[2] sm:flex-initial px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-2xl bg-gradient-to-b from-[#00e676] via-[#00c853] to-[#00873a] border-2 border-[#b9f6ca] text-white font-black text-xs sm:text-base uppercase tracking-widest shadow-[0_6px_20px_rgba(0,200,83,0.6),inset_0_2px_4px_rgba(255,255,255,0.8)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 flex items-center justify-center gap-1.5 sm:gap-2"
+            title="Spin (Spacebar)"
           >
             <Sparkles size={16} />
             <span>{isAnySpinning ? 'SPINNING...' : `SPIN (£${totalBet})`}</span>
+            <span className="hidden lg:inline text-[9px] opacity-75 font-mono ml-1 px-1.5 py-0.5 rounded bg-black/30 border border-white/20">
+              SPACE
+            </span>
           </button>
         </div>
       </div>

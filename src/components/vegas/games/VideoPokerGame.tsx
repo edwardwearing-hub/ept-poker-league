@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { HelpCircle, Play, RotateCcw, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { HelpCircle, Play, RotateCcw, Sparkles, Trophy, Brain, Wand2 } from 'lucide-react';
 import VegasCard, { CardModel } from '../VegasCard';
 import { VegasChipRack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import { playCardSound, playChipSound, playWinSound, playJackpotSound } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
+import { getVideoPokerAdvice } from '@/lib/vegas/VegasStrategyEngine';
 
 interface Props {
   bankroll: number;
@@ -110,8 +112,13 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
   const [message, setMessage] = useState<string | null>(
     'Select your wager, click Deal, then click cards to HOLD before the final Draw!'
   );
-  const [lastWinHand, setLastWinHand] = useState<string | null>(null);
   const [splashWin, setSplashWin] = useState<number | null>(null);
+  const [lastWinHand, setLastWinHand] = useState<string | null>(null);
+  const [splashDetails, setSplashDetails] = useState<{
+    subtitle?: string;
+    winDetail?: string;
+    badge?: string;
+  }>({});
 
   const toggleHold = (idx: number) => {
     if (step !== 'holding') return;
@@ -170,6 +177,11 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
       } else {
         playWinSound();
       }
+      setSplashDetails({
+        subtitle: `Made Hand: ${result.rankName}`,
+        winDetail: `Paid ${result.multiplier}x on £${bet} wager • Cards: ${handStr}`,
+        badge: `${result.multiplier}x Payout`,
+      });
       setSplashWin(netWin);
 
       setMessage(`🎉 ${result.rankName}! Paid ${result.multiplier}x (+£${netWin.toLocaleString()})!`);
@@ -183,7 +195,6 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
       });
     } else {
       setMessage(`No qualifying hand. Click Deal to play again.`);
-      setLastWinHand(null);
       addGameHistory({
         gameId: 'video-poker',
         headline: 'No Qualifying Hand',
@@ -197,7 +208,14 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
   return (
     <div className="relative w-full rounded-[2.5rem] bg-gradient-to-b from-[#2d140a] via-[#1a0b05] to-[#0d0502] p-2.5 sm:p-5 border-4 border-[#4a220f] shadow-[0_30px_70px_rgba(0,0,0,0.95)] select-none overflow-hidden space-y-6">
       {/* Big Win Splash Banner */}
-      <VegasWinSplash winAmount={splashWin} title="VIDEO POKER PAYOUT!" onComplete={() => setSplashWin(null)} />
+      <VegasWinSplash
+        winAmount={splashWin}
+        title="VIDEO POKER PAYOUT!"
+        subtitle={splashDetails.subtitle}
+        winDetail={splashDetails.winDetail}
+        badge={splashDetails.badge}
+        onComplete={() => setSplashWin(null)}
+      />
 
       {/* Bar-Top Brass Rim & Drink Coaster Inset */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-amber-900/40 pb-3 relative z-10">
@@ -222,14 +240,66 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
           </div>
         </div>
 
-        <button
-          onClick={onOpenTutorial}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
-        >
-          <HelpCircle size={14} className="text-gold" />
-          <span>Rules & Tutorial</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/academy?tab=leaderboard&discipline=blackjack"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-xs font-bold text-gold transition"
+          >
+            <Trophy size={14} />
+            <span>Leaderboard</span>
+          </Link>
+          <button
+            onClick={onOpenTutorial}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+          >
+            <HelpCircle size={14} className="text-gold" />
+            <span>Rules & Tutorial</span>
+          </button>
+        </div>
       </div>
+
+      {/* Live Video Poker Optimal Hold Advisor */}
+      {step === 'holding' && cards.length === 5 && (
+        <div className="bg-gradient-to-r from-blue-950/80 via-black to-zinc-950 border border-blue-500/40 p-3 sm:p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center text-blue-300 shrink-0">
+              <Brain size={16} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase font-mono font-black text-blue-300">
+                  9/6 Jacks or Better Advisor
+                </span>
+                <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
+                  ⚡ 99.54% GTO RTP
+                </span>
+              </div>
+              {(() => {
+                const adv = getVideoPokerAdvice(cards);
+                return (
+                  <>
+                    <div className="font-bold text-white text-xs mt-0.5">{adv.headline}</div>
+                    <p className="text-[11px] text-zinc-300 leading-snug">{adv.explanation}</p>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <button
+              onClick={() => {
+                const adv = getVideoPokerAdvice(cards);
+                playCardSound();
+                setHeld([0, 1, 2, 3, 4].map((i) => adv.holdIndices.includes(i)));
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-black uppercase text-[11px] shadow-lg active:scale-95 transition"
+            >
+              <Wand2 size={13} />
+              <span>Auto-Hold Optimal</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 3D SLANTED ARCADE MONITOR ASSEMBLY (Perspective + Recessed Chassis) */}
       <div className="w-full">
