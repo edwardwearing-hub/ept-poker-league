@@ -147,7 +147,14 @@ interface ComputedPlayerProfile {
 }
 
 type BroadcastSlide =
-    | { type: 'player'; profile: ComputedPlayerProfile; id: string; label: string; badge: string }
+    | {
+          type: 'player';
+          profile: ComputedPlayerProfile;
+          page: 1 | 2 | 3;
+          id: string;
+          label: string;
+          badge: string;
+      }
     | { type: 'tale_of_the_tape'; id: string; label: string; badge: string }
     | { type: 'season_awards'; id: string; label: string; badge: string }
     | { type: 'stacks_and_payouts'; id: string; label: string; badge: string };
@@ -177,9 +184,9 @@ function getSearchTerms(name: string): string[] {
 // OPTION 3 HELPER COMPONENTS: 6-AXIS POKER DNA RADAR & PROFIT SPARKLINE
 // ============================================================================
 function PokerDnaRadarChart({ attributes }: { attributes: RadarAttribute[] }) {
-    const cx = 120;
-    const cy = 115;
-    const radius = 74;
+    const cx = 115;
+    const cy = 110;
+    const radius = 68;
     const levels = [0.25, 0.5, 0.75, 1.0];
 
     const getPoint = (idx: number, fraction: number) => {
@@ -206,8 +213,8 @@ function PokerDnaRadarChart({ attributes }: { attributes: RadarAttribute[] }) {
         .join(' ');
 
     return (
-        <div className="flex flex-col items-center justify-center">
-            <svg viewBox="0 0 240 230" className="w-full max-w-[235px] h-auto overflow-visible">
+        <div className="flex items-center justify-between gap-3 w-full h-full min-h-0">
+            <svg viewBox="0 0 230 220" className="h-full max-h-[155px] w-auto shrink-0 overflow-visible">
                 <defs>
                     <radialGradient id="dnaGoldGrad" cx="50%" cy="50%" r="50%">
                         <stop offset="0%" stopColor="#ffd700" stopOpacity="0.55" />
@@ -228,7 +235,7 @@ function PokerDnaRadarChart({ attributes }: { attributes: RadarAttribute[] }) {
                             key={lIdx}
                             points={ringPts}
                             fill="none"
-                            stroke="rgba(255,255,255,0.12)"
+                            stroke="rgba(255,255,255,0.14)"
                             strokeWidth="1"
                             strokeDasharray={lvl === 1 ? undefined : '2 2'}
                         />
@@ -245,7 +252,7 @@ function PokerDnaRadarChart({ attributes }: { attributes: RadarAttribute[] }) {
                             y1={cy}
                             x2={end.x}
                             y2={end.y}
-                            stroke="rgba(255,255,255,0.12)"
+                            stroke="rgba(255,255,255,0.14)"
                             strokeWidth="1"
                         />
                     );
@@ -254,8 +261,8 @@ function PokerDnaRadarChart({ attributes }: { attributes: RadarAttribute[] }) {
                 {/* League Average Baseline Polygon */}
                 <polygon
                     points={avgPolygonPoints}
-                    fill="rgba(56,189,248,0.08)"
-                    stroke="rgba(56,189,248,0.5)"
+                    fill="rgba(56,189,248,0.1)"
+                    stroke="rgba(56,189,248,0.6)"
                     strokeWidth="1.5"
                     strokeDasharray="3 3"
                 />
@@ -271,7 +278,7 @@ function PokerDnaRadarChart({ attributes }: { attributes: RadarAttribute[] }) {
                 {/* Vertex Dots & Axis Labels */}
                 {attributes.map((attr, i) => {
                     const valPt = getPoint(i, Math.max(0.08, Math.min(1, attr.value / 100)));
-                    const labelPt = getPoint(i, 1.26);
+                    const labelPt = getPoint(i, 1.27);
                     return (
                         <g key={attr.axis}>
                             <circle
@@ -284,7 +291,7 @@ function PokerDnaRadarChart({ attributes }: { attributes: RadarAttribute[] }) {
                             />
                             <text
                                 x={labelPt.x}
-                                y={labelPt.y - 4}
+                                y={labelPt.y - 3}
                                 textAnchor="middle"
                                 className="fill-zinc-300 font-mono font-bold text-[8.5px] uppercase"
                             >
@@ -292,7 +299,7 @@ function PokerDnaRadarChart({ attributes }: { attributes: RadarAttribute[] }) {
                             </text>
                             <text
                                 x={labelPt.x}
-                                y={labelPt.y + 7}
+                                y={labelPt.y + 8}
                                 textAnchor="middle"
                                 className="fill-gold font-mono font-black text-[9.5px]"
                             >
@@ -302,25 +309,33 @@ function PokerDnaRadarChart({ attributes }: { attributes: RadarAttribute[] }) {
                     );
                 })}
             </svg>
-            <div className="flex items-center gap-4 text-[10px] font-mono mt-1">
-                <span className="flex items-center gap-1.5 text-gold font-bold">
-                    <span className="w-2.5 h-2.5 rounded-full bg-gold inline-block" />
-                    Player DNA
-                </span>
-                <span className="flex items-center gap-1.5 text-sky-400">
-                    <span className="w-2.5 h-0.5 border-t border-dashed border-sky-400 inline-block" />
-                    League Avg
-                </span>
+
+            {/* Right-side 6-Axis Attribute Bars */}
+            <div className="flex-1 grid grid-cols-2 gap-x-3 gap-y-1.5 min-w-0">
+                {attributes.map(attr => (
+                    <div key={attr.axis} className="bg-black/50 px-2.5 py-1.5 rounded-xl border border-white/10">
+                        <div className="flex items-center justify-between text-[10px] font-mono mb-1">
+                            <span className="text-zinc-300 font-bold truncate">{attr.axis}</span>
+                            <span className="text-gold font-black">{attr.value}<span className="text-zinc-500 text-[8px]">/{attr.avg} avg</span></span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-zinc-900 overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-gold"
+                                style={{ width: `${Math.max(8, Math.min(100, attr.value))}%` }}
+                            />
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );
 }
 
 function ProfitSparklineChart({ points }: { points: { label: string; value: number }[] }) {
-    const width = 300;
-    const height = 135;
-    const padX = 28;
-    const padY = 22;
+    const width = 560;
+    const height = 108;
+    const padX = 34;
+    const padY = 20;
 
     const vals = points.map(p => p.value);
     const minVal = Math.min(0, ...vals, -20);
@@ -349,23 +364,23 @@ function ProfitSparklineChart({ points }: { points: { label: string; value: numb
     const strokeColor = isPositive ? '#4ade80' : '#f87171';
 
     return (
-        <div className="w-full">
-            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible">
+        <div className="w-full h-full flex items-center">
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full max-h-[110px] overflow-visible">
                 {/* Zero Break-Even Line */}
                 <line
                     x1={padX}
                     y1={zeroY}
                     x2={width - padX}
                     y2={zeroY}
-                    stroke="rgba(255,255,255,0.2)"
+                    stroke="rgba(255,255,255,0.22)"
                     strokeWidth="1"
-                    strokeDasharray="3 3"
+                    strokeDasharray="4 4"
                 />
                 <text
-                    x={padX - 4}
+                    x={padX - 6}
                     y={zeroY + 3}
                     textAnchor="end"
-                    className="fill-zinc-500 font-mono text-[8px]"
+                    className="fill-zinc-400 font-mono text-[9px] font-bold"
                 >
                     £0
                 </text>
@@ -375,7 +390,7 @@ function ProfitSparklineChart({ points }: { points: { label: string; value: numb
                     <polyline
                         fill="none"
                         stroke={strokeColor}
-                        strokeWidth="2.5"
+                        strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         points={polylineStr}
@@ -391,28 +406,26 @@ function ProfitSparklineChart({ points }: { points: { label: string; value: numb
                             <circle
                                 cx={c.x}
                                 cy={c.y}
-                                r="3.5"
+                                r="4"
                                 fill={nodePositive ? '#4ade80' : '#f87171'}
                                 stroke="#09090b"
                                 strokeWidth="1.5"
                             />
-                            {(i === 0 || i === points.length - 1 || points.length <= 8) && (
-                                <text
-                                    x={c.x}
-                                    y={c.y - 7}
-                                    textAnchor="middle"
-                                    className={`font-mono font-bold text-[8px] ${
-                                        nodePositive ? 'fill-emerald-400' : 'fill-rose-400'
-                                    }`}
-                                >
-                                    {pt.value >= 0 ? `+£${pt.value}` : `-£${Math.abs(pt.value)}`}
-                                </text>
-                            )}
                             <text
                                 x={c.x}
-                                y={height - 5}
+                                y={c.y - 7}
                                 textAnchor="middle"
-                                className="fill-zinc-500 font-mono text-[8px]"
+                                className={`font-mono font-black text-[9px] ${
+                                    nodePositive ? 'fill-emerald-400' : 'fill-rose-400'
+                                }`}
+                            >
+                                {pt.value >= 0 ? `+£${pt.value}` : `-£${Math.abs(pt.value)}`}
+                            </text>
+                            <text
+                                x={c.x}
+                                y={height - 3}
+                                textAnchor="middle"
+                                className="fill-zinc-400 font-mono text-[8.5px]"
                             >
                                 {pt.label}
                             </text>
@@ -1062,20 +1075,46 @@ export default function TVPresentationClient({
         });
     }, [players, history, reports, totalSeasonGames]);
 
-    // Build the full Broadcast Slide Deck (Players + Option 1 Special Interstitial Slides)
-    const broadcastSlides: BroadcastSlide[] = useMemo(() => {
+    // Build the full Broadcast Slide Deck (3 Pages per Player + Option 1 Special Interstitial Slides)
+    const activePlayerProfiles = useMemo(() => {
         const filteredPlayers = onlyActiveFinalists
             ? computedProfiles.filter(cp => !eliminatedPlayers[cp.player.name])
             : computedProfiles;
-        const activeList = filteredPlayers.length > 0 ? filteredPlayers : computedProfiles;
+        return filteredPlayers.length > 0 ? filteredPlayers : computedProfiles;
+    }, [computedProfiles, onlyActiveFinalists, eliminatedPlayers]);
 
-        const slides: BroadcastSlide[] = activeList.map(cp => ({
-            type: 'player',
-            profile: cp,
-            id: `player_${cp.player.name}`,
-            label: cp.player.name.split(' ')[0],
-            badge: `#${cp.player.rank}`
-        }));
+    const broadcastSlides: BroadcastSlide[] = useMemo(() => {
+        const slides: BroadcastSlide[] = [];
+
+        activePlayerProfiles.forEach(cp => {
+            const firstName = cp.player.name.split(' ')[0];
+            slides.push(
+                {
+                    type: 'player',
+                    profile: cp,
+                    page: 1,
+                    id: `player_${cp.player.name}_p1`,
+                    label: `${firstName} (1/3)`,
+                    badge: `#${cp.player.rank} • P1`
+                },
+                {
+                    type: 'player',
+                    profile: cp,
+                    page: 2,
+                    id: `player_${cp.player.name}_p2`,
+                    label: `${firstName} (2/3)`,
+                    badge: `#${cp.player.rank} • P2`
+                },
+                {
+                    type: 'player',
+                    profile: cp,
+                    page: 3,
+                    id: `player_${cp.player.name}_p3`,
+                    label: `${firstName} (3/3)`,
+                    badge: `#${cp.player.rank} • P3`
+                }
+            );
+        });
 
         if (includeSpecialSlides && computedProfiles.length > 0) {
             slides.push(
@@ -1101,7 +1140,7 @@ export default function TVPresentationClient({
         }
 
         return slides;
-    }, [computedProfiles, onlyActiveFinalists, eliminatedPlayers, includeSpecialSlides]);
+    }, [activePlayerProfiles, computedProfiles.length, includeSpecialSlides]);
 
     const safeSlideIdx = broadcastSlides.length > 0 ? activeSlideIdx % broadcastSlides.length : 0;
     const currentSlide = broadcastSlides[safeSlideIdx] || broadcastSlides[0];
@@ -1121,7 +1160,7 @@ export default function TVPresentationClient({
         setLoopProgress(0);
 
         const nextSlide = broadcastSlides[nextIdx];
-        if (playFanfareOnSlide && nextSlide && nextSlide.type === 'player') {
+        if (playFanfareOnSlide && nextSlide && nextSlide.type === 'player' && nextSlide.page === 1) {
             const th = playerThemes[nextSlide.profile.player.name] || 'gladiator';
             playWalkUpTheme(th);
         }
@@ -1134,7 +1173,7 @@ export default function TVPresentationClient({
         setLoopProgress(0);
 
         const prevSlide = broadcastSlides[prevIdx];
-        if (playFanfareOnSlide && prevSlide && prevSlide.type === 'player') {
+        if (playFanfareOnSlide && prevSlide && prevSlide.type === 'player' && prevSlide.page === 1) {
             const th = playerThemes[prevSlide.profile.player.name] || 'gladiator';
             playWalkUpTheme(th);
         }
@@ -1144,9 +1183,18 @@ export default function TVPresentationClient({
         setActiveSlideIdx(idx);
         setLoopProgress(0);
         const target = broadcastSlides[idx];
-        if (playFanfareOnSlide && target && target.type === 'player') {
+        if (playFanfareOnSlide && target && target.type === 'player' && target.page === 1) {
             const th = playerThemes[target.profile.player.name] || 'gladiator';
             playWalkUpTheme(th);
+        }
+    };
+
+    const handleSelectPlayerPage = (playerName: string, page: 1 | 2 | 3) => {
+        const targetIdx = broadcastSlides.findIndex(
+            s => s.type === 'player' && s.profile.player.name === playerName && s.page === page
+        );
+        if (targetIdx !== -1) {
+            handleSelectSlide(targetIdx);
         }
     };
 
@@ -1329,181 +1377,216 @@ export default function TVPresentationClient({
     }, [computedProfiles, currentLevel, remainingCount, players.length, effectivePot]);
 
     // ========================================================================
-    // RENDER TOP LOOP & CAROUSEL BAR (SHARED ACROSS ALL SLIDES)
+    // RENDER COMPACT TOP LOOP & PLAYER CAROUSEL BAR
     // ========================================================================
-    const renderTopLoopControls = () => (
-        <div className="bg-zinc-950/90 border border-gold/30 rounded-2xl p-3 shadow-2xl relative overflow-hidden">
-            {/* Animated Top Progress Bar */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-zinc-900 overflow-hidden">
-                <div
-                    className={`h-full transition-all duration-100 ${
-                        isLooping
-                            ? 'bg-gradient-to-r from-gold via-yellow-300 to-amber-500 shadow-[0_0_12px_#ffd700]'
-                            : 'bg-zinc-600'
-                    }`}
-                    style={{ width: `${loopProgress}%` }}
-                />
-            </div>
+    const renderTopLoopControls = () => {
+        const activePlayerName = currentSlide?.type === 'player' ? currentSlide.profile.player.name : null;
+        const activePlayerPage = currentSlide?.type === 'player' ? currentSlide.page : null;
 
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-white/10">
-                <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                        onClick={() => setIsLooping(!isLooping)}
-                        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-black text-xs uppercase tracking-wider transition cursor-pointer ${
+        return (
+            <div className="bg-zinc-950/95 border border-gold/30 rounded-2xl px-3.5 py-2 shadow-xl relative overflow-hidden shrink-0">
+                {/* Animated Top Progress Bar */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-zinc-900 overflow-hidden">
+                    <div
+                        className={`h-full transition-all duration-100 ${
                             isLooping
-                                ? 'bg-gold text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]'
-                                : 'bg-zinc-800 text-zinc-300 border border-white/10 hover:text-white'
+                                ? 'bg-gradient-to-r from-gold via-yellow-300 to-amber-500 shadow-[0_0_12px_#ffd700]'
+                                : 'bg-zinc-600'
                         }`}
-                        title="Pause or Resume Auto-Loop (Spacebar)"
-                    >
-                        {isLooping ? <Pause size={13} className="fill-current" /> : <Play size={13} className="fill-current" />}
-                        <span>{isLooping ? 'Auto-Looping' : 'Loop Paused'}</span>
-                    </button>
+                        style={{ width: `${loopProgress}%` }}
+                    />
+                </div>
 
-                    <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10">
-                        <span className="text-[10px] font-mono text-zinc-400 px-1.5 uppercase">Speed:</span>
-                        {LOOP_INTERVAL_OPTIONS.map(opt => (
-                            <button
-                                key={opt.seconds}
-                                onClick={() => {
-                                    setLoopDurationSec(opt.seconds);
-                                    setLoopProgress(0);
-                                }}
-                                className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold transition cursor-pointer ${
-                                    loopDurationSec === opt.seconds
-                                        ? 'bg-gold/25 text-gold border border-gold/40'
-                                        : 'text-zinc-400 hover:text-white'
-                                }`}
-                            >
-                                {opt.label}
-                            </button>
-                        ))}
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-1.5 mb-1.5 border-b border-white/10">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <button
+                            onClick={() => setIsLooping(!isLooping)}
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-black text-[11px] uppercase tracking-wider transition cursor-pointer ${
+                                isLooping
+                                    ? 'bg-gold text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]'
+                                    : 'bg-zinc-800 text-zinc-300 border border-white/10 hover:text-white'
+                            }`}
+                            title="Pause or Resume Auto-Loop (Spacebar)"
+                        >
+                            {isLooping ? <Pause size={12} className="fill-current" /> : <Play size={12} className="fill-current" />}
+                            <span>{isLooping ? 'Auto-Looping' : 'Paused'}</span>
+                        </button>
+
+                        <div className="flex items-center gap-1 bg-black/60 px-1.5 py-0.5 rounded-xl border border-white/10">
+                            <span className="text-[9px] font-mono text-zinc-400 px-1 uppercase">Page Speed:</span>
+                            {LOOP_INTERVAL_OPTIONS.map(opt => (
+                                <button
+                                    key={opt.seconds}
+                                    onClick={() => {
+                                        setLoopDurationSec(opt.seconds);
+                                        setLoopProgress(0);
+                                    }}
+                                    className={`px-1.5 py-0.5 rounded-lg text-[10px] font-mono font-bold transition cursor-pointer ${
+                                        loopDurationSec === opt.seconds
+                                            ? 'bg-gold/25 text-gold border border-gold/40'
+                                            : 'text-zinc-400 hover:text-white'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={() => setIncludeSpecialSlides(!includeSpecialSlides)}
+                            className={`px-2 py-1 rounded-xl text-[10px] font-mono font-bold uppercase border transition cursor-pointer ${
+                                includeSpecialSlides
+                                    ? 'bg-amber-950/80 border-gold/50 text-gold'
+                                    : 'bg-zinc-900 border-white/10 text-zinc-400 hover:text-white'
+                            }`}
+                        >
+                            TV Specials: {includeSpecialSlides ? 'ON' : 'OFF'}
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                setOnlyActiveFinalists(!onlyActiveFinalists);
+                                setActiveSlideIdx(0);
+                            }}
+                            className={`px-2 py-1 rounded-xl text-[10px] font-mono font-bold uppercase border transition cursor-pointer ${
+                                onlyActiveFinalists
+                                    ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300'
+                                    : 'bg-zinc-900 border-white/10 text-zinc-400 hover:text-white'
+                            }`}
+                        >
+                            {onlyActiveFinalists ? `In Play (${remainingCount})` : `All (${players.length})`}
+                        </button>
+
+                        <button
+                            onClick={() => setPlayFanfareOnSlide(!playFanfareOnSlide)}
+                            className={`px-2 py-1 rounded-xl text-[10px] font-mono font-bold uppercase border transition flex items-center gap-1 cursor-pointer ${
+                                playFanfareOnSlide
+                                    ? 'bg-purple-950/80 border-purple-400/50 text-purple-300'
+                                    : 'bg-zinc-900 border-white/10 text-zinc-400 hover:text-white'
+                            }`}
+                        >
+                            <Music size={10} />
+                            <span className="hidden sm:inline">Fanfare: {playFanfareOnSlide ? 'ON' : 'OFF'}</span>
+                        </button>
                     </div>
 
-                    <button
-                        onClick={() => setIncludeSpecialSlides(!includeSpecialSlides)}
-                        className={`px-2.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase border transition cursor-pointer ${
-                            includeSpecialSlides
-                                ? 'bg-amber-950/80 border-gold/50 text-gold'
-                                : 'bg-zinc-900 border-white/10 text-zinc-400 hover:text-white'
-                        }`}
-                        title="Include Tale of the Tape, Season Awards, & Payouts slides in loop"
-                    >
-                        TV Specials: {includeSpecialSlides ? 'ON (+3 Slides)' : 'OFF'}
-                    </button>
+                    {/* Right: Active Player 3-Page Tabs + Slide Counter */}
+                    <div className="flex items-center gap-2">
+                        {activePlayerName && activePlayerPage && (
+                            <div className="flex items-center gap-1 bg-black/80 px-2 py-0.5 rounded-xl border border-gold/40">
+                                <span className="text-[9px] font-mono uppercase text-zinc-400 mr-1">
+                                    {activePlayerName.split(' ')[0]} Pages:
+                                </span>
+                                {([1, 2, 3] as const).map(pg => (
+                                    <button
+                                        key={pg}
+                                        onClick={() => handleSelectPlayerPage(activePlayerName, pg)}
+                                        className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-black uppercase transition cursor-pointer ${
+                                            activePlayerPage === pg
+                                                ? 'bg-gold text-black shadow'
+                                                : 'text-zinc-400 hover:text-white bg-zinc-900'
+                                        }`}
+                                    >
+                                        P{pg}/3
+                                    </button>
+                                ))}
+                            </div>
+                        )}
 
-                    <button
-                        onClick={() => {
-                            setOnlyActiveFinalists(!onlyActiveFinalists);
-                            setActiveSlideIdx(0);
-                        }}
-                        className={`px-2.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase border transition cursor-pointer ${
-                            onlyActiveFinalists
-                                ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300'
-                                : 'bg-zinc-900 border-white/10 text-zinc-400 hover:text-white'
-                        }`}
-                    >
-                        {onlyActiveFinalists ? `In Play Only (${remainingCount})` : `All Players (${players.length})`}
-                    </button>
-
-                    <button
-                        onClick={() => setPlayFanfareOnSlide(!playFanfareOnSlide)}
-                        className={`px-2.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase border transition flex items-center gap-1 cursor-pointer ${
-                            playFanfareOnSlide
-                                ? 'bg-purple-950/80 border-purple-400/50 text-purple-300'
-                                : 'bg-zinc-900 border-white/10 text-zinc-400 hover:text-white'
-                        }`}
-                    >
-                        <Music size={11} />
-                        <span className="hidden sm:inline">Slide Audio: {playFanfareOnSlide ? 'ON' : 'OFF'}</span>
-                    </button>
+                        <span className="text-[11px] font-mono text-zinc-400">
+                            Slide <strong className="text-gold">{safeSlideIdx + 1}</strong>/{broadcastSlides.length}
+                        </span>
+                        <button
+                            onClick={handlePrevSlide}
+                            className="p-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white transition cursor-pointer"
+                        >
+                            <ChevronLeft size={15} />
+                        </button>
+                        <button
+                            onClick={handleNextSlide}
+                            className="p-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white transition cursor-pointer"
+                        >
+                            <ChevronRight size={15} />
+                        </button>
+                    </div>
                 </div>
 
-                {/* Slide Counter & Prev/Next */}
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-zinc-400">
-                        Slide <strong className="text-gold">{safeSlideIdx + 1}</strong> of {broadcastSlides.length}
-                    </span>
-                    <button
-                        onClick={handlePrevSlide}
-                        className="p-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white transition cursor-pointer"
-                    >
-                        <ChevronLeft size={16} />
-                    </button>
-                    <button
-                        onClick={handleNextSlide}
-                        className="p-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white transition cursor-pointer"
-                    >
-                        <ChevronRight size={16} />
-                    </button>
-                </div>
-            </div>
-
-            {/* Horizontal Clickable Slide & Player Carousel */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
-                {broadcastSlides.map((s, idx) => {
-                    const isSelected = idx === safeSlideIdx;
-                    if (s.type === 'player') {
-                        const cp = s.profile;
+                {/* Compact Single-Row Player & Special Slide Strip (1 Pill per Player + 3 Specials) */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                    {activePlayerProfiles.map(cp => {
+                        const isPlayerActive = activePlayerName === cp.player.name;
                         const eliminated = !!eliminatedPlayers[cp.player.name];
                         return (
                             <button
-                                key={s.id}
-                                onClick={() => handleSelectSlide(idx)}
-                                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border shrink-0 transition-all cursor-pointer ${
-                                    isSelected
-                                        ? 'bg-gradient-to-r from-gold/25 via-amber-500/20 to-black border-gold shadow-[0_0_15px_rgba(212,175,55,0.35)] scale-[1.02]'
+                                key={cp.player.name}
+                                onClick={() => {
+                                    if (isPlayerActive && activePlayerPage) {
+                                        const nextPg = ((activePlayerPage % 3) + 1) as 1 | 2 | 3;
+                                        handleSelectPlayerPage(cp.player.name, nextPg);
+                                    } else {
+                                        handleSelectPlayerPage(cp.player.name, 1);
+                                    }
+                                }}
+                                className={`flex items-center gap-1.5 px-2 py-1 rounded-xl border shrink-0 transition-all cursor-pointer ${
+                                    isPlayerActive
+                                        ? 'bg-gradient-to-r from-gold/30 via-amber-500/20 to-black border-gold shadow-[0_0_12px_rgba(212,175,55,0.35)]'
                                         : eliminated
-                                        ? 'bg-zinc-950/60 border-red-900/40 opacity-45 hover:opacity-75'
+                                        ? 'bg-zinc-950/60 border-red-900/40 opacity-40 hover:opacity-75'
                                         : 'bg-zinc-900/70 border-white/10 hover:border-white/25'
                                 }`}
                             >
-                                <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-gold/40 shrink-0 bg-zinc-800">
+                                <div className="relative w-6 h-6 rounded-md overflow-hidden border border-gold/40 shrink-0 bg-zinc-800">
                                     <img
                                         src={getAvatarFilename(cp.player.name)}
                                         alt={cp.player.name}
                                         className={`w-full h-full object-cover ${eliminated ? 'grayscale' : ''}`}
                                     />
                                 </div>
-                                <div className="text-left">
+                                <div className="text-left leading-none">
                                     <div className="flex items-center gap-1">
-                                        <span className="text-[9px] font-mono font-black text-gold">#{cp.player.rank}</span>
-                                        <span className={`text-xs font-extrabold uppercase truncate max-w-[90px] ${isSelected ? 'text-white' : 'text-zinc-300'}`}>
-                                            {s.label}
+                                        <span className="text-[8.5px] font-mono font-black text-gold">#{cp.player.rank}</span>
+                                        <span className={`text-[11px] font-extrabold uppercase ${isPlayerActive ? 'text-white' : 'text-zinc-300'}`}>
+                                            {cp.player.name.split(' ')[0]}
                                         </span>
-                                    </div>
-                                    <div className="text-[9px] font-mono text-zinc-400">
-                                        {cp.player.points}p • {cp.player.knockOuts}☠️
+                                        {isPlayerActive && activePlayerPage && (
+                                            <span className="px-1 py-0.2 rounded bg-gold text-black text-[8px] font-mono font-black">
+                                                {activePlayerPage}/3
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </button>
                         );
-                    }
+                    })}
 
-                    // Special Broadcast Slide Pill
-                    return (
-                        <button
-                            key={s.id}
-                            onClick={() => handleSelectSlide(idx)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border shrink-0 transition-all cursor-pointer ${
-                                isSelected
-                                    ? 'bg-gradient-to-r from-purple-600/40 via-amber-500/30 to-black border-gold text-white shadow-[0_0_15px_rgba(212,175,55,0.4)] scale-[1.02]'
-                                    : 'bg-purple-950/30 border-purple-500/30 text-purple-200 hover:border-gold/50'
-                            }`}
-                        >
-                            <div className="text-left">
-                                <div className="text-[9px] font-mono font-black text-gold uppercase">{s.badge}</div>
-                                <div className="text-xs font-black uppercase whitespace-nowrap">{s.label}</div>
-                            </div>
-                        </button>
-                    );
-                })}
+                    {includeSpecialSlides &&
+                        broadcastSlides
+                            .map((s, idx) => ({ s, idx }))
+                            .filter(item => item.s.type !== 'player')
+                            .map(({ s, idx }) => {
+                                const isSelected = idx === safeSlideIdx;
+                                return (
+                                    <button
+                                        key={s.id}
+                                        onClick={() => handleSelectSlide(idx)}
+                                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border shrink-0 transition-all cursor-pointer ${
+                                            isSelected
+                                                ? 'bg-gradient-to-r from-purple-600/40 via-amber-500/30 to-black border-gold text-white shadow-[0_0_12px_rgba(212,175,55,0.4)]'
+                                                : 'bg-purple-950/30 border-purple-500/30 text-purple-200 hover:border-gold/50'
+                                        }`}
+                                    >
+                                        <span className="text-[9px] font-mono font-black text-gold uppercase">{s.badge}</span>
+                                        <span className="text-[11px] font-black uppercase whitespace-nowrap">{s.label}</span>
+                                    </button>
+                                );
+                            })}
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     // ========================================================================
-    // OPTION 1A: UFC-STYLE "TALE OF THE TAPE" RIVALRY SLIDE
+    // OPTION 1A: UFC-STYLE "TALE OF THE TAPE" RIVALRY SLIDE (ZERO-SCROLL TV FIT)
     // ========================================================================
     const renderTaleOfTheTapeSlide = () => {
         const fighterA = computedProfiles[rivalryIdxA % computedProfiles.length] || computedProfiles[0];
@@ -1574,37 +1657,28 @@ export default function TVPresentationClient({
                 fmtA: formatOrdinal(fighterA.worstPosition),
                 fmtB: formatOrdinal(fighterB.worstPosition),
                 higherWins: false
-            },
-            {
-                label: 'Final Table Bonus Chips',
-                valA: fighterA.player.bonusChips || 0,
-                valB: fighterB.player.bonusChips || 0,
-                fmtA: `+${(fighterA.player.bonusChips || 0).toLocaleString()}`,
-                fmtB: `+${(fighterB.player.bonusChips || 0).toLocaleString()}`,
-                higherWins: true
             }
         ];
 
         return (
-            <div className="bg-gradient-to-b from-zinc-950/95 via-[#12090d]/95 to-black border-2 border-gold/50 rounded-3xl p-5 sm:p-8 shadow-[0_0_80px_rgba(220,38,38,0.2)] animate-in fade-in duration-300 space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div className="flex-1 min-h-0 bg-gradient-to-b from-zinc-950/95 via-[#12090d]/95 to-black border-2 border-gold/50 rounded-3xl p-4 sm:p-6 shadow-[0_0_80px_rgba(220,38,38,0.2)] animate-in fade-in duration-300 flex flex-col justify-between overflow-hidden">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-3 shrink-0">
                     <div>
-                        <span className="text-xs font-mono font-black uppercase tracking-[0.3em] text-ept-red flex items-center gap-2">
+                        <span className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-ept-red flex items-center gap-2">
                             <Swords className="w-4 h-4" />
                             <span>Main Event Rivalry Showcase • Head-to-Head</span>
                         </span>
-                        <h2 className="text-2xl sm:text-4xl font-black uppercase italic text-white tracking-tight mt-1">
+                        <h2 className="text-xl sm:text-3xl font-black uppercase italic text-white tracking-tight">
                             Championship Tale of the Tape
                         </h2>
                     </div>
 
-                    {/* Quick Rivalry Matchup Selector */}
-                    <div className="flex flex-wrap items-center gap-2 bg-black/70 p-2 rounded-2xl border border-white/10">
+                    <div className="flex flex-wrap items-center gap-2 bg-black/70 p-1.5 rounded-2xl border border-white/10">
                         <span className="text-[10px] font-mono uppercase text-zinc-400 px-1">Matchup:</span>
                         <select
                             value={rivalryIdxA}
                             onChange={e => setRivalryIdxA(Number(e.target.value))}
-                            className="bg-zinc-900 text-gold font-bold text-xs px-2.5 py-1.5 rounded-xl border border-gold/40"
+                            className="bg-zinc-900 text-gold font-bold text-xs px-2.5 py-1 rounded-xl border border-gold/40"
                         >
                             {computedProfiles.map((cp, i) => (
                                 <option key={cp.player.name} value={i}>
@@ -1616,7 +1690,7 @@ export default function TVPresentationClient({
                         <select
                             value={rivalryIdxB}
                             onChange={e => setRivalryIdxB(Number(e.target.value))}
-                            className="bg-zinc-900 text-sky-400 font-bold text-xs px-2.5 py-1.5 rounded-xl border border-sky-400/40"
+                            className="bg-zinc-900 text-sky-400 font-bold text-xs px-2.5 py-1 rounded-xl border border-sky-400/40"
                         >
                             {computedProfiles.map((cp, i) => (
                                 <option key={cp.player.name} value={i}>
@@ -1627,12 +1701,12 @@ export default function TVPresentationClient({
                     </div>
                 </div>
 
-                {/* Fighter Headers */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                {/* Fighter Headers & Center Comparison Bars */}
+                <div className="flex-1 min-h-0 grid grid-cols-12 gap-5 items-center pt-3 overflow-hidden">
                     {/* Fighter A */}
-                    <div className="md:col-span-4 flex flex-col items-center text-center p-5 rounded-3xl bg-gradient-to-b from-gold/15 to-black border-2 border-gold/50 shadow-xl">
+                    <div className="col-span-4 h-full flex flex-col items-center justify-center text-center p-4 rounded-3xl bg-gradient-to-b from-gold/15 to-black border-2 border-gold/50 shadow-xl">
                         <div className="flex items-center justify-center gap-3 mb-3">
-                            <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl border-4 border-gold overflow-hidden shadow-[0_0_35px_rgba(212,175,55,0.5)] bg-zinc-900">
+                            <div className="relative w-28 h-28 xl:w-36 xl:h-36 rounded-2xl border-4 border-gold overflow-hidden shadow-[0_0_35px_rgba(212,175,55,0.5)] bg-zinc-900">
                                 <WantedVideo
                                     playerName={fighterA.player.name}
                                     className="absolute inset-0 w-full h-full object-cover object-top z-10"
@@ -1642,7 +1716,7 @@ export default function TVPresentationClient({
                                     🎬 AI Video
                                 </span>
                             </div>
-                            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-amber-400/70 overflow-hidden shadow-lg bg-zinc-950">
+                            <div className="relative w-20 h-24 xl:w-24 xl:h-28 rounded-2xl border-2 border-amber-400/70 overflow-hidden shadow-lg bg-zinc-950">
                                 <img
                                     src={getAvatarFilename(fighterA.player.name)}
                                     alt={`${fighterA.player.name} 8-bit`}
@@ -1657,12 +1731,12 @@ export default function TVPresentationClient({
                         <span className="px-3 py-0.5 rounded-full bg-gold text-black font-black text-[10px] uppercase tracking-widest mb-1">
                             Seed #{fighterA.player.rank} • {fighterA.player.nickname || 'Contender'}
                         </span>
-                        <h3 className="text-2xl sm:text-3xl font-black uppercase text-white">{fighterA.player.name}</h3>
+                        <h3 className="text-2xl xl:text-3xl font-black uppercase text-white">{fighterA.player.name}</h3>
                         <span className="text-xs font-mono text-gold mt-1">{fighterA.archetypeBadge}</span>
                     </div>
 
                     {/* Center Comparison Bars */}
-                    <div className="md:col-span-4 space-y-3">
+                    <div className="col-span-4 h-full flex flex-col justify-center gap-2 overflow-hidden">
                         {comparisons.map(row => {
                             const aWins = row.higherWins ? row.valA >= row.valB : row.valA <= row.valB;
                             const bWins = row.higherWins ? row.valB >= row.valA : row.valB <= row.valA;
@@ -1672,13 +1746,13 @@ export default function TVPresentationClient({
                                 : Math.max(15, Math.min(85, 100 - Math.round((Math.max(0, row.valA) / total) * 100)));
 
                             return (
-                                <div key={row.label} className="bg-black/70 p-2.5 rounded-xl border border-white/10 space-y-1">
+                                <div key={row.label} className="bg-black/70 px-3 py-1.5 rounded-xl border border-white/10 space-y-1">
                                     <div className="flex items-center justify-between text-xs font-mono">
                                         <span className={aWins ? 'text-gold font-black' : 'text-zinc-400'}>{row.fmtA}</span>
                                         <span className="text-[10px] uppercase font-bold text-zinc-300 tracking-wider">{row.label}</span>
                                         <span className={bWins ? 'text-sky-400 font-black' : 'text-zinc-400'}>{row.fmtB}</span>
                                     </div>
-                                    <div className="w-full h-2 rounded-full bg-zinc-900 overflow-hidden flex">
+                                    <div className="w-full h-1.5 rounded-full bg-zinc-900 overflow-hidden flex">
                                         <div
                                             className="h-full bg-gradient-to-r from-amber-500 to-gold transition-all duration-500"
                                             style={{ width: `${pctA}%` }}
@@ -1694,9 +1768,9 @@ export default function TVPresentationClient({
                     </div>
 
                     {/* Fighter B */}
-                    <div className="md:col-span-4 flex flex-col items-center text-center p-5 rounded-3xl bg-gradient-to-b from-sky-500/15 to-black border-2 border-sky-400/50 shadow-xl">
+                    <div className="col-span-4 h-full flex flex-col items-center justify-center text-center p-4 rounded-3xl bg-gradient-to-b from-sky-500/15 to-black border-2 border-sky-400/50 shadow-xl">
                         <div className="flex items-center justify-center gap-3 mb-3">
-                            <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl border-4 border-sky-400 overflow-hidden shadow-[0_0_35px_rgba(56,189,248,0.4)] bg-zinc-900">
+                            <div className="relative w-28 h-28 xl:w-36 xl:h-36 rounded-2xl border-4 border-sky-400 overflow-hidden shadow-[0_0_35px_rgba(56,189,248,0.4)] bg-zinc-900">
                                 <WantedVideo
                                     playerName={fighterB.player.name}
                                     className="absolute inset-0 w-full h-full object-cover object-top z-10"
@@ -1706,7 +1780,7 @@ export default function TVPresentationClient({
                                     🎬 AI Video
                                 </span>
                             </div>
-                            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-sky-400/70 overflow-hidden shadow-lg bg-zinc-950">
+                            <div className="relative w-20 h-24 xl:w-24 xl:h-28 rounded-2xl border-2 border-sky-400/70 overflow-hidden shadow-lg bg-zinc-950">
                                 <img
                                     src={getAvatarFilename(fighterB.player.name)}
                                     alt={`${fighterB.player.name} 8-bit`}
@@ -1721,7 +1795,7 @@ export default function TVPresentationClient({
                         <span className="px-3 py-0.5 rounded-full bg-sky-400 text-black font-black text-[10px] uppercase tracking-widest mb-1">
                             Seed #{fighterB.player.rank} • {fighterB.player.nickname || 'Contender'}
                         </span>
-                        <h3 className="text-2xl sm:text-3xl font-black uppercase text-white">{fighterB.player.name}</h3>
+                        <h3 className="text-2xl xl:text-3xl font-black uppercase text-white">{fighterB.player.name}</h3>
                         <span className="text-xs font-mono text-sky-300 mt-1">{fighterB.archetypeBadge}</span>
                     </div>
                 </div>
@@ -1730,7 +1804,7 @@ export default function TVPresentationClient({
     };
 
     // ========================================================================
-    // OPTION 1B: SEASON AWARDS & "HALL OF SHAME" SUPERLATIVES SLIDE
+    // OPTION 1B: SEASON AWARDS & "HALL OF SHAME" SUPERLATIVES SLIDE (ZERO-SCROLL)
     // ========================================================================
     const renderSeasonAwardsSlide = () => {
         if (computedProfiles.length === 0) return null;
@@ -1812,27 +1886,27 @@ export default function TVPresentationClient({
         ];
 
         return (
-            <div className="bg-gradient-to-b from-zinc-950/95 via-[#0f0c16]/95 to-black border-2 border-gold/50 rounded-3xl p-5 sm:p-8 shadow-[0_0_80px_rgba(212,175,55,0.2)] animate-in fade-in duration-300 space-y-6">
-                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div className="flex-1 min-h-0 bg-gradient-to-b from-zinc-950/95 via-[#0f0c16]/95 to-black border-2 border-gold/50 rounded-3xl p-4 sm:p-6 shadow-[0_0_80px_rgba(212,175,55,0.2)] animate-in fade-in duration-300 flex flex-col justify-between overflow-hidden">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3 shrink-0">
                     <div>
-                        <span className="text-xs font-mono font-black uppercase tracking-[0.3em] text-gold flex items-center gap-2">
+                        <span className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-gold flex items-center gap-2">
                             <Award className="w-4 h-4" />
                             <span>Official 2026 Season Superlatives</span>
                         </span>
-                        <h2 className="text-2xl sm:text-4xl font-black uppercase italic text-white tracking-tight mt-1">
+                        <h2 className="text-xl sm:text-3xl font-black uppercase italic text-white tracking-tight">
                             Hall of Fame &amp; Hall of Shame Awards
                         </h2>
                     </div>
-                    <span className="hidden sm:inline-block px-4 py-1.5 rounded-full bg-gold/15 border border-gold/40 text-gold font-mono font-bold text-xs">
+                    <span className="hidden sm:inline-block px-4 py-1 rounded-full bg-gold/15 border border-gold/40 text-gold font-mono font-bold text-xs">
                         8 Official Season Honors
                     </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="flex-1 min-h-0 grid grid-cols-4 grid-rows-2 gap-3.5 pt-3 overflow-hidden">
                     {awards.map(aw => (
                         <div
                             key={aw.title}
-                            className={`p-4 rounded-2xl border-2 flex flex-col justify-between space-y-3 shadow-xl ${aw.color}`}
+                            className={`p-3.5 rounded-2xl border-2 flex flex-col justify-between shadow-xl overflow-hidden ${aw.color}`}
                         >
                             <div className="flex items-center justify-between gap-2">
                                 <div>
@@ -1859,11 +1933,11 @@ export default function TVPresentationClient({
                             </div>
 
                             <div>
-                                <div className="text-lg font-black uppercase text-white truncate">{aw.winner}</div>
-                                <div className="text-xl font-black font-mono mt-0.5">{aw.stat}</div>
+                                <div className="text-lg xl:text-xl font-black uppercase text-white truncate">{aw.winner}</div>
+                                <div className="text-xl xl:text-2xl font-black font-mono mt-0.5">{aw.stat}</div>
                             </div>
 
-                            <p className="text-[11px] text-zinc-300 leading-snug font-sans border-t border-white/10 pt-2">
+                            <p className="text-[11px] text-zinc-300 leading-snug font-sans border-t border-white/10 pt-2 line-clamp-2">
                                 {aw.detail}
                             </p>
                         </div>
@@ -1884,50 +1958,50 @@ export default function TVPresentationClient({
         const baseStartingStack = 20000;
 
         return (
-            <div className="bg-gradient-to-b from-zinc-950/95 via-[#09130e]/95 to-black border-2 border-gold/50 rounded-3xl p-5 sm:p-8 shadow-[0_0_80px_rgba(16,185,129,0.2)] animate-in fade-in duration-300 space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div className="flex-1 min-h-0 bg-gradient-to-b from-zinc-950/95 via-[#09130e]/95 to-black border-2 border-gold/50 rounded-3xl p-4 sm:p-6 shadow-[0_0_80px_rgba(16,185,129,0.2)] animate-in fade-in duration-300 flex flex-col justify-between gap-3 overflow-hidden">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-2.5 shrink-0">
                     <div>
-                        <span className="text-xs font-mono font-black uppercase tracking-[0.3em] text-emerald-400 flex items-center gap-2">
+                        <span className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-emerald-400 flex items-center gap-2">
                             <Coins className="w-4 h-4" />
                             <span>Grand Final Prize Distribution &amp; Chip Telemetry</span>
                         </span>
-                        <h2 className="text-2xl sm:text-4xl font-black uppercase italic text-white tracking-tight mt-1">
+                        <h2 className="text-xl sm:text-3xl font-black uppercase italic text-white tracking-tight">
                             Championship Payouts &amp; Starting Stack Depth
                         </h2>
                     </div>
 
-                    <div className="px-5 py-2 rounded-2xl bg-gold/20 border-2 border-gold text-right">
-                        <span className="text-[10px] font-mono uppercase text-gold block">Total Championship Vault</span>
-                        <span className="text-2xl sm:text-3xl font-black font-mono text-white">£{effectivePot}</span>
+                    <div className="px-4 py-1.5 rounded-2xl bg-gold/20 border-2 border-gold text-right">
+                        <span className="text-[9px] font-mono uppercase text-gold block">Total Championship Vault</span>
+                        <span className="text-xl sm:text-2xl font-black font-mono text-white">£{effectivePot}</span>
                     </div>
                 </div>
 
                 {/* Payout Cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="p-4 rounded-2xl bg-gradient-to-b from-gold/25 to-black border-2 border-gold text-center">
+                <div className="grid grid-cols-4 gap-3 shrink-0">
+                    <div className="p-3 rounded-2xl bg-gradient-to-b from-gold/25 to-black border-2 border-gold text-center">
                         <span className="text-xs font-black uppercase text-gold block">🏆 1st Place Champion (50%)</span>
-                        <span className="text-3xl sm:text-4xl font-black font-mono text-white mt-1 block">£{firstPayout}</span>
+                        <span className="text-2xl xl:text-3xl font-black font-mono text-white mt-0.5 block">£{firstPayout}</span>
                         <span className="text-[10px] font-mono text-zinc-400">+ E.P.T. 2026 Championship Trophy</span>
                     </div>
-                    <div className="p-4 rounded-2xl bg-gradient-to-b from-zinc-400/20 to-black border-2 border-zinc-400 text-center">
+                    <div className="p-3 rounded-2xl bg-gradient-to-b from-zinc-400/20 to-black border-2 border-zinc-400 text-center">
                         <span className="text-xs font-black uppercase text-zinc-300 block">🥈 2nd Place Runner-Up (30%)</span>
-                        <span className="text-3xl sm:text-4xl font-black font-mono text-white mt-1 block">£{secondPayout}</span>
+                        <span className="text-2xl xl:text-3xl font-black font-mono text-white mt-0.5 block">£{secondPayout}</span>
                         <span className="text-[10px] font-mono text-zinc-400">Silver Finalist Payout</span>
                     </div>
-                    <div className="p-4 rounded-2xl bg-gradient-to-b from-amber-700/25 to-black border-2 border-amber-600 text-center">
+                    <div className="p-3 rounded-2xl bg-gradient-to-b from-amber-700/25 to-black border-2 border-amber-600 text-center">
                         <span className="text-xs font-black uppercase text-amber-400 block">🥉 3rd Place Podium (15%)</span>
-                        <span className="text-3xl sm:text-4xl font-black font-mono text-white mt-1 block">£{thirdPayout}</span>
+                        <span className="text-2xl xl:text-3xl font-black font-mono text-white mt-0.5 block">£{thirdPayout}</span>
                         <span className="text-[10px] font-mono text-zinc-400">Bronze Podium Payout</span>
                     </div>
-                    <div className="p-4 rounded-2xl bg-gradient-to-b from-red-600/25 to-black border-2 border-red-500 text-center">
+                    <div className="p-3 rounded-2xl bg-gradient-to-b from-red-600/25 to-black border-2 border-red-500 text-center">
                         <span className="text-xs font-black uppercase text-red-400 block">☠️ Top Bounty Hunter (5%)</span>
-                        <span className="text-3xl sm:text-4xl font-black font-mono text-white mt-1 block">£{bountyPayout}</span>
+                        <span className="text-2xl xl:text-3xl font-black font-mono text-white mt-0.5 block">£{bountyPayout}</span>
                         <span className="text-[10px] font-mono text-zinc-400">Special Knockout Bonus</span>
                     </div>
                 </div>
 
                 {/* Starting Stacks & Big Blind Depth Table */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="flex-1 min-h-0 grid grid-cols-3 lg:grid-cols-4 gap-2.5 content-stretch overflow-hidden">
                     {computedProfiles.map(cp => {
                         const bonus = cp.player.bonusChips || 0;
                         const totalStack = baseStartingStack + bonus;
@@ -1937,7 +2011,7 @@ export default function TVPresentationClient({
                         return (
                             <div
                                 key={cp.player.name}
-                                className={`flex items-center justify-between p-3 rounded-2xl border ${
+                                className={`flex items-center justify-between px-3 py-2 rounded-2xl border ${
                                     isOut
                                         ? 'bg-zinc-950/60 border-red-900/40 opacity-40'
                                         : cp.player.rank === 1
@@ -1945,8 +2019,12 @@ export default function TVPresentationClient({
                                         : 'bg-zinc-900/80 border-white/10'
                                 }`}
                             >
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-gold/40 shrink-0 bg-zinc-800">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-gold/40 shrink-0 bg-zinc-800 relative">
+                                        <WantedVideo
+                                            playerName={cp.player.name}
+                                            className="absolute inset-0 w-full h-full object-cover object-top z-10"
+                                        />
                                         <img src={getAvatarFilename(cp.player.name)} alt={cp.player.name} className="w-full h-full object-cover" />
                                     </div>
                                     <div className="min-w-0">
@@ -1954,17 +2032,17 @@ export default function TVPresentationClient({
                                             #{cp.player.rank} {cp.player.name}
                                         </div>
                                         <div className="text-[10px] font-mono text-zinc-400">
-                                            Base 20k + <strong className="text-gold">{bonus.toLocaleString()} Bonus</strong>
+                                            20k + <strong className="text-gold">{bonus.toLocaleString()}</strong>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="text-right shrink-0">
                                     <div className="text-sm font-black font-mono text-emerald-400">
-                                        {totalStack.toLocaleString()} Chips
+                                        {totalStack.toLocaleString()}
                                     </div>
                                     <div className="text-[10px] font-mono text-gold font-bold">
-                                        {bbDepth} BB (Lvl {currentLevel.level})
+                                        {bbDepth} BB
                                     </div>
                                 </div>
                             </div>
@@ -1976,29 +2054,52 @@ export default function TVPresentationClient({
     };
 
     // ========================================================================
-    // RENDER INDIVIDUAL PLAYER SLIDE (WITH 16 STATS + RADAR + SPARKLINE + REPORT)
+    // RENDER INDIVIDUAL PLAYER SLIDE (SPLIT ACROSS 3 ZERO-SCROLL TV PAGES!)
+    // Page 1: Core Standings, Cash & Placement Stats (Stats 1–8) + Profit Trajectory
+    // Page 2: Combat, Survival & Extremes (Stats 9–16) + 6-Axis Poker DNA & Rivalries
+    // Page 3: Full 4-Part Official League Scouting Dossier + Session Log & Gazette
     // ========================================================================
-    const renderPlayerDossierSlide = (currentProfile: ComputedPlayerProfile, compact = false) => {
+    const renderPlayerDossierSlide = (currentProfile: ComputedPlayerProfile, page: 1 | 2 | 3) => {
         const { player: p } = currentProfile;
         const isOut = !!eliminatedPlayers[p.name];
+        const page1Stats = currentProfile.statsGrid.slice(0, 8);
+        const page2Stats = currentProfile.statsGrid.slice(8, 16);
+
+        const pageTitles: Record<1 | 2 | 3, { badge: string; title: string; subtitle: string }> = {
+            1: {
+                badge: 'PAGE 1 OF 3 • HEADLINE & FINANCIAL TELEMETRY',
+                title: 'Championship Standings, Payouts & Profit Curve',
+                subtitle: 'Stats 1–8 of 16 • Cumulative Season Cash Flow Trajectory'
+            },
+            2: {
+                badge: 'PAGE 2 OF 3 • COMBAT, SURVIVAL & POKER DNA',
+                title: 'Knockout Records, Rebuy Resilience & 6-Axis DNA',
+                subtitle: 'Stats 9–16 of 16 • Hexagon Attribute Radar & Rivalry Matchups'
+            },
+            3: {
+                badge: 'PAGE 3 OF 3 • OFFICIAL LEAGUE SCOUTING DOSSIER',
+                title: 'Full Season Analyst Report, Game Log & Gazette Press',
+                subtitle: '4-Part Tactical Breakdown • Game-by-Game Results & Headlines'
+            }
+        };
 
         return (
             <div
-                key={p.name}
-                className="bg-gradient-to-b from-zinc-950/95 via-[#0c0c0e]/95 to-black border-2 border-gold/40 rounded-3xl p-4 sm:p-6 shadow-[0_0_70px_rgba(212,175,55,0.18)] relative overflow-hidden animate-in fade-in duration-300"
+                key={`${p.name}_page_${page}`}
+                className="flex-1 min-h-0 bg-gradient-to-b from-zinc-950/95 via-[#0c0c0e]/95 to-black border-2 border-gold/40 rounded-3xl p-4 sm:p-5 shadow-[0_0_70px_rgba(212,175,55,0.18)] relative overflow-hidden animate-in fade-in duration-300 grid grid-cols-12 gap-5"
             >
-                <div className="absolute -top-6 right-4 text-[8rem] sm:text-[12rem] font-black text-white/[0.03] select-none pointer-events-none leading-none font-mono">
+                <div className="absolute -bottom-8 right-6 text-[9rem] font-black text-white/[0.025] select-none pointer-events-none leading-none font-mono">
                     #{p.rank}
                 </div>
 
-                {/* 1. HERO PLAYER IDENTITY HEADER (WITH BOTH AI VIDEO & 8-BIT CHARACTER) */}
-                <div className="relative z-10 flex flex-col xl:flex-row items-center xl:items-start justify-between gap-6 pb-5 border-b border-white/10">
-                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
-                        {/* Dual Media Showcase: Live AI Video + 8-Bit Character Portrait */}
-                        <div className="flex items-center gap-3 shrink-0">
+                {/* LEFT 4 COLUMNS: ANCHORED PLAYER BROADCAST IDENTITY & MEDIA SHOWCASE */}
+                <div className="col-span-4 h-full min-h-0 flex flex-col justify-between bg-zinc-900/50 border border-gold/25 rounded-2xl p-4 relative z-10 overflow-hidden">
+                    {/* Top: Dual Media Showcase (Live AI Video + 8-Bit Arcade Character) */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-center gap-3">
                             {/* Card 1: AI Video Feed */}
                             <div className="relative">
-                                <div className={`relative w-28 h-28 sm:w-36 sm:h-36 rounded-3xl border-4 overflow-hidden shadow-[0_0_40px_rgba(212,175,55,0.5)] bg-zinc-900 ${
+                                <div className={`relative w-32 h-32 xl:w-40 xl:h-40 rounded-2xl border-4 overflow-hidden shadow-[0_0_35px_rgba(212,175,55,0.45)] bg-zinc-900 ${
                                     isOut ? 'border-red-600 grayscale' : 'border-gold'
                                 }`}>
                                     <WantedVideo
@@ -2010,26 +2111,26 @@ export default function TVPresentationClient({
                                         alt={p.name}
                                         className="w-full h-full object-cover object-top scale-105"
                                     />
-                                    <span className="absolute top-2 left-2 z-20 px-2 py-0.5 rounded-md bg-black/80 border border-gold/50 text-[8px] font-mono font-black uppercase tracking-wider text-gold">
+                                    <span className="absolute top-2 left-2 z-20 px-2 py-0.5 rounded bg-black/85 border border-gold/50 text-[8px] font-mono font-black uppercase tracking-wider text-gold">
                                         🎬 AI Video
                                     </span>
                                     {isOut && (
                                         <div className="absolute inset-0 z-30 bg-red-950/75 flex flex-col items-center justify-center">
-                                            <Skull className="w-10 h-10 text-red-500 animate-pulse" />
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-white bg-red-600 px-2 py-0.5 rounded mt-1">
+                                            <Skull className="w-9 h-9 text-red-500 animate-pulse" />
+                                            <span className="text-[9px] font-black uppercase tracking-widest text-white bg-red-600 px-2 py-0.5 rounded mt-1">
                                                 BUSTED
                                             </span>
                                         </div>
                                     )}
                                 </div>
-                                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1 rounded-full bg-gradient-to-r from-gold via-yellow-400 to-amber-500 text-black font-black text-xs uppercase tracking-widest shadow-xl whitespace-nowrap border border-white">
+                                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-30 px-3 py-0.5 rounded-full bg-gradient-to-r from-gold via-yellow-400 to-amber-500 text-black font-black text-[10px] uppercase tracking-widest shadow-xl whitespace-nowrap border border-white">
                                     SEED #{p.rank}
                                 </div>
                             </div>
 
                             {/* Card 2: 8-Bit Arcade Character */}
                             <div className="relative">
-                                <div className={`relative w-24 h-28 sm:w-28 sm:h-36 rounded-3xl border-2 overflow-hidden shadow-[0_0_25px_rgba(245,158,11,0.3)] bg-zinc-950 ${
+                                <div className={`relative w-28 h-32 xl:w-32 xl:h-40 rounded-2xl border-2 overflow-hidden shadow-[0_0_25px_rgba(245,158,11,0.3)] bg-zinc-950 ${
                                     isOut ? 'border-red-600/60 grayscale' : 'border-amber-400/70'
                                 }`}>
                                     <img
@@ -2038,318 +2139,442 @@ export default function TVPresentationClient({
                                         className="w-full h-full object-cover object-top"
                                         style={{ imageRendering: 'pixelated' }}
                                     />
-                                    <span className="absolute bottom-2 inset-x-1.5 z-20 px-1.5 py-0.5 rounded-md bg-black/85 border border-amber-400/40 text-[8px] font-mono font-black uppercase tracking-wider text-amber-300 text-center">
+                                    <span className="absolute bottom-1.5 inset-x-1.5 z-20 px-1.5 py-0.5 rounded bg-black/85 border border-amber-400/40 text-[8px] font-mono font-black uppercase tracking-wider text-amber-300 text-center">
                                         👾 8-Bit Avatar
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-2.5 max-w-2xl">
-                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                                <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${currentProfile.archetypeColor}`}>
+                        {/* Player Identity Details */}
+                        <div className="text-center pt-1 space-y-1.5">
+                            <div className="flex flex-wrap items-center justify-center gap-1.5">
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${currentProfile.archetypeColor}`}>
                                     {currentProfile.archetypeBadge}
                                 </span>
                                 {p.nickname && (
-                                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-zinc-300 text-xs font-mono font-bold">
-                                        AKA &ldquo;{p.nickname}&rdquo;
+                                    <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300 text-[10px] font-mono font-bold">
+                                        &ldquo;{p.nickname}&rdquo;
                                     </span>
                                 )}
-                                <span className="px-2.5 py-1 rounded-full bg-zinc-900 border border-white/10 text-[11px] font-mono text-zinc-400">
-                                    Attendance: <strong className="text-white">{currentProfile.attendanceRate}</strong>
-                                </span>
                             </div>
 
-                            <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white drop-shadow-[0_2px_20px_rgba(255,215,0,0.3)]">
+                            <h2 className="text-2xl xl:text-4xl font-black uppercase tracking-tight text-white drop-shadow-[0_2px_20px_rgba(255,215,0,0.3)] leading-tight">
                                 {p.name}
                             </h2>
 
-                            <p className="text-xs sm:text-sm font-mono text-gold/90 italic">
+                            <p className="text-[11px] xl:text-xs font-mono text-gold/90 italic line-clamp-2 px-1">
                                 &ldquo;{currentProfile.quote}&rdquo;
                             </p>
+                        </div>
 
-                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
-                                {(p.badges || []).map(badge => (
-                                    <span
-                                        key={badge.id}
-                                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black border uppercase tracking-wider ${badge.color}`}
-                                    >
-                                        <span>{badge.icon}</span>
-                                        <span>{badge.label}</span>
-                                    </span>
-                                ))}
-                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-zinc-900 border border-white/15 text-zinc-300">
-                                    VPIP: <strong className="text-gold">{p.vpip || 24}%</strong>
-                                </span>
-                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-zinc-900 border border-white/15 text-zinc-300">
-                                    Aggression: <strong className="text-gold">{p.aggressionFactor || 1.8}</strong>
-                                </span>
-                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-zinc-900 border border-white/15 text-zinc-300">
-                                    Threat Level: <strong className="text-ept-red">{currentProfile.fearLevel}</strong>
-                                </span>
+                        {/* Quick Summary Strip */}
+                        <div className="grid grid-cols-4 gap-1.5 pt-1">
+                            <div className="bg-black/60 border border-gold/30 rounded-xl p-2 text-center">
+                                <div className="text-[8px] font-mono uppercase text-zinc-400">Points</div>
+                                <div className="text-sm xl:text-base font-black font-mono text-gold">{p.points}</div>
                             </div>
+                            <div className="bg-black/60 border border-white/10 rounded-xl p-2 text-center">
+                                <div className="text-[8px] font-mono uppercase text-zinc-400">Net Profit</div>
+                                <div className={`text-sm xl:text-base font-black font-mono ${p.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                    {p.profit >= 0 ? `+£${p.profit}` : `-£${Math.abs(p.profit)}`}
+                                </div>
+                            </div>
+                            <div className="bg-black/60 border border-white/10 rounded-xl p-2 text-center">
+                                <div className="text-[8px] font-mono uppercase text-zinc-400">High Win</div>
+                                <div className="text-sm xl:text-base font-black font-mono text-emerald-300">£{currentProfile.highestWinAmount}</div>
+                            </div>
+                            <div className="bg-black/60 border border-white/10 rounded-xl p-2 text-center">
+                                <div className="text-[8px] font-mono uppercase text-zinc-400">Total KOs</div>
+                                <div className="text-sm xl:text-base font-black font-mono text-ept-red">{p.knockOuts}☠️</div>
+                            </div>
+                        </div>
+
+                        {/* Telemetry Badges */}
+                        <div className="flex flex-wrap items-center justify-center gap-1.5">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 border border-white/10 text-zinc-300">
+                                VPIP: <strong className="text-gold">{p.vpip || 24}%</strong>
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 border border-white/10 text-zinc-300">
+                                AF: <strong className="text-gold">{p.aggressionFactor || 1.8}</strong>
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 border border-white/10 text-zinc-300">
+                                Threat: <strong className="text-ept-red">{currentProfile.fearLevel}</strong>
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 border border-white/10 text-zinc-300">
+                                Attendance: <strong className="text-white">{currentProfile.attendancePct}%</strong>
+                            </span>
                         </div>
                     </div>
 
-                    {/* Right Actions */}
-                    <div className="flex flex-wrap sm:flex-nowrap xl:flex-col items-center xl:items-end gap-2.5 shrink-0">
-                        <div className="flex items-center gap-2">
+                    {/* Bottom: 3-Page Dossier Switcher + Walk-Up Audio & Status Controls */}
+                    <div className="space-y-2 pt-2 border-t border-white/10">
+                        <div className="grid grid-cols-3 gap-1.5">
+                            {([
+                                { pg: 1 as const, label: '1/3 • Core Stats' },
+                                { pg: 2 as const, label: '2/3 • Combat & DNA' },
+                                { pg: 3 as const, label: '3/3 • Full Report' }
+                            ]).map(tab => (
+                                <button
+                                    key={tab.pg}
+                                    onClick={() => handleSelectPlayerPage(p.name, tab.pg)}
+                                    className={`py-1.5 px-2 rounded-xl font-mono font-black text-[10px] uppercase tracking-wider border transition cursor-pointer ${
+                                        page === tab.pg
+                                            ? 'bg-gold text-black border-white shadow-[0_0_15px_rgba(212,175,55,0.45)]'
+                                            : 'bg-black/70 text-zinc-400 border-white/10 hover:text-white hover:border-gold/40'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2">
                             <button
                                 onClick={() => {
                                     const th = playerThemes[p.name] || 'gladiator';
                                     playWalkUpTheme(th);
                                 }}
-                                className="px-3.5 py-2 rounded-xl bg-gold/20 hover:bg-gold/30 border border-gold/50 text-gold text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+                                className="flex-1 py-1.5 px-3 rounded-xl bg-gold/20 hover:bg-gold/30 border border-gold/50 text-gold text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition cursor-pointer"
                             >
-                                <Music size={14} />
-                                <span>Walk-Up Fanfare</span>
+                                <Music size={12} />
+                                <span>Fanfare</span>
                             </button>
 
                             <button
                                 onClick={() => toggleEliminate(p.name)}
-                                className={`px-3.5 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition cursor-pointer ${
+                                className={`flex-1 py-1.5 px-3 rounded-xl border text-[10px] font-black uppercase tracking-wider transition cursor-pointer ${
                                     isOut
                                         ? 'bg-red-950/90 border-red-500 text-red-300 hover:bg-red-900'
                                         : 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300 hover:bg-emerald-900/60'
                                 }`}
                             >
-                                {isOut ? '💀 Marked Busted (Restore)' : '🟢 Active In Final'}
+                                {isOut ? '💀 Busted (Restore)' : '🟢 Active Finalist'}
                             </button>
                         </div>
-
-                        <div className="flex items-center gap-1 bg-black/80 p-1 rounded-xl border border-white/10">
-                            {(['gladiator', 'cyberpunk', 'casino', 'rock'] as const).map(th => (
-                                <button
-                                    key={th}
-                                    onClick={() => handleSelectTheme(p.name, th)}
-                                    className={`px-2 py-0.5 rounded-lg uppercase font-mono font-bold text-[9px] transition cursor-pointer ${
-                                        (playerThemes[p.name] || 'gladiator') === th
-                                            ? 'bg-gold text-black'
-                                            : 'text-zinc-500 hover:text-white'
-                                    }`}
-                                >
-                                    {th}
-                                </button>
-                            ))}
-                        </div>
                     </div>
                 </div>
 
-                {/* 2. THE 16 LEAGUE STATISTICS GRID */}
-                <div className="mt-5">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                            <BarChart3 className="w-5 h-5 text-gold" />
-                            <h3 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">
-                                Complete 16-Point Season League Telemetry
+                {/* RIGHT 8 COLUMNS: DYNAMIC ZERO-SCROLL PAGE CONTENT (PAGE 1, PAGE 2, OR PAGE 3) */}
+                <div className="col-span-8 h-full min-h-0 flex flex-col justify-between gap-3 relative z-10 overflow-hidden">
+                    {/* Page Section Header */}
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2 shrink-0">
+                        <div>
+                            <span className="text-[10px] font-mono font-black uppercase tracking-[0.25em] text-gold block">
+                                {pageTitles[page].badge}
+                            </span>
+                            <h3 className="text-lg xl:text-2xl font-black uppercase italic text-white tracking-tight">
+                                {pageTitles[page].title}
                             </h3>
                         </div>
-                        <span className="text-[10px] font-mono uppercase text-zinc-400">
-                            Live Synced from E.P.T. 2026 Master Ledger
-                        </span>
-                    </div>
-
-                    <div className={`grid grid-cols-2 sm:grid-cols-4 ${compact ? 'xl:grid-cols-4' : 'xl:grid-cols-8'} gap-2.5`}>
-                        {currentProfile.statsGrid.map(stat => (
-                            <div
-                                key={stat.id}
-                                className={`relative p-3 rounded-2xl border flex flex-col justify-between transition-all hover:scale-[1.02] ${stat.highlightColor}`}
-                            >
-                                {stat.isLeagueRecord && (
-                                    <span className="absolute -top-2 right-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-gold via-yellow-300 to-amber-500 text-black text-[8px] font-black uppercase tracking-widest shadow-md border border-white">
-                                        {stat.recordLabel || '★ RECORD'}
-                                    </span>
-                                )}
-                                <div className="text-[10px] font-mono font-bold uppercase text-zinc-400 tracking-tight leading-snug">
-                                    {stat.label}
-                                </div>
-                                <div className="text-lg sm:text-xl font-black font-mono tracking-tight my-1 truncate">
-                                    {stat.value}
-                                </div>
-                                <div className="text-[10px] font-sans text-zinc-400/90 leading-tight line-clamp-2">
-                                    {stat.subtext}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* 3. FULL LEAGUE REPORT + 6-AXIS POKER DNA RADAR + PROFIT SPARKLINE + SESSION ARCHIVE */}
-                <div className={`grid grid-cols-1 ${compact ? 'xl:grid-cols-1' : 'xl:grid-cols-12'} gap-5 mt-5 pt-5 border-t border-white/10`}>
-                    {/* Left 5 Cols: Comprehensive 4-Part League Scouting Report */}
-                    <div className={`${compact ? '' : 'xl:col-span-5'} bg-zinc-900/60 border border-gold/25 rounded-2xl p-4 sm:p-5 space-y-3.5`}>
-                        <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-                            <div className="flex items-center gap-2">
-                                <Trophy className="w-5 h-5 text-gold" />
-                                <div>
-                                    <span className="text-[10px] font-mono uppercase tracking-widest text-gold block">
-                                        Official 2026 League Scouting Dossier
-                                    </span>
-                                    <h3 className="text-sm sm:text-base font-black text-white uppercase italic">
-                                        &ldquo;{currentProfile.headline}&rdquo;
-                                    </h3>
-                                </div>
-                            </div>
-                            <Link
-                                href={`/scouting/${encodeURIComponent(p.name)}`}
-                                className="px-2.5 py-1 rounded-xl bg-white/5 hover:bg-gold/20 border border-white/10 hover:border-gold/40 text-[10px] font-bold text-zinc-300 hover:text-gold transition shrink-0"
-                            >
-                                Dossier →
-                            </Link>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {currentProfile.reportParagraphs.map((sec, idx) => (
-                                <div
-                                    key={idx}
-                                    className="p-3 rounded-xl bg-black/60 border border-white/10 space-y-1"
-                                >
-                                    <div className="text-[11px] font-black uppercase tracking-wider text-gold">
-                                        {sec.title}
-                                    </div>
-                                    <p className="text-xs text-zinc-300 leading-relaxed font-sans">
-                                        {sec.text}
-                                    </p>
-                                </div>
-                            ))}
+                        <div className="text-right hidden sm:block">
+                            <span className="px-3 py-1 rounded-full bg-gold/15 border border-gold/40 text-gold font-mono font-black text-xs">
+                                Page {page} of 3
+                            </span>
+                            <span className="text-[10px] font-mono text-zinc-400 block mt-0.5">
+                                {pageTitles[page].subtitle}
+                            </span>
                         </div>
                     </div>
 
-                    {/* Center 3 Cols: Option 3 — 6-Axis Poker DNA Radar & Cumulative Profit Sparkline */}
-                    <div className={`${compact ? '' : 'xl:col-span-3'} bg-zinc-900/60 border border-white/10 rounded-2xl p-4 flex flex-col justify-between gap-3`}>
-                        <div>
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-black uppercase tracking-wider text-gold flex items-center gap-1.5">
-                                    <Activity className="w-4 h-4" />
-                                    <span>6-Axis Poker DNA</span>
-                                </span>
-                                <span className="text-[9px] font-mono text-zinc-400">0–100 Index</span>
-                            </div>
-                            <PokerDnaRadarChart attributes={currentProfile.radarAttributes} />
-                        </div>
-
-                        <div className="pt-2 border-t border-white/10">
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-[11px] font-black uppercase tracking-wider text-white flex items-center gap-1">
-                                    <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span>Season Profit Trajectory</span>
-                                </span>
-                                <span className={`text-xs font-mono font-black ${p.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                    {p.profit >= 0 ? `+£${p.profit}` : `-£${Math.abs(p.profit)}`}
-                                </span>
-                            </div>
-                            <ProfitSparklineChart points={currentProfile.cumulativeProfitPoints} />
-                        </div>
-                    </div>
-
-                    {/* Right 4 Cols: Session-by-Session Log & Gazette Press Clippings */}
-                    <div className={`${compact ? '' : 'xl:col-span-4'} flex flex-col justify-between gap-4`}>
-                        <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-4 space-y-2.5">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-1.5">
-                                    <Calendar className="w-4 h-4 text-gold" />
-                                    <span>Session-by-Session Log</span>
-                                </span>
-                                <span className="text-[10px] font-mono text-zinc-400">
-                                    {p.gamesPlayed}/{currentProfile.sessionLog.length} Played
-                                </span>
-                            </div>
-
-                            {currentProfile.sessionLog.length > 0 ? (
-                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 max-h-[195px] overflow-y-auto pr-1 custom-scrollbar">
-                                    {currentProfile.sessionLog.map(s => (
-                                        <div
-                                            key={s.gameNumber}
-                                            className={`p-2 rounded-xl border text-center transition ${
-                                                !s.played
-                                                    ? 'bg-black/40 border-white/5 opacity-40'
-                                                    : s.placeNum === 1
-                                                    ? 'bg-gradient-to-b from-gold/25 to-black border-gold text-white'
-                                                    : s.placeNum && s.placeNum <= 3
-                                                    ? 'bg-emerald-950/40 border-emerald-500/40 text-white'
-                                                    : s.placeNum === currentProfile.worstPosition
-                                                    ? 'bg-red-950/30 border-red-500/40 text-zinc-200'
-                                                    : 'bg-black/70 border-white/10 text-zinc-200'
-                                            }`}
-                                        >
-                                            <div className="flex items-center justify-between text-[8.5px] font-mono text-zinc-400">
-                                                <span>G{s.gameNumber}</span>
-                                                <span className="truncate max-w-[45px]">{s.date}</span>
-                                            </div>
-                                            <div className={`text-xs font-black font-mono my-0.5 ${
-                                                !s.played
-                                                    ? 'text-zinc-600'
-                                                    : s.placeNum === 1
-                                                    ? 'text-gold'
-                                                    : s.placeNum && s.placeNum <= 3
-                                                    ? 'text-emerald-400'
-                                                    : 'text-white'
-                                            }`}>
-                                                {s.played ? `${s.placeLabel} ${s.placeNum === 1 ? '🏆' : ''}` : 'DNP'}
-                                            </div>
-                                            {s.played && (
-                                                <div className="text-[8.5px] font-mono text-zinc-400 flex items-center justify-center gap-1">
-                                                    <span className={s.winnings > 0 ? 'text-green-400 font-bold' : ''}>£{s.winnings}</span>
-                                                    <span>•</span>
-                                                    <span>{s.kos}☠️</span>
-                                                </div>
-                                            )}
+                    {/* ============================================================ */}
+                    {/* PAGE 1 OF 3: STATS 1–8 (4x2 GRID) + SEASON PROFIT SPARKLINE */}
+                    {/* ============================================================ */}
+                    {page === 1 && (
+                        <div className="flex-1 min-h-0 flex flex-col justify-between gap-3 overflow-hidden">
+                            <div className="flex-1 min-h-0 grid grid-cols-4 grid-rows-2 gap-3">
+                                {page1Stats.map(stat => (
+                                    <div
+                                        key={stat.id}
+                                        className={`relative p-3.5 rounded-2xl border-2 flex flex-col justify-between shadow-lg ${stat.highlightColor}`}
+                                    >
+                                        {stat.isLeagueRecord && (
+                                            <span className="absolute -top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-gold via-yellow-300 to-amber-500 text-black text-[8.5px] font-black uppercase tracking-widest shadow-md border border-white">
+                                                {stat.recordLabel || '★ RECORD'}
+                                            </span>
+                                        )}
+                                        <div className="text-[11px] font-mono font-black uppercase text-zinc-300 tracking-tight">
+                                            {stat.label}
                                         </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="p-3 text-center text-xs text-zinc-500 bg-black/40 rounded-xl border border-white/5">
-                                    Session history will populate automatically.
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-4 space-y-2 flex-1">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-black uppercase tracking-wider text-gold flex items-center gap-1.5">
-                                    <Newspaper className="w-4 h-4" />
-                                    <span>Gazette Press Mentions</span>
-                                </span>
-                                <span className="px-2 py-0.5 rounded-full bg-gold/15 text-gold text-[10px] font-mono font-bold border border-gold/30">
-                                    {currentProfile.gazetteMentions.length} Headlines
-                                </span>
+                                        <div className="text-2xl xl:text-3xl font-black font-mono tracking-tight my-auto truncate">
+                                            {stat.value}
+                                        </div>
+                                        <div className="text-[11px] font-sans text-zinc-300/90 leading-snug line-clamp-2 border-t border-white/10 pt-1.5">
+                                            {stat.subtext}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
 
-                            {currentProfile.gazetteMentions.length > 0 ? (
-                                <div className="space-y-2 max-h-[140px] overflow-y-auto pr-1 custom-scrollbar">
-                                    {currentProfile.gazetteMentions.slice(0, 2).map((m, idx) => (
+                            {/* Bottom Widescreen Profit Trajectory Card */}
+                            <div className="h-[175px] shrink-0 bg-zinc-900/70 border border-white/15 rounded-2xl p-3.5 grid grid-cols-12 gap-4 items-center overflow-hidden">
+                                <div className="col-span-4 h-full flex flex-col justify-between border-r border-white/10 pr-3">
+                                    <div>
+                                        <span className="text-[10px] font-mono font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                                            <TrendingUp className="w-3.5 h-3.5" />
+                                            <span>Season Cash Trajectory</span>
+                                        </span>
+                                        <h4 className="text-base font-black uppercase text-white mt-0.5">
+                                            Cumulative Profit Curve
+                                        </h4>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="bg-black/60 p-2 rounded-xl border border-white/10">
+                                            <span className="text-[9px] font-mono text-zinc-400 uppercase block">Total Outlay</span>
+                                            <span className="text-sm font-black font-mono text-white">£{currentProfile.cashPaid}</span>
+                                        </div>
+                                        <div className="bg-black/60 p-2 rounded-xl border border-white/10">
+                                            <span className="text-[9px] font-mono text-zinc-400 uppercase block">Season ROI</span>
+                                            <span className={`text-sm font-black font-mono ${currentProfile.roiPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                {currentProfile.roiPct >= 0 ? `+${currentProfile.roiPct}%` : `${currentProfile.roiPct}%`}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="col-span-8 h-full min-h-0 flex items-center">
+                                    <ProfitSparklineChart points={currentProfile.cumulativeProfitPoints} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ============================================================ */}
+                    {/* PAGE 2 OF 3: STATS 9–16 (4x2 GRID) + 6-AXIS DNA & RIVALRIES */}
+                    {/* ============================================================ */}
+                    {page === 2 && (
+                        <div className="flex-1 min-h-0 flex flex-col justify-between gap-3 overflow-hidden">
+                            <div className="flex-1 min-h-0 grid grid-cols-4 grid-rows-2 gap-3">
+                                {page2Stats.map(stat => (
+                                    <div
+                                        key={stat.id}
+                                        className={`relative p-3.5 rounded-2xl border-2 flex flex-col justify-between shadow-lg ${stat.highlightColor}`}
+                                    >
+                                        {stat.isLeagueRecord && (
+                                            <span className="absolute -top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-gold via-yellow-300 to-amber-500 text-black text-[8.5px] font-black uppercase tracking-widest shadow-md border border-white">
+                                                {stat.recordLabel || '★ RECORD'}
+                                            </span>
+                                        )}
+                                        <div className="text-[11px] font-mono font-black uppercase text-zinc-300 tracking-tight">
+                                            {stat.label}
+                                        </div>
+                                        <div className="text-2xl xl:text-3xl font-black font-mono tracking-tight my-auto truncate">
+                                            {stat.value}
+                                        </div>
+                                        <div className="text-[11px] font-sans text-zinc-300/90 leading-snug line-clamp-2 border-t border-white/10 pt-1.5">
+                                            {stat.subtext}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Bottom 6-Axis Poker DNA Radar + Rivalry Spotlight */}
+                            <div className="h-[195px] shrink-0 grid grid-cols-12 gap-3 overflow-hidden">
+                                <div className="col-span-7 h-full bg-zinc-900/70 border border-gold/30 rounded-2xl p-3 flex flex-col justify-between overflow-hidden">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-black uppercase tracking-wider text-gold flex items-center gap-1.5">
+                                            <Activity className="w-4 h-4" />
+                                            <span>6-Axis Poker DNA Telemetry vs. League Avg</span>
+                                        </span>
+                                        <span className="text-[9px] font-mono text-sky-400">Dashed = League Avg</span>
+                                    </div>
+                                    <div className="flex-1 min-h-0">
+                                        <PokerDnaRadarChart attributes={currentProfile.radarAttributes} />
+                                    </div>
+                                </div>
+
+                                <div className="col-span-5 h-full bg-zinc-900/70 border border-white/15 rounded-2xl p-3 flex flex-col justify-between overflow-hidden">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-black uppercase tracking-wider text-ept-red flex items-center gap-1.5">
+                                            <Swords className="w-4 h-4" />
+                                            <span>Head-to-Head Rivalry Matrix</span>
+                                        </span>
+                                        <span className="text-[9px] font-mono text-zinc-400">Nemesis &amp; Target</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2.5 my-auto">
+                                        <div className="p-2.5 rounded-xl bg-red-950/30 border border-red-500/40 flex items-center gap-2.5">
+                                            <img
+                                                src={getAvatarFilename(currentProfile.nemesisName)}
+                                                alt={currentProfile.nemesisName}
+                                                className="w-11 h-11 rounded-xl border border-red-500/50 object-cover bg-zinc-900 shrink-0"
+                                            />
+                                            <div className="min-w-0">
+                                                <span className="text-[9px] font-mono font-black uppercase text-red-400 block">⚔️ Arch-Nemesis</span>
+                                                <span className="text-xs font-black uppercase text-white truncate block">{currentProfile.nemesisName}</span>
+                                                <span className="text-[9px] font-mono text-zinc-400 truncate block">
+                                                    {p.archNemesis?.headToHeadNotes || 'Primary Executioner'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 flex items-center gap-2.5">
+                                            <img
+                                                src={getAvatarFilename(currentProfile.pigeonName)}
+                                                alt={currentProfile.pigeonName}
+                                                className="w-11 h-11 rounded-xl border border-emerald-500/50 object-cover bg-zinc-900 shrink-0"
+                                            />
+                                            <div className="min-w-0">
+                                                <span className="text-[9px] font-mono font-black uppercase text-emerald-400 block">🎯 Favorite Pigeon</span>
+                                                <span className="text-xs font-black uppercase text-white truncate block">{currentProfile.pigeonName}</span>
+                                                <span className="text-[9px] font-mono text-zinc-400 truncate block">
+                                                    Most Exploited Rival
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-[10px] font-mono text-zinc-300 bg-black/50 px-3 py-1.5 rounded-xl border border-white/10">
+                                        <span>Peak Night: <strong className="text-gold">{currentProfile.mostKOsInGame} KOs</strong></span>
+                                        <span>•</span>
+                                        <span>Survival: <strong className="text-emerald-400">{currentProfile.survivalRate}%</strong></span>
+                                        <span>•</span>
+                                        <span>Bonus: <strong className="text-gold">+{(p.bonusChips || 0).toLocaleString()}</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ============================================================ */}
+                    {/* PAGE 3 OF 3: 4-PART LEAGUE REPORT + GAME LOG + GAZETTE       */}
+                    {/* ============================================================ */}
+                    {page === 3 && (
+                        <div className="flex-1 min-h-0 flex flex-col justify-between gap-3 overflow-hidden">
+                            {/* Top 2x2 Official League Scouting Report Grid */}
+                            <div className="flex-1 min-h-0 bg-zinc-900/60 border border-gold/30 rounded-2xl p-4 flex flex-col justify-between gap-2.5 overflow-hidden">
+                                <div className="flex items-center justify-between border-b border-white/10 pb-2 shrink-0">
+                                    <div className="flex items-center gap-2">
+                                        <Trophy className="w-5 h-5 text-gold" />
+                                        <h4 className="text-sm xl:text-base font-black text-white uppercase italic">
+                                            &ldquo;{currentProfile.headline}&rdquo;
+                                        </h4>
+                                    </div>
+                                    <span className="text-[10px] font-mono uppercase text-gold">
+                                        4-Part Tactical Dossier
+                                    </span>
+                                </div>
+
+                                <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-3">
+                                    {currentProfile.reportParagraphs.map((sec, idx) => (
                                         <div
                                             key={idx}
-                                            className="p-2.5 rounded-xl bg-black/70 border-l-2 border-gold text-xs space-y-1"
+                                            className="p-3.5 rounded-xl bg-black/70 border border-white/10 flex flex-col justify-center space-y-1.5 overflow-hidden"
                                         >
-                                            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400">
-                                                <span className="text-gold font-bold uppercase">{m.episode} {m.title ? `• ${m.title}` : ''}</span>
-                                                <span>{m.date}</span>
+                                            <div className="text-xs font-black uppercase tracking-wider text-gold">
+                                                {sec.title}
                                             </div>
-                                            <p className="text-zinc-300 text-xs line-clamp-2 italic leading-relaxed">
-                                                &ldquo;{m.snippet}&rdquo;
+                                            <p className="text-xs xl:text-sm text-zinc-200 leading-relaxed font-sans line-clamp-4">
+                                                {sec.text}
                                             </p>
                                         </div>
                                     ))}
                                 </div>
-                            ) : (
-                                <div className="p-3 rounded-xl bg-black/40 border border-white/5 text-xs text-zinc-500 italic">
-                                    Operating under the radar in official Gazette dispatches this season.
+                            </div>
+
+                            {/* Bottom: 10-Game Session Log (5x2 Grid) + Gazette Headlines */}
+                            <div className="h-[190px] shrink-0 grid grid-cols-12 gap-3 overflow-hidden">
+                                <div className="col-span-7 h-full bg-zinc-900/70 border border-white/15 rounded-2xl p-3 flex flex-col justify-between overflow-hidden">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-1.5">
+                                            <Calendar className="w-4 h-4 text-gold" />
+                                            <span>Game-by-Game Season Performance Log</span>
+                                        </span>
+                                        <span className="text-[10px] font-mono text-zinc-400">
+                                            {p.gamesPlayed}/{currentProfile.sessionLog.length} Sessions Played
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-5 grid-rows-2 gap-1.5 my-auto">
+                                        {currentProfile.sessionLog.slice(0, 10).map(s => (
+                                            <div
+                                                key={s.gameNumber}
+                                                className={`px-2 py-1.5 rounded-xl border text-center ${
+                                                    !s.played
+                                                        ? 'bg-black/40 border-white/5 opacity-40'
+                                                        : s.placeNum === 1
+                                                        ? 'bg-gradient-to-b from-gold/25 to-black border-gold text-white'
+                                                        : s.placeNum && s.placeNum <= 3
+                                                        ? 'bg-emerald-950/40 border-emerald-500/40 text-white'
+                                                        : s.placeNum === currentProfile.worstPosition
+                                                        ? 'bg-red-950/30 border-red-500/40 text-zinc-200'
+                                                        : 'bg-black/70 border-white/10 text-zinc-200'
+                                                }`}
+                                            >
+                                                <div className="flex items-center justify-between text-[8px] font-mono text-zinc-400">
+                                                    <span>G{s.gameNumber}</span>
+                                                    <span className="truncate max-w-[38px]">{s.date}</span>
+                                                </div>
+                                                <div className={`text-xs font-black font-mono ${
+                                                    !s.played
+                                                        ? 'text-zinc-600'
+                                                        : s.placeNum === 1
+                                                        ? 'text-gold'
+                                                        : s.placeNum && s.placeNum <= 3
+                                                        ? 'text-emerald-400'
+                                                        : 'text-white'
+                                                }`}>
+                                                    {s.played ? `${s.placeLabel}${s.placeNum === 1 ? '🏆' : ''}` : 'DNP'}
+                                                </div>
+                                                <div className="text-[8px] font-mono text-zinc-400 truncate">
+                                                    {s.played ? `£${s.winnings} • ${s.kos}☠️` : '-'}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            )}
+
+                                <div className="col-span-5 h-full bg-zinc-900/70 border border-white/15 rounded-2xl p-3 flex flex-col justify-between overflow-hidden">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-black uppercase tracking-wider text-gold flex items-center gap-1.5">
+                                            <Newspaper className="w-4 h-4" />
+                                            <span>Gazette Press Mentions</span>
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-full bg-gold/15 text-gold text-[10px] font-mono font-bold border border-gold/30">
+                                            {currentProfile.gazetteMentions.length} Headlines
+                                        </span>
+                                    </div>
+
+                                    {currentProfile.gazetteMentions.length > 0 ? (
+                                        <div className="space-y-2 my-auto overflow-hidden">
+                                            {currentProfile.gazetteMentions.slice(0, 2).map((m, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="p-2.5 rounded-xl bg-black/70 border-l-2 border-gold text-xs space-y-0.5"
+                                                >
+                                                    <div className="flex items-center justify-between text-[9px] font-mono text-zinc-400">
+                                                        <span className="text-gold font-bold uppercase truncate max-w-[200px]">
+                                                            {m.episode} {m.title ? `• ${m.title}` : ''}
+                                                        </span>
+                                                        <span>{m.date}</span>
+                                                    </div>
+                                                    <p className="text-zinc-200 text-[11px] line-clamp-2 italic leading-snug">
+                                                        &ldquo;{m.snippet}&rdquo;
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-3 my-auto rounded-xl bg-black/40 border border-white/5 text-xs text-zinc-400 italic text-center">
+                                            Operating under the radar in official Gazette dispatches this season.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         );
     };
 
-    const renderActiveSlideContent = (compact = false) => {
+    const renderActiveSlideContent = () => {
         if (!currentSlide) return null;
         return (
-            <div className="flex flex-col gap-4 w-full">
+            <div className="flex-1 min-h-0 flex flex-col gap-2.5 w-full overflow-hidden">
                 {renderTopLoopControls()}
-                {currentSlide.type === 'player' && renderPlayerDossierSlide(currentSlide.profile, compact)}
+                {currentSlide.type === 'player' && renderPlayerDossierSlide(currentSlide.profile, currentSlide.page)}
                 {currentSlide.type === 'tale_of_the_tape' && renderTaleOfTheTapeSlide()}
                 {currentSlide.type === 'season_awards' && renderSeasonAwardsSlide()}
                 {currentSlide.type === 'stacks_and_payouts' && renderStacksAndPayoutsSlide()}
@@ -2358,7 +2583,7 @@ export default function TVPresentationClient({
     };
 
     return (
-        <div className="relative min-h-screen bg-black text-white font-sans flex flex-col justify-between p-3 sm:p-6 pb-16 select-none overflow-hidden rounded-3xl border border-white/10">
+        <div className="fixed inset-0 z-[60] w-screen h-screen bg-black text-white font-sans flex flex-col justify-between px-4 pt-3 pb-12 select-none overflow-hidden">
             <style>{`
                 @keyframes eptTickerScroll {
                     0% { transform: translateX(0%); }
@@ -2367,7 +2592,8 @@ export default function TVPresentationClient({
                 .ept-ticker-track {
                     display: flex;
                     width: max-content;
-                    animation: eptTickerScroll 75s linear infinite;
+                    /* Slowed down by 75% (from 75s to 300s) for relaxed TV reading */
+                    animation: eptTickerScroll 300s linear infinite;
                 }
                 .ept-ticker-track:hover {
                     animation-play-state: paused;
@@ -2381,140 +2607,141 @@ export default function TVPresentationClient({
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-black/80 pointer-events-none" />
 
-            {/* TOP BROADCAST HEADER */}
-            <header className="relative z-10 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4 mb-4">
+            {/* TOP BROADCAST HEADER (COMPACT SINGLE-ROW TV BAR) */}
+            <header className="relative z-10 flex items-center justify-between gap-4 border-b border-white/10 pb-2 mb-2 shrink-0">
                 <div className="flex items-center gap-3">
                     <Link
                         href="/final"
-                        className="text-zinc-400 hover:text-white p-2.5 bg-zinc-900 border border-white/10 rounded-2xl transition-colors hover:scale-105"
+                        className="text-zinc-400 hover:text-white p-2 bg-zinc-900 border border-white/10 rounded-xl transition-colors hover:scale-105"
                         title="Back to Finals Hub"
                     >
-                        <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="w-4 h-4" />
                     </Link>
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-ept-red">
-                                Ongoing Final Game TV Broadcast • Auto-Looping Player Dossiers
+                            <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+                            <span className="text-[9px] font-black uppercase tracking-widest text-ept-red">
+                                Live TV Final Table • 3-Page Auto-Looping Player Dossiers
                             </span>
                         </div>
-                        <h1 className="text-lg sm:text-2xl font-black uppercase text-white tracking-tight flex items-center gap-2 italic">
+                        <h1 className="text-base sm:text-xl font-black uppercase text-white tracking-tight flex items-center gap-2 italic leading-tight">
                             <span>E.P.T. 2026 Championship Presentation</span>
-                            <Crown className="w-5 h-5 text-gold fill-gold/20" />
+                            <Crown className="w-4 h-4 text-gold fill-gold/20" />
                         </h1>
                     </div>
                 </div>
 
                 {/* Center: Compact Live Blind Clock Pill */}
-                <div className="flex items-center gap-3 px-3.5 py-2 rounded-2xl bg-zinc-950/90 border border-gold/40 shadow-[0_0_20px_rgba(212,175,55,0.15)]">
+                <div className="flex items-center gap-3 px-3.5 py-1.5 rounded-2xl bg-zinc-950/90 border border-gold/40 shadow-[0_0_20px_rgba(212,175,55,0.15)]">
                     <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-gold" />
                         <div>
-                            <span className="text-[9px] font-mono uppercase text-zinc-400 block">
+                            <span className="text-[8.5px] font-mono uppercase text-zinc-400 block">
                                 Lvl {currentLevel.level} • {currentLevel.sb}/{currentLevel.bb} {currentLevel.ante ? `(${currentLevel.ante})` : ''}
                             </span>
-                            <span className="text-base sm:text-lg font-black font-mono text-white tracking-tight">
+                            <span className="text-sm sm:text-base font-black font-mono text-white tracking-tight">
                                 {formatTime(timeLeft)}
                             </span>
                         </div>
                     </div>
                     <button
                         onClick={() => setIsClockRunning(!isClockRunning)}
-                        className={`px-2.5 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider flex items-center gap-1 transition cursor-pointer ${
+                        className={`px-2.5 py-1 rounded-xl font-black text-[10px] uppercase tracking-wider flex items-center gap-1 transition cursor-pointer ${
                             isClockRunning ? 'bg-red-600 text-white' : 'bg-gold text-black'
                         }`}
                     >
-                        {isClockRunning ? <Pause size={11} className="fill-current" /> : <Play size={11} className="fill-current" />}
+                        {isClockRunning ? <Pause size={10} className="fill-current" /> : <Play size={10} className="fill-current" />}
                         <span>{isClockRunning ? 'Pause' : 'Clock'}</span>
                     </button>
-                    <div className="h-6 w-[1px] bg-white/10 hidden sm:block" />
+                    <div className="h-5 w-[1px] bg-white/10 hidden sm:block" />
                     <div className="hidden sm:block text-right">
-                        <span className="text-[9px] text-zinc-400 font-bold uppercase block">Prize Vault</span>
+                        <span className="text-[8.5px] text-zinc-400 font-bold uppercase block">Prize Vault</span>
                         <span className="text-sm font-black text-gold font-mono">£{effectivePot}</span>
                     </div>
                 </div>
 
                 {/* Right: View Switcher & Fullscreen */}
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center bg-zinc-900/90 p-1 rounded-2xl border border-white/10">
+                    <div className="flex items-center bg-zinc-900/90 p-1 rounded-xl border border-white/10">
                         <button
                             onClick={() => setViewMode('showcase')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer ${
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider transition cursor-pointer ${
                                 viewMode === 'showcase' ? 'bg-gold text-black shadow' : 'text-zinc-400 hover:text-white'
                             }`}
                         >
-                            <LayoutGrid size={13} />
+                            <LayoutGrid size={12} />
                             <span className="hidden md:inline">Player Loop</span>
                         </button>
                         <button
                             onClick={() => setViewMode('split')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer ${
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider transition cursor-pointer ${
                                 viewMode === 'split' ? 'bg-gold text-black shadow' : 'text-zinc-400 hover:text-white'
                             }`}
                         >
-                            <Columns size={13} />
+                            <Columns size={12} />
                             <span className="hidden md:inline">Split TV</span>
                         </button>
                         <button
                             onClick={() => setViewMode('clock')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer ${
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider transition cursor-pointer ${
                                 viewMode === 'clock' ? 'bg-gold text-black shadow' : 'text-zinc-400 hover:text-white'
                             }`}
                         >
-                            <Clock size={13} />
+                            <Clock size={12} />
                             <span className="hidden md:inline">Timer Only</span>
                         </button>
                     </div>
 
                     <button
                         onClick={() => setSoundEnabled(!soundEnabled)}
-                        className="p-2.5 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/10 rounded-2xl transition-all cursor-pointer"
+                        className="p-2 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/10 rounded-xl transition-all cursor-pointer"
                     >
-                        {soundEnabled ? <Volume2 className="w-5 h-5 text-gold" /> : <VolumeX className="w-5 h-5" />}
+                        {soundEnabled ? <Volume2 className="w-4 h-4 text-gold" /> : <VolumeX className="w-4 h-4" />}
                     </button>
 
                     <button
                         onClick={handleFullscreen}
-                        className="p-2.5 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/10 rounded-2xl transition-all hover:scale-105 cursor-pointer"
+                        className="p-2 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/10 rounded-xl transition-all hover:scale-105 cursor-pointer"
+                        title="Toggle Fullscreen TV Mode"
                     >
-                        <Maximize className="w-5 h-5" />
+                        <Maximize className="w-4 h-4" />
                     </button>
                 </div>
             </header>
 
-            {/* MAIN CONTENT AREA */}
-            <main className="relative z-10 my-auto py-2">
-                {viewMode === 'showcase' && renderActiveSlideContent(false)}
+            {/* MAIN ZERO-SCROLL TV STAGE */}
+            <main className="relative z-10 flex-1 min-h-0 flex flex-col overflow-hidden">
+                {viewMode === 'showcase' && renderActiveSlideContent()}
 
                 {viewMode === 'split' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                        <div className="lg:col-span-4 space-y-4">
-                            <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-b from-zinc-950/95 to-black rounded-3xl border-2 border-gold/40 shadow-[0_0_60px_rgba(212,175,55,0.2)] relative overflow-hidden">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold/10 border border-gold/40 rounded-full mb-2 text-gold text-xs font-black uppercase tracking-widest">
-                                    <Flame className="w-3.5 h-3.5 fill-current" />
-                                    <span>Blind Level {currentLevel.level} of {BLIND_LEVELS.length}</span>
+                    <div className="flex-1 min-h-0 grid grid-cols-12 gap-4 overflow-hidden">
+                        <div className="col-span-3 h-full min-h-0 flex flex-col justify-between gap-3 overflow-hidden">
+                            <div className="flex-1 flex flex-col items-center justify-center p-4 bg-gradient-to-b from-zinc-950/95 to-black rounded-3xl border-2 border-gold/40 shadow-[0_0_60px_rgba(212,175,55,0.2)] relative overflow-hidden">
+                                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 bg-gold/10 border border-gold/40 rounded-full mb-1 text-gold text-[10px] font-black uppercase tracking-widest">
+                                    <Flame className="w-3 h-3 fill-current" />
+                                    <span>Level {currentLevel.level} of {BLIND_LEVELS.length}</span>
                                 </div>
 
-                                <div className="text-6xl sm:text-7xl font-black font-mono tracking-tighter text-white drop-shadow-[0_0_35px_rgba(255,215,0,0.35)] my-2">
+                                <div className="text-5xl xl:text-6xl font-black font-mono tracking-tighter text-white drop-shadow-[0_0_35px_rgba(255,215,0,0.35)] my-1">
                                     {formatTime(timeLeft)}
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-2.5 w-full mt-2 text-center">
-                                    <div className="p-3 bg-zinc-900/90 border border-gold/30 rounded-2xl">
-                                        <span className="text-[9px] text-zinc-400 font-bold uppercase block">Small</span>
-                                        <span className="text-xl font-black text-gold font-mono">{currentLevel.sb}</span>
+                                <div className="grid grid-cols-3 gap-2 w-full mt-2 text-center">
+                                    <div className="p-2 bg-zinc-900/90 border border-gold/30 rounded-xl">
+                                        <span className="text-[8px] text-zinc-400 font-bold uppercase block">Small</span>
+                                        <span className="text-base font-black text-gold font-mono">{currentLevel.sb}</span>
                                     </div>
-                                    <div className="p-3 bg-zinc-900/90 border border-gold/30 rounded-2xl">
-                                        <span className="text-[9px] text-zinc-400 font-bold uppercase block">Big</span>
-                                        <span className="text-xl font-black text-gold font-mono">{currentLevel.bb}</span>
+                                    <div className="p-2 bg-zinc-900/90 border border-gold/30 rounded-xl">
+                                        <span className="text-[8px] text-zinc-400 font-bold uppercase block">Big</span>
+                                        <span className="text-base font-black text-gold font-mono">{currentLevel.bb}</span>
                                     </div>
-                                    <div className="p-3 bg-zinc-900/90 border border-white/10 rounded-2xl">
-                                        <span className="text-[9px] text-zinc-400 font-bold uppercase block">Ante</span>
-                                        <span className="text-xl font-black text-amber-500 font-mono">{currentLevel.ante || '-'}</span>
+                                    <div className="p-2 bg-zinc-900/90 border border-white/10 rounded-xl">
+                                        <span className="text-[8px] text-zinc-400 font-bold uppercase block">Ante</span>
+                                        <span className="text-base font-black text-amber-500 font-mono">{currentLevel.ante || '-'}</span>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 mt-5">
+                                <div className="flex items-center gap-1.5 mt-3">
                                     <button
                                         onClick={() => {
                                             if (currentLevelIdx > 0) {
@@ -2523,22 +2750,22 @@ export default function TVPresentationClient({
                                             }
                                         }}
                                         disabled={currentLevelIdx === 0}
-                                        className="p-2.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-white/10 rounded-xl text-zinc-300 cursor-pointer"
+                                        className="p-2 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-white/10 rounded-xl text-zinc-300 cursor-pointer"
                                     >
                                         <ChevronLeft className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => setIsClockRunning(!isClockRunning)}
-                                        className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-black uppercase text-xs tracking-wider cursor-pointer ${
+                                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-black uppercase text-xs tracking-wider cursor-pointer ${
                                             isClockRunning ? 'bg-red-600 text-white' : 'bg-gold text-black'
                                         }`}
                                     >
-                                        {isClockRunning ? <Pause size={14} className="fill-current" /> : <Play size={14} className="fill-current" />}
+                                        {isClockRunning ? <Pause size={12} className="fill-current" /> : <Play size={12} className="fill-current" />}
                                         <span>{isClockRunning ? 'Pause' : 'Start'}</span>
                                     </button>
                                     <button
                                         onClick={() => setTimeLeft(currentLevel.duration)}
-                                        className="p-2.5 bg-zinc-900 hover:bg-zinc-800 border border-white/10 rounded-xl text-zinc-300 cursor-pointer"
+                                        className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 rounded-xl text-zinc-300 cursor-pointer"
                                     >
                                         <RotateCcw className="w-4 h-4" />
                                     </button>
@@ -2550,35 +2777,35 @@ export default function TVPresentationClient({
                                             }
                                         }}
                                         disabled={currentLevelIdx === BLIND_LEVELS.length - 1}
-                                        className="p-2.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-white/10 rounded-xl text-zinc-300 cursor-pointer"
+                                        className="p-2 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-white/10 rounded-xl text-zinc-300 cursor-pointer"
                                     >
                                         <ChevronRight className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="p-4 bg-zinc-950/95 border border-white/10 rounded-3xl space-y-2.5">
+                            <div className="p-3 bg-zinc-950/95 border border-white/10 rounded-3xl space-y-2 shrink-0">
                                 <div className="flex items-center justify-between text-xs font-black uppercase">
                                     <span className="text-white flex items-center gap-1.5">
-                                        <Users size={14} className="text-gold" />
+                                        <Users size={13} className="text-gold" />
                                         <span>Live Table Status</span>
                                     </span>
                                     <span className="text-green-400 font-mono">{remainingCount}/{players.length} In Play</span>
                                 </div>
-                                <div className="grid grid-cols-2 gap-1.5 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
+                                <div className="grid grid-cols-2 gap-1.5">
                                     {players.map(p => {
                                         const isOut = !!eliminatedPlayers[p.name];
                                         return (
                                             <button
                                                 key={p.name}
                                                 onClick={() => toggleEliminate(p.name)}
-                                                className={`flex items-center justify-between p-2 rounded-xl border text-left transition cursor-pointer ${
+                                                className={`flex items-center justify-between px-2 py-1.5 rounded-xl border text-left transition cursor-pointer ${
                                                     isOut
                                                         ? 'bg-zinc-950 border-red-900/40 opacity-40'
                                                         : 'bg-zinc-900/80 border-white/10 hover:border-gold/40'
                                                 }`}
                                             >
-                                                <span className={`text-xs font-bold truncate ${isOut ? 'line-through text-zinc-500' : 'text-white'}`}>
+                                                <span className={`text-[11px] font-bold truncate ${isOut ? 'line-through text-zinc-500' : 'text-white'}`}>
                                                     #{p.rank} {p.name.split(' ')[0]}
                                                 </span>
                                                 <span className="text-[9px] font-mono">{isOut ? '💀' : '🟢'}</span>
@@ -2589,24 +2816,24 @@ export default function TVPresentationClient({
                             </div>
                         </div>
 
-                        <div className="lg:col-span-8">
-                            {renderActiveSlideContent(true)}
+                        <div className="col-span-9 h-full min-h-0 flex flex-col overflow-hidden">
+                            {renderActiveSlideContent()}
                         </div>
                     </div>
                 )}
 
                 {viewMode === 'clock' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                        <div className="lg:col-span-7 flex flex-col items-center justify-center p-8 sm:p-12 bg-gradient-to-b from-zinc-950/95 to-black rounded-3xl border-2 border-gold/40 shadow-[0_0_100px_rgba(212,175,55,0.2)] relative overflow-hidden backdrop-blur-md">
+                    <div className="flex-1 min-h-0 grid grid-cols-12 gap-6 items-stretch overflow-hidden">
+                        <div className="col-span-7 h-full flex flex-col items-center justify-center p-8 bg-gradient-to-b from-zinc-950/95 to-black rounded-3xl border-2 border-gold/40 shadow-[0_0_100px_rgba(212,175,55,0.2)] relative overflow-hidden">
                             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-80" />
-                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold/10 border border-gold/40 rounded-full mb-3 text-gold text-xs font-black uppercase tracking-widest">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold/10 border border-gold/40 rounded-full mb-2 text-gold text-xs font-black uppercase tracking-widest">
                                 <Flame className="w-3.5 h-3.5 fill-current" />
                                 <span>Level {currentLevel.level} of {BLIND_LEVELS.length}</span>
                             </div>
-                            <div className="text-7xl sm:text-9xl md:text-[10rem] font-black font-mono tracking-tighter text-white drop-shadow-[0_0_50px_rgba(255,215,0,0.35)] my-2">
+                            <div className="text-7xl xl:text-9xl font-black font-mono tracking-tighter text-white drop-shadow-[0_0_50px_rgba(255,215,0,0.35)] my-2">
                                 {formatTime(timeLeft)}
                             </div>
-                            <div className="grid grid-cols-3 gap-4 w-full max-w-xl mt-4 text-center">
+                            <div className="grid grid-cols-3 gap-4 w-full max-w-xl mt-3 text-center">
                                 <div className="p-4 bg-zinc-900/90 border border-gold/30 rounded-2xl shadow-md">
                                     <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider block">Small Blind</span>
                                     <span className="text-2xl sm:text-3xl font-black text-gold font-mono">{currentLevel.sb}</span>
@@ -2621,11 +2848,11 @@ export default function TVPresentationClient({
                                 </div>
                             </div>
                             {nextLevel && (
-                                <div className="mt-5 text-xs font-mono text-zinc-400 font-bold">
+                                <div className="mt-4 text-xs font-mono text-zinc-400 font-bold">
                                     Next Level: <span className="text-gold font-black">{nextLevel.sb} / {nextLevel.bb}</span> (Ante: {nextLevel.ante || 0})
                                 </div>
                             )}
-                            <div className="flex items-center gap-3 mt-8">
+                            <div className="flex items-center gap-3 mt-6">
                                 <button
                                     onClick={() => {
                                         if (currentLevelIdx > 0) {
@@ -2634,13 +2861,13 @@ export default function TVPresentationClient({
                                         }
                                     }}
                                     disabled={currentLevelIdx === 0}
-                                    className="p-3.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-white/10 rounded-2xl text-zinc-300 transition-all hover:scale-105 cursor-pointer"
+                                    className="p-3 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-white/10 rounded-2xl text-zinc-300 transition-all hover:scale-105 cursor-pointer"
                                 >
                                     <ChevronLeft className="w-5 h-5" />
                                 </button>
                                 <button
                                     onClick={() => setIsClockRunning(!isClockRunning)}
-                                    className={`flex items-center gap-2 px-8 py-3.5 rounded-2xl font-black uppercase text-sm tracking-wider transition-all transform hover:scale-105 cursor-pointer ${
+                                    className={`flex items-center gap-2 px-7 py-3 rounded-2xl font-black uppercase text-sm tracking-wider transition-all transform hover:scale-105 cursor-pointer ${
                                         isClockRunning
                                             ? 'bg-red-600 hover:bg-red-500 text-white shadow-[0_0_30px_rgba(220,38,38,0.5)]'
                                             : 'bg-gold hover:bg-yellow-400 text-black shadow-[0_0_30px_rgba(212,175,55,0.5)]'
@@ -2660,7 +2887,7 @@ export default function TVPresentationClient({
                                 </button>
                                 <button
                                     onClick={() => setTimeLeft(currentLevel.duration)}
-                                    className="p-3.5 bg-zinc-900 hover:bg-zinc-800 border border-white/10 rounded-2xl text-zinc-300 transition-all hover:scale-105 cursor-pointer"
+                                    className="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/10 rounded-2xl text-zinc-300 transition-all hover:scale-105 cursor-pointer"
                                 >
                                     <RotateCcw className="w-5 h-5" />
                                 </button>
@@ -2672,15 +2899,15 @@ export default function TVPresentationClient({
                                         }
                                     }}
                                     disabled={currentLevelIdx === BLIND_LEVELS.length - 1}
-                                    className="p-3.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-white/10 rounded-2xl text-zinc-300 transition-all hover:scale-105 cursor-pointer"
+                                    className="p-3 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-30 border border-white/10 rounded-2xl text-zinc-300 transition-all hover:scale-105 cursor-pointer"
                                 >
                                     <ChevronRight className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
 
-                        <div className="lg:col-span-5 p-6 bg-zinc-950/95 border border-white/10 rounded-3xl flex flex-col justify-between h-full space-y-4 backdrop-blur-md shadow-2xl">
-                            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                        <div className="col-span-5 h-full p-5 bg-zinc-950/95 border border-white/10 rounded-3xl flex flex-col justify-between overflow-hidden shadow-2xl">
+                            <div className="flex items-center justify-between pb-2.5 border-b border-white/10 shrink-0">
                                 <div className="flex items-center gap-2">
                                     <Users className="w-5 h-5 text-gold" />
                                     <h3 className="text-base font-black uppercase text-white tracking-wider">Final Table Roster</h3>
@@ -2690,23 +2917,23 @@ export default function TVPresentationClient({
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5 max-h-[460px] overflow-y-auto pr-1 custom-scrollbar">
+                            <div className="flex-1 min-h-0 grid grid-cols-2 gap-2 pt-3 content-stretch overflow-hidden">
                                 {players.map((p, i) => {
                                     const isOut = !!eliminatedPlayers[p.name];
                                     return (
                                         <div
                                             key={p.name}
                                             onClick={() => toggleEliminate(p.name)}
-                                            className={`relative flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer overflow-hidden ${
+                                            className={`relative flex items-center justify-between p-2.5 rounded-2xl border transition-all cursor-pointer overflow-hidden ${
                                                 isOut
                                                     ? 'bg-zinc-950/80 border-red-950/50 opacity-40'
                                                     : i === 0
-                                                    ? 'bg-gradient-to-r from-gold/15 to-black/80 border-gold/50 shadow-[0_0_15px_rgba(212,175,55,0.2)]'
+                                                    ? 'bg-gradient-to-r from-gold/15 to-black/80 border-gold/50'
                                                     : 'bg-zinc-900/80 border-white/10 hover:border-white/20'
                                             }`}
                                         >
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className={`relative w-12 h-12 rounded-xl overflow-hidden border-2 shrink-0 bg-zinc-900 ${
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <div className={`relative w-10 h-10 rounded-xl overflow-hidden border shrink-0 bg-zinc-900 ${
                                                     isOut ? 'border-red-600 grayscale' : i === 0 ? 'border-gold' : 'border-white/20'
                                                 }`}>
                                                     <img
@@ -2714,36 +2941,24 @@ export default function TVPresentationClient({
                                                         alt={p.name}
                                                         className="w-full h-full object-cover"
                                                     />
-                                                    {isOut && (
-                                                        <div className="absolute inset-0 bg-red-950/70 flex items-center justify-center">
-                                                            <Skull className="w-5 h-5 text-red-500 drop-shadow-md" />
-                                                        </div>
-                                                    )}
                                                 </div>
 
                                                 <div className="min-w-0">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className={`text-xs font-mono font-bold ${i === 0 ? 'text-gold' : 'text-zinc-500'}`}>
-                                                            #{p.rank}
-                                                        </span>
-                                                        <span className={`text-sm font-extrabold uppercase truncate max-w-[140px] ${
-                                                            isOut ? 'line-through text-zinc-500' : 'text-white'
-                                                        }`}>
-                                                            {p.name}
-                                                        </span>
+                                                    <div className="text-xs font-extrabold uppercase truncate text-white">
+                                                        #{p.rank} {p.name.split(' ')[0]}
                                                     </div>
-                                                    <span className="text-[11px] font-mono text-zinc-400 font-semibold block">
-                                                        {p.points} Pts • {p.knockOuts} KOs • {p.profit >= 0 ? `+£${p.profit}` : `-£${Math.abs(p.profit)}`}
+                                                    <span className="text-[10px] font-mono text-zinc-400 font-semibold block">
+                                                        {p.points}p • {p.knockOuts}☠️
                                                     </span>
                                                 </div>
                                             </div>
 
-                                            <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border ${
+                                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${
                                                 isOut
                                                     ? 'bg-red-950/80 text-red-400 border-red-800'
                                                     : 'bg-green-950/80 text-green-400 border-green-700/50'
                                             }`}>
-                                                {isOut ? 'BUSTED' : 'IN PLAY'}
+                                                {isOut ? 'OUT' : 'IN'}
                                             </span>
                                         </div>
                                     );
@@ -2754,15 +2969,13 @@ export default function TVPresentationClient({
                 )}
             </main>
 
-            {/* OPTION 4: SKY SPORTS / ESPN SCROLLING NEWS TICKER FOOTER */}
-            <footer className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 border-t-2 border-gold/60 shadow-[0_-10px_30px_rgba(0,0,0,0.9)] flex items-center h-11 overflow-hidden">
-                {/* Left Fixed Broadcast Bug */}
+            {/* OPTION 4: SKY SPORTS / ESPN SCROLLING NEWS TICKER FOOTER (SLOWED BY 75%) */}
+            <footer className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 border-t-2 border-gold/60 shadow-[0_-10px_30px_rgba(0,0,0,0.9)] flex items-center h-10 overflow-hidden">
                 <div className="bg-gradient-to-r from-red-700 via-red-600 to-amber-600 text-white font-black text-xs uppercase tracking-widest px-4 h-full flex items-center gap-2 shrink-0 z-20 shadow-[5px_0_15px_rgba(0,0,0,0.8)] border-r border-white/20">
                     <Radio className="w-4 h-4 animate-pulse" />
                     <span>E.P.T. LIVE WIRE</span>
                 </div>
 
-                {/* Continuous Marquee Track (Duplicated for seamless infinite scroll) */}
                 <div className="flex-1 overflow-hidden relative h-full flex items-center">
                     <div className="ept-ticker-track items-center gap-8 px-4">
                         {[...tickerHeadlines, ...tickerHeadlines].map((item, idx) => (
@@ -2779,11 +2992,10 @@ export default function TVPresentationClient({
                     </div>
                 </div>
 
-                {/* Right Keyboard Shortcut Hint */}
                 <div className="hidden xl:flex items-center gap-2 px-4 h-full bg-black border-l border-white/10 text-[10px] font-mono text-zinc-400 shrink-0 z-20">
                     <span className="text-gold font-bold">[SPACE]</span> Pause
                     <span>•</span>
-                    <span className="text-gold font-bold">[←/→]</span> Slide
+                    <span className="text-gold font-bold">[←/→]</span> Page
                 </div>
             </footer>
         </div>
