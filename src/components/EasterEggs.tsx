@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, HeartCrack, Sparkles, X, Shuffle } from 'lucide-react';
+import { Volume2, VolumeX, HeartCrack, Sparkles, X, Shuffle, Gamepad2 } from 'lucide-react';
 import { isSfxMuted, setSfxMuted, playChipClack, playChimeSuccess, playKonamiChiptuneFanfare } from '@/lib/felt-audio';
 import { triggerHaptic } from '@/lib/haptics';
 
@@ -200,50 +200,251 @@ const COIN_PARTICLES = Array.from({ length: 32 }, (_, i) => ({
     symbol: i % 4 === 0 ? '👑' : i % 2 === 0 ? '🪙' : '✨',
 }));
 
+const KONAMI_SEQUENCE = [
+    'ArrowUp',
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowLeft',
+    'ArrowRight',
+    'b',
+    'a',
+];
+
+const KONAMI_LABELS = ['↑', '↑', '↓', '↓', '←', '→', '←', '→', 'B', 'A'];
+
+export function triggerKonamiCelebrationToggle() {
+    triggerHaptic(50);
+    const nextState = !getKonamiHighRoller();
+    setKonamiHighRollerState(nextState);
+    if (nextState) {
+        playKonamiChiptuneFanfare();
+    } else {
+        playChimeSuccess();
+    }
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+            new CustomEvent('ept_konami_celebrate', { detail: { active: nextState } })
+        );
+    }
+    return nextState;
+}
+
+export function KonamiArcadePadButton() {
+    const { isHighRoller } = useKonamiHighRoller();
+    const [isOpen, setIsOpen] = useState(false);
+    const [progress, setProgress] = useState(0);
+
+    const handlePadInput = (inputKey: string) => {
+        triggerHaptic(18);
+        playChipClack();
+
+        const expected = KONAMI_SEQUENCE[progress].toLowerCase();
+        const pressed = inputKey.toLowerCase();
+
+        if (pressed === expected) {
+            const nextStep = progress + 1;
+            if (nextStep === KONAMI_SEQUENCE.length) {
+                setProgress(0);
+                setIsOpen(false);
+                triggerKonamiCelebrationToggle();
+            } else {
+                setProgress(nextStep);
+            }
+        } else {
+            setProgress(pressed === KONAMI_SEQUENCE[0].toLowerCase() ? 1 : 0);
+        }
+    };
+
+    return (
+        <>
+            <button
+                type="button"
+                onClick={() => {
+                    triggerHaptic(15);
+                    playChipClack();
+                    setProgress(0);
+                    setIsOpen(true);
+                }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs transition active:scale-95 cursor-pointer ${
+                    isHighRoller
+                        ? 'border-[#ffd700] bg-[#ffd700]/15 text-[#ffd700] shadow-[0_0_12px_rgba(255,215,0,0.3)]'
+                        : 'border-amber-500/30 hover:border-gold/60 bg-amber-950/20 hover:bg-amber-950/40 text-amber-300'
+                }`}
+                title="Open 8-Bit Konami Code Keypad (Mobile & Desktop)"
+            >
+                <Gamepad2 size={14} className={isHighRoller ? 'text-[#ffd700]' : 'text-amber-400'} />
+                <span className="font-mono text-[11px]">
+                    {isHighRoller ? '👑 VIP Pad: ON' : '🕹️ Secret Code Pad'}
+                </span>
+            </button>
+
+            {isOpen && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="w-full max-w-sm bg-zinc-950 border-2 border-gold/60 rounded-3xl p-5 text-center relative shadow-[0_0_50px_rgba(212,175,55,0.35)]">
+                        <button
+                            type="button"
+                            onClick={() => setIsOpen(false)}
+                            className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full hover:bg-white/10"
+                            aria-label="Close"
+                        >
+                            <X size={18} />
+                        </button>
+
+                        <div className="text-[10px] font-mono font-black uppercase tracking-widest text-gold mb-1">
+                            🕹️ E.P.T. 8-Bit Pocket Controller
+                        </div>
+                        <h3 className="text-base font-black uppercase tracking-wider text-white mb-2">
+                            Enter Secret Konami Code
+                        </h3>
+
+                        {/* 10-Step Sequence Progress Bar */}
+                        <div className="flex items-center justify-center gap-1 mb-5 bg-black/80 border border-white/10 rounded-xl p-2">
+                            {KONAMI_LABELS.map((lbl, idx) => {
+                                const done = idx < progress;
+                                const current = idx === progress;
+                                return (
+                                    <span
+                                        key={idx}
+                                        className={`w-6 h-6 rounded-md font-mono text-xs font-black flex items-center justify-center border transition-all ${
+                                            done
+                                                ? 'bg-[#ffd700] text-black border-white shadow-[0_0_10px_#ffd700] scale-105'
+                                                : current
+                                                ? 'bg-amber-500/20 text-gold border-gold animate-pulse'
+                                                : 'bg-zinc-900 text-zinc-500 border-white/10'
+                                        }`}
+                                    >
+                                        {lbl}
+                                    </span>
+                                );
+                            })}
+                        </div>
+
+                        {/* Classic Retro Controller Layout: D-Pad (Left) + B/A Buttons (Right) */}
+                        <div className="flex items-center justify-between gap-4 px-2 py-3 bg-gradient-to-b from-zinc-900 to-black rounded-2xl border border-white/15 shadow-inner">
+                            {/* D-PAD */}
+                            <div className="grid grid-cols-3 gap-1.5 w-32 h-32">
+                                <div />
+                                <button
+                                    type="button"
+                                    onClick={() => handlePadInput('ArrowUp')}
+                                    className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-gold active:text-black border border-white/20 text-white font-black text-base flex items-center justify-center shadow active:scale-95 transition cursor-pointer"
+                                >
+                                    ↑
+                                </button>
+                                <div />
+                                <button
+                                    type="button"
+                                    onClick={() => handlePadInput('ArrowLeft')}
+                                    className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-gold active:text-black border border-white/20 text-white font-black text-base flex items-center justify-center shadow active:scale-95 transition cursor-pointer"
+                                >
+                                    ←
+                                </button>
+                                <div className="rounded-lg bg-zinc-950 border border-white/5 flex items-center justify-center">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-zinc-800" />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handlePadInput('ArrowRight')}
+                                    className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-gold active:text-black border border-white/20 text-white font-black text-base flex items-center justify-center shadow active:scale-95 transition cursor-pointer"
+                                >
+                                    →
+                                </button>
+                                <div />
+                                <button
+                                    type="button"
+                                    onClick={() => handlePadInput('ArrowDown')}
+                                    className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-gold active:text-black border border-white/20 text-white font-black text-base flex items-center justify-center shadow active:scale-95 transition cursor-pointer"
+                                >
+                                    ↓
+                                </button>
+                                <div />
+                            </div>
+
+                            {/* Crimson B & A Arcade Buttons */}
+                            <div className="flex items-center gap-3 pr-1">
+                                <div className="flex flex-col items-center gap-1 translate-y-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePadInput('b')}
+                                        className="w-12 h-12 rounded-full bg-gradient-to-b from-red-500 to-red-700 hover:brightness-110 active:scale-90 border-2 border-red-300 text-white font-mono font-black text-base shadow-[0_4px_12px_rgba(239,68,68,0.5)] flex items-center justify-center cursor-pointer"
+                                    >
+                                        B
+                                    </button>
+                                    <span className="text-[9px] font-mono font-bold text-zinc-400">B</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-1 -translate-y-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePadInput('a')}
+                                        className="w-12 h-12 rounded-full bg-gradient-to-b from-red-500 to-red-700 hover:brightness-110 active:scale-90 border-2 border-red-300 text-white font-mono font-black text-base shadow-[0_4px_12px_rgba(239,68,68,0.5)] flex items-center justify-center cursor-pointer"
+                                    >
+                                        A
+                                    </button>
+                                    <span className="text-[9px] font-mono font-bold text-zinc-400">A</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p className="text-[11px] text-zinc-400 font-mono mt-3">
+                            Tap <span className="text-gold font-bold">↑ ↑ ↓ ↓ ← → ← → B A</span> to toggle 24K High Roller Mode
+                        </p>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+}
+
 export function KonamiHighRoller() {
     const { isHighRoller, toggleHighRoller } = useKonamiHighRoller();
     const [bannerMessage, setBannerMessage] = useState<string | null>(null);
     const [showCoinRain, setShowCoinRain] = useState(false);
 
     useEffect(() => {
-        const code = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
         let keyIdx = 0;
 
         const onKeyDown = (e: KeyboardEvent) => {
             const active = (document.activeElement?.tagName || '').toLowerCase();
             if (active === 'input' || active === 'textarea') return;
 
-            const expected = code[keyIdx].toLowerCase();
+            const expected = KONAMI_SEQUENCE[keyIdx].toLowerCase();
             const pressed = e.key.toLowerCase();
 
             if (pressed === expected) {
                 keyIdx++;
-                if (keyIdx === code.length) {
+                if (keyIdx === KONAMI_SEQUENCE.length) {
                     keyIdx = 0;
-                    triggerHaptic(50);
-                    const nextState = !getKonamiHighRoller();
-                    setKonamiHighRollerState(nextState);
-                    if (nextState) {
-                        playKonamiChiptuneFanfare();
-                        setShowCoinRain(true);
-                        setTimeout(() => setShowCoinRain(false), 4500);
-                    } else {
-                        playChimeSuccess();
-                    }
-                    setBannerMessage(
-                        nextState
-                            ? '👑 24K Gold High Roller Salon Unlocked! Gold Felts, Obsidian Cards & £5k Plaques Active!'
-                            : '🎩 Standard Casino Felt Restored (Konami Mode Off)'
-                    );
-                    setTimeout(() => setBannerMessage(null), 5500);
+                    triggerKonamiCelebrationToggle();
                 }
             } else {
-                keyIdx = pressed === code[0].toLowerCase() ? 1 : 0;
+                keyIdx = pressed === KONAMI_SEQUENCE[0].toLowerCase() ? 1 : 0;
             }
         };
 
+        const onCelebrate = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            const nextState = detail?.active ?? getKonamiHighRoller();
+            if (nextState) {
+                setShowCoinRain(true);
+                setTimeout(() => setShowCoinRain(false), 4500);
+            }
+            setBannerMessage(
+                nextState
+                    ? '👑 24K Gold High Roller Salon Unlocked! Gold Felts, Obsidian Cards & £5k Plaques Active!'
+                    : '🎩 Standard Casino Felt Restored (Konami Mode Off)'
+            );
+            setTimeout(() => setBannerMessage(null), 5500);
+        };
+
         window.addEventListener('keydown', onKeyDown);
-        return () => window.removeEventListener('keydown', onKeyDown);
+        window.addEventListener('ept_konami_celebrate', onCelebrate);
+        return () => {
+            window.removeEventListener('keydown', onKeyDown);
+            window.removeEventListener('ept_konami_celebrate', onCelebrate);
+        };
     }, []);
 
     return (
@@ -286,7 +487,7 @@ export function KonamiHighRoller() {
                         );
                         setTimeout(() => setBannerMessage(null), 3500);
                     }}
-                    className="fixed bottom-4 right-4 z-40 inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-gradient-to-r from-[#ffd700] via-[#ffe578] to-[#b8860b] text-black font-mono font-black text-[11px] uppercase tracking-wider shadow-[0_0_25px_rgba(255,215,0,0.65)] border-2 border-white/80 hover:scale-105 active:scale-95 transition cursor-pointer"
+                    className="fixed bottom-20 md:bottom-4 right-4 z-40 inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-gradient-to-r from-[#ffd700] via-[#ffe578] to-[#b8860b] text-black font-mono font-black text-[11px] uppercase tracking-wider shadow-[0_0_25px_rgba(255,215,0,0.65)] border-2 border-white/80 hover:scale-105 active:scale-95 transition cursor-pointer"
                     title="Click to toggle 24K Gold High Roller Mode (Konami Code)"
                 >
                     <Sparkles size={13} className="text-black" />
@@ -305,5 +506,6 @@ export function KonamiHighRoller() {
         </>
     );
 }
+
 
 

@@ -19,7 +19,7 @@ import {
     Lock,
     Key
 } from 'lucide-react';
-import { SfxToggle, BadBeatReportButton, KonamiHighRoller } from './EasterEggs';
+import { SfxToggle, BadBeatReportButton, KonamiHighRoller, KonamiArcadePadButton } from './EasterEggs';
 
 export default function SiteFooter() {
     return (
@@ -181,6 +181,7 @@ export default function SiteFooter() {
                     <div className="flex flex-wrap items-center gap-2">
                         <SfxToggle />
                         <BadBeatReportButton />
+                        <KonamiArcadePadButton />
                     </div>
                     <div className="text-[11px] text-zinc-600 font-mono hidden md:block">
                         Tip: ↑ ↑ ↓ ↓ ← → ← → B A unlocks High Roller
