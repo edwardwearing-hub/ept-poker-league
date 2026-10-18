@@ -137,3 +137,53 @@ export function playChimeSuccess(): void {
         });
     } catch {}
 }
+
+/**
+ * Classic 8-Bit Arcade Chiptune Fanfare when Konami Code is unlocked
+ */
+export function playKonamiChiptuneFanfare(): void {
+    if (isSfxMuted()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    try {
+        const now = ctx.currentTime;
+        // 8-bit power-up melody + final triumphant chord
+        const melody = [
+            { f: 523.25, t: 0.0, d: 0.07 },   // C5
+            { f: 659.25, t: 0.07, d: 0.07 },  // E5
+            { f: 783.99, t: 0.14, d: 0.07 },  // G5
+            { f: 1046.50, t: 0.21, d: 0.11 }, // C6
+            { f: 783.99, t: 0.32, d: 0.07 },  // G5
+            { f: 1046.50, t: 0.39, d: 0.09 }, // C6
+            { f: 1318.51, t: 0.48, d: 0.09 }, // E6
+            { f: 1567.98, t: 0.57, d: 0.11 }, // G6
+            { f: 2093.00, t: 0.68, d: 0.42 }, // C7
+        ];
+
+        melody.forEach((note) => {
+            const osc = ctx.createOscillator();
+            const harmony = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(note.f, now + note.t);
+
+            harmony.type = 'triangle';
+            harmony.frequency.setValueAtTime(note.f * 0.5, now + note.t);
+
+            gain.gain.setValueAtTime(0.11, now + note.t);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + note.t + note.d * 1.25);
+
+            osc.connect(gain);
+            harmony.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(now + note.t);
+            harmony.start(now + note.t);
+            osc.stop(now + note.t + note.d * 1.3);
+            harmony.stop(now + note.t + note.d * 1.3);
+        });
+    } catch {}
+}
+

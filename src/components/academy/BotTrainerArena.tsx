@@ -69,6 +69,7 @@ import {
   ConsoleHudThemeId,
 } from '@/lib/poker-trainer/console-aesthetics-db';
 import InfoTooltip from './InfoTooltip';
+import { useKonamiHighRoller } from '@/components/EasterEggs';
 import {
   TimedBlindsConfig,
   loadTimedBlindsConfig,
@@ -1889,15 +1890,17 @@ export default function BotTrainerArena({
     }, streetAdvanceTime);
   };
 
+  const { isHighRoller } = useKonamiHighRoller();
   const [feltColor, setFeltColor] = useState<'sky-blue' | 'ept-emerald' | 'vip-obsidian'>('sky-blue');
   const [rightDockTab, setRightDockTab] = useState<'coach' | 'ladder' | 'style'>('coach');
 
-  const feltGradientClass =
-    feltColor === 'sky-blue'
-      ? 'bg-[radial-gradient(ellipse_at_center,_#25668c_0%,_#154263_60%,_#092136_100%)]'
-      : feltColor === 'ept-emerald'
-      ? 'bg-[radial-gradient(ellipse_at_center,_#166534_0%,_#09361c_62%,_#03170b_100%)]'
-      : 'bg-[radial-gradient(ellipse_at_center,_#2b261d_0%,_#15130f_65%,_#080705_100%)]';
+  const feltGradientClass = isHighRoller
+    ? 'bg-[radial-gradient(ellipse_at_center,_#b8860b_0%,_#755405_60%,_#3d2901_100%)]'
+    : feltColor === 'sky-blue'
+    ? 'bg-[radial-gradient(ellipse_at_center,_#25668c_0%,_#154263_60%,_#092136_100%)]'
+    : feltColor === 'ept-emerald'
+    ? 'bg-[radial-gradient(ellipse_at_center,_#166534_0%,_#09361c_62%,_#03170b_100%)]'
+    : 'bg-[radial-gradient(ellipse_at_center,_#2b261d_0%,_#15130f_65%,_#080705_100%)]';
 
   const renderPlayingCard = (
     card: Card,
@@ -1918,17 +1921,26 @@ export default function BotTrainerArena({
         <div
           key={`${handNumber}-${street}-${card.rank}${card.suit}-${delayMs}-back`}
           style={{ animationDelay: `${delayMs}ms` }}
-          className={`${dims} ${animClass} rounded-lg bg-gradient-to-br from-[#1d4ed8] via-[#1e3a8a] to-[#0f172a] border-2 border-white/80 shadow-[0_6px_14px_rgba(0,0,0,0.65)] flex items-center justify-center select-none relative overflow-hidden`}
+          className={`${dims} ${animClass} rounded-lg border-2 shadow-[0_6px_14px_rgba(0,0,0,0.65)] flex items-center justify-center select-none relative overflow-hidden ${
+            isHighRoller
+              ? 'bg-gradient-to-br from-zinc-950 via-[#241a04] to-black border-[#ffd700]'
+              : 'bg-gradient-to-br from-[#1d4ed8] via-[#1e3a8a] to-[#0f172a] border-white/80'
+          }`}
         >
-          <div className="w-[82%] h-[82%] rounded border border-sky-300/35 bg-[radial-gradient(circle,_rgba(212,175,55,0.2)_0%,_transparent_70%)] flex items-center justify-center text-[8px] font-black text-gold tracking-tighter">
-            E.P.T
+          <div className="w-[82%] h-[82%] rounded border border-gold/50 bg-[radial-gradient(circle,_rgba(212,175,55,0.25)_0%,_transparent_70%)] flex items-center justify-center text-[8px] font-black text-gold tracking-tighter">
+            {isHighRoller ? '👑 24K' : 'E.P.T'}
           </div>
         </div>
       );
     }
 
     let suitTextColor = 'text-zinc-900';
-    if (fourColorDeck) {
+    if (isHighRoller) {
+      suitTextColor =
+        card.suit === '♥' || card.suit === '♦'
+          ? 'text-rose-400 drop-shadow-[0_0_6px_rgba(251,113,133,0.6)]'
+          : 'text-[#ffd700] drop-shadow-[0_0_6px_rgba(255,215,0,0.6)]';
+    } else if (fourColorDeck) {
       if (card.suit === '♠') suitTextColor = 'text-zinc-900';
       else if (card.suit === '♥') suitTextColor = 'text-red-600';
       else if (card.suit === '♦') suitTextColor = 'text-blue-600';
@@ -1941,7 +1953,11 @@ export default function BotTrainerArena({
       <div
         key={`${handNumber}-${street}-${card.rank}${card.suit}-${delayMs}-face`}
         style={{ animationDelay: `${delayMs}ms` }}
-        className={`${dims} ${animClass} rounded-lg bg-white border-2 border-zinc-200 shadow-[0_8px_18px_rgba(0,0,0,0.65)] flex flex-col justify-between p-1.5 font-black select-none ${suitTextColor}`}
+        className={`${dims} ${animClass} rounded-lg border-2 shadow-[0_8px_18px_rgba(0,0,0,0.65)] flex flex-col justify-between p-1.5 font-black select-none ${
+          isHighRoller
+            ? 'bg-gradient-to-b from-zinc-900 via-[#12100a] to-black border-[#ffd700]'
+            : 'bg-white border-zinc-200'
+        } ${suitTextColor}`}
       >
         <div className="leading-none text-left">
           <div className=" tracking-tighter">{card.rank}</div>

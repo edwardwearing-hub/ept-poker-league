@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { playChipSound } from '@/lib/vegas/VegasAudio';
+import { useKonamiHighRoller } from '@/components/EasterEggs';
 
-export type ChipValue = 5 | 10 | 25 | 50 | 100 | 500 | number;
+export type ChipValue = 5 | 10 | 25 | 50 | 100 | 500 | 1000 | 5000 | number;
 
 interface ChipColors {
   main: string;
@@ -75,14 +76,36 @@ function getChipColors(val: number): ChipColors {
       innerBorder: 'border-pink-400',
     };
   }
-  // 500+ High Roller (Royal Purple & Gold)
+  if (val <= 500) {
+    // 500 High Roller (Royal Purple & Gold)
+    return {
+      main: 'from-purple-600 via-purple-800 to-indigo-950',
+      edge: 'border-purple-950',
+      stripe: 'bg-gold',
+      border: 'border-gold',
+      text: 'text-purple-900',
+      innerBorder: 'border-gold',
+    };
+  }
+  if (val <= 1000) {
+    // £1,000 Konami VIP Whale (24K Liquid Gold)
+    return {
+      main: 'from-[#ffd700] via-[#d4af37] to-[#8a6508]',
+      edge: 'border-yellow-200',
+      stripe: 'bg-zinc-950',
+      border: 'border-white',
+      text: 'text-amber-900',
+      innerBorder: 'border-amber-600',
+    };
+  }
+  // £5,000+ Konami Diamond Cranberry / Platinum Whale
   return {
-    main: 'from-purple-600 via-purple-800 to-indigo-950',
-    edge: 'border-purple-950',
-    stripe: 'bg-gold',
-    border: 'border-gold',
-    text: 'text-purple-900',
-    innerBorder: 'border-gold',
+    main: 'from-rose-600 via-red-900 to-zinc-950',
+    edge: 'border-[#ffd700]',
+    stripe: 'bg-cyan-300',
+    border: 'border-[#ffd700]',
+    text: 'text-rose-950',
+    innerBorder: 'border-[#ffd700]',
   };
 }
 
@@ -196,7 +219,7 @@ export default function VegasChip({
 }
 
 /**
- * Chip Rack Bar for wagering
+ * Chip Rack Bar for wagering (unlocks £500, £1k & £5k Whale chips in Konami High Roller Mode)
  */
 export function VegasChipRack({
   values = [5, 10, 25, 50, 100, 500],
@@ -211,14 +234,21 @@ export function VegasChipRack({
   disabled?: boolean;
   className?: string;
 }) {
+  const { isHighRoller } = useKonamiHighRoller();
+  const displayValues = isHighRoller
+    ? Array.from(new Set([...values, 500, 1000, 5000])).sort((a, b) => a - b)
+    : values;
+
   return (
     <div
-      className={`inline-flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl bg-black/70 border border-white/10 shadow-2xl backdrop-blur-md max-w-full overflow-x-auto touch-pan-x ${className}`}
+      className={`inline-flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl bg-black/70 border ${
+        isHighRoller ? 'border-[#ffd700]/60 shadow-[0_0_20px_rgba(255,215,0,0.2)]' : 'border-white/10 shadow-2xl'
+      } backdrop-blur-md max-w-full overflow-x-auto touch-pan-x ${className}`}
     >
       <span className="text-[10px] uppercase font-bold text-zinc-400 pl-1 pr-1 hidden sm:inline shrink-0">
-        Chips:
+        {isHighRoller ? '👑 VIP Chips:' : 'Chips:'}
       </span>
-      {values.map((val) => (
+      {displayValues.map((val) => (
         <VegasChip
           key={val}
           value={val}

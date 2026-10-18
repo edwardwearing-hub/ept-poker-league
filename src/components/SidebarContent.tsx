@@ -33,6 +33,7 @@ import SidebarCountdown from './SidebarCountdown';
 import NextGameRSVP from './NextGameRSVP';
 import { usePlayerStatus } from '@/hooks/usePlayerStatus';
 import SetPINModal from './auth/SetPINModal';
+import { useKonamiHighRoller } from './EasterEggs';
 
 interface Props {
     stats: { totalPot: number; totalSidePot?: number; nextGameDate: string };
@@ -43,6 +44,7 @@ interface Props {
 export default function SidebarContent({ stats, onLinkClick, playerName: initialPlayerName }: Props) {
     const pathname = usePathname();
     const { status } = usePlayerStatus();
+    const { isHighRoller } = useKonamiHighRoller();
     const [showSetPin, setShowSetPin] = useState(false);
     const [playerName, setPlayerName] = useState<string | undefined>(initialPlayerName);
 
@@ -82,10 +84,24 @@ export default function SidebarContent({ stats, onLinkClick, playerName: initial
     return (
         <div className="flex flex-col h-full w-full bg-charcoal font-sans select-none">
             {/* Brand Header */}
-            <div className="p-4 sm:p-5 border-b border-white/5 flex flex-col items-center shrink-0">
-                <Link href="/" onClick={onLinkClick} className="w-full aspect-video relative rounded-xl overflow-hidden border border-white/10 shadow-2xl mb-2 block hover:border-gold/50 transition">
+            <div className={`p-4 sm:p-5 border-b flex flex-col items-center shrink-0 ${isHighRoller ? 'border-[#ffd700]/50 bg-gradient-to-b from-[#291d02]/60 to-transparent' : 'border-white/5'}`}>
+                <Link
+                    href="/"
+                    onClick={onLinkClick}
+                    className={`w-full aspect-video relative rounded-xl overflow-hidden border mb-2 block transition ${
+                        isHighRoller
+                            ? 'border-2 border-[#ffd700] shadow-[0_0_25px_rgba(255,215,0,0.55)]'
+                            : 'border-white/10 shadow-2xl hover:border-gold/50'
+                    }`}
+                >
                     <img src="/ept-logo.jpg" alt="E.P.T. Poker League 2026 - Official Logo" className="w-full h-full object-cover" />
                 </Link>
+
+                {isHighRoller && (
+                    <div className="w-full mb-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#ffd700] via-[#ffe578] to-[#b8860b] text-black text-[10px] font-mono font-black uppercase tracking-widest text-center shadow-[0_0_15px_rgba(255,215,0,0.45)]">
+                        👑 24K VIP HIGH ROLLER
+                    </div>
+                )}
 
                 {/* Active Player Status */}
                 <div className="w-full flex items-center justify-between px-3 py-2 bg-black/40 border border-white/10 rounded-xl mt-1">

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { Volume2, VolumeX, Sparkles, Crown } from 'lucide-react';
+import { useKonamiHighRoller } from '@/components/EasterEggs';
 
 interface Props {
   dialogue?: string | null;
@@ -11,6 +12,14 @@ interface Props {
   compact?: boolean;
 }
 
+const KONAMI_VIP_WHISPERS = [
+  "Ah, the Konami Code... Welcome to the 24K Gold Salon Privé, Your Highness. The £5,000 whale plaques are unlocked.",
+  "Private ropes are drawn, Chairman of the E.P.T. Tonight we deal exclusively from the Black Obsidian & Gold Foil shoe.",
+  "Only true legends know ↑ ↑ ↓ ↓ ← → ← → B A, darling. Champagne is on the house in the High Roller suite!",
+  "The pit boss just authorized unlimited VIP privileges for you, Your Excellency. Shall we break the vault tonight?",
+  "24K liquid gold felt and obsidian cards... Macau's highest rollers have nothing on you, darling.",
+];
+
 export default function VegasAiDealer({
   dialogue,
   status = 'Dealing for the House',
@@ -18,7 +27,9 @@ export default function VegasAiDealer({
   className = '',
   compact = false,
 }: Props) {
+  const { isHighRoller } = useKonamiHighRoller();
   const [speechEnabled, setSpeechEnabled] = useState(false);
+  const [whisperIdx, setWhisperIdx] = useState(0);
   const [displayLine, setDisplayLine] = useState<string>(
     dialogue || 'Welcome to my table, darling. Best of luck against the house!'
   );
@@ -29,6 +40,18 @@ export default function VegasAiDealer({
       setDisplayLine(dialogue);
     }
   }, [dialogue]);
+
+  useEffect(() => {
+    if (isHighRoller) {
+      setDisplayLine(KONAMI_VIP_WHISPERS[0]);
+    }
+  }, [isHighRoller]);
+
+  const cycleVipWhisper = () => {
+    const next = (whisperIdx + 1) % KONAMI_VIP_WHISPERS.length;
+    setWhisperIdx(next);
+    setDisplayLine(KONAMI_VIP_WHISPERS[next]);
+  };
 
   // Voice synthesis effect
   useEffect(() => {
@@ -69,7 +92,9 @@ export default function VegasAiDealer({
   if (compact) {
     return (
       <div
-        className={`flex items-center gap-3 bg-black/80 border border-gold/40 rounded-2xl p-2.5 shadow-xl ${className}`}
+        className={`flex items-center gap-3 bg-black/80 border ${
+          isHighRoller ? 'border-[#ffd700] shadow-[0_0_20px_rgba(255,215,0,0.35)]' : 'border-gold/40 shadow-xl'
+        } rounded-2xl p-2.5 ${className}`}
       >
         <div className="relative shrink-0">
           <img
@@ -82,7 +107,7 @@ export default function VegasAiDealer({
         <div className="flex-1 min-w-0 pr-1">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-wider text-gold">
-              Sarah • House Dealer
+              {isHighRoller ? '👑 Sarah • Salon Privé VIP' : 'Sarah • House Dealer'}
             </span>
             <button
               onClick={() => setSpeechEnabled(!speechEnabled)}
@@ -102,7 +127,11 @@ export default function VegasAiDealer({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-950/70 via-black to-zinc-950 border border-gold/40 p-3.5 sm:p-4 shadow-xl flex flex-col sm:flex-row items-center sm:items-center justify-between gap-3 ${className}`}
+      className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${
+        isHighRoller
+          ? 'from-[#3b2903]/90 via-black to-[#291b02]/90 border-2 border-[#ffd700] shadow-[0_0_30px_rgba(255,215,0,0.3)]'
+          : 'from-amber-950/70 via-black to-zinc-950 border border-gold/40 shadow-xl'
+      } p-3.5 sm:p-4 flex flex-col sm:flex-row items-center sm:items-center justify-between gap-3 ${className}`}
     >
       <div className="flex items-center gap-3.5 w-full sm:w-auto">
         {/* Sarah Dealer Avatar */}
@@ -110,49 +139,73 @@ export default function VegasAiDealer({
           <img
             src="/vegas/dealer_sarah.jpg"
             alt="AI Dealer Sarah"
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-gold object-cover shadow-[0_0_15px_rgba(212,175,55,0.6)]"
+            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 object-cover ${
+              isHighRoller
+                ? 'border-[#ffd700] shadow-[0_0_22px_rgba(255,215,0,0.85)]'
+                : 'border-gold shadow-[0_0_15px_rgba(212,175,55,0.6)]'
+            }`}
           />
           <span
-            className="absolute -bottom-0.5 -right-0.5 px-1.5 py-0.2 rounded-full bg-gold text-black text-[8px] font-black uppercase tracking-tighter border border-white shadow"
-            title="Official Vegas House Dealer"
+            className="absolute -bottom-0.5 -right-0.5 px-1.5 py-0.2 rounded-full bg-gradient-to-r from-[#ffd700] to-amber-500 text-black text-[8px] font-black uppercase tracking-tighter border border-white shadow"
+            title={isHighRoller ? 'Konami Salon Privé Host' : 'Official Vegas House Dealer'}
           >
-            HOUSE
+            {isHighRoller ? '👑 VIP' : 'HOUSE'}
           </span>
         </div>
 
         {/* Speech Bubble */}
         <div className="space-y-0.5 flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-black uppercase tracking-widest text-gold flex items-center gap-1">
               <span>Sarah</span>
-              <span className="text-[10px] font-normal text-zinc-400">• Las Vegas VIP Dealer</span>
+              <span className="text-[10px] font-normal text-amber-200/80">
+                {isHighRoller ? '• 👑 24K Salon Privé Host' : '• Las Vegas VIP Dealer'}
+              </span>
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-[10px] text-zinc-400 font-mono hidden md:inline">
               ({status})
             </span>
           </div>
-          <div className="relative bg-black/60 border border-white/10 px-3 py-1.5 rounded-xl text-xs sm:text-sm text-zinc-200 font-sans italic leading-relaxed">
+          <div
+            className={`relative bg-black/70 border px-3 py-1.5 rounded-xl text-xs sm:text-sm font-sans italic leading-relaxed ${
+              isHighRoller ? 'border-[#ffd700]/50 text-yellow-100' : 'border-white/10 text-zinc-200'
+            }`}
+          >
             &quot;{displayLine}&quot;
           </div>
         </div>
       </div>
 
-      {/* Voice Toggle Button */}
-      <button
-        onClick={() => setSpeechEnabled(!speechEnabled)}
-        className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 shrink-0 self-end sm:self-center ${
-          speechEnabled
-            ? 'bg-gold/20 text-gold border-gold/60 shadow-[0_0_10px_rgba(212,175,55,0.3)]'
-            : 'bg-white/5 text-zinc-400 border-white/10 hover:text-white'
-        }`}
-        title={speechEnabled ? 'Mute AI Dealer Voice' : 'Unmute AI Dealer Voice'}
-      >
-        {speechEnabled ? <Volume2 size={14} className="text-gold" /> : <VolumeX size={14} />}
-        <span className="text-[11px] font-black uppercase tracking-wider">
-          Voice: {speechEnabled ? 'ON' : 'OFF'}
-        </span>
-      </button>
+      {/* Controls: Secret VIP Whisper + Voice Toggle */}
+      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+        {isHighRoller && (
+          <button
+            type="button"
+            onClick={cycleVipWhisper}
+            className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#ffd700]/25 to-amber-500/20 hover:from-[#ffd700]/40 hover:to-amber-500/30 border border-[#ffd700] text-[#ffd700] text-[11px] font-black uppercase tracking-wider transition flex items-center gap-1 shadow-[0_0_12px_rgba(255,215,0,0.3)] cursor-pointer"
+            title="Hear secret Salon Privé High Roller commentary from Sarah"
+          >
+            <Crown size={13} className="text-[#ffd700]" />
+            <span>VIP Chat</span>
+          </button>
+        )}
+
+        <button
+          onClick={() => setSpeechEnabled(!speechEnabled)}
+          className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 ${
+            speechEnabled
+              ? 'bg-gold/20 text-gold border-gold/60 shadow-[0_0_10px_rgba(212,175,55,0.3)]'
+              : 'bg-white/5 text-zinc-400 border-white/10 hover:text-white'
+          }`}
+          title={speechEnabled ? 'Mute AI Dealer Voice' : 'Unmute AI Dealer Voice'}
+        >
+          {speechEnabled ? <Volume2 size={14} className="text-gold" /> : <VolumeX size={14} />}
+          <span className="text-[11px] font-black uppercase tracking-wider">
+            Voice: {speechEnabled ? 'ON' : 'OFF'}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }

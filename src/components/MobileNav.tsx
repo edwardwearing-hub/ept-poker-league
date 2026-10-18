@@ -19,6 +19,7 @@ import {
 import SidebarContent from './SidebarContent';
 import { clsx } from 'clsx';
 import { usePlayerStatus } from '@/hooks/usePlayerStatus';
+import { useKonamiHighRoller } from './EasterEggs';
 
 interface Props {
     stats: { totalPot: number; totalSidePot?: number; nextGameDate: string };
@@ -28,6 +29,7 @@ export default function MobileNav({ stats }: Props) {
     const [isOpen, setIsOpen] = useState(false);
     const pathname = usePathname();
     const { status } = usePlayerStatus();
+    const { isHighRoller } = useKonamiHighRoller();
 
     // Lock body scrolling when drawer is open
     useEffect(() => {
@@ -52,13 +54,34 @@ export default function MobileNav({ stats }: Props) {
     return (
         <>
             {/* Top Fixed Mobile Header Bar */}
-            <header className="md:hidden fixed top-0 left-0 right-0 z-[60] bg-charcoal/95 backdrop-blur-md border-b border-white/10 pt-safe">
+            <header
+                className={`md:hidden fixed top-0 left-0 right-0 z-[60] backdrop-blur-md border-b pt-safe ${
+                    isHighRoller
+                        ? 'bg-gradient-to-r from-[#211702]/95 via-charcoal/95 to-[#211702]/95 border-[#ffd700] shadow-[0_4px_20px_rgba(255,215,0,0.3)]'
+                        : 'bg-charcoal/95 border-white/10'
+                }`}
+            >
                 <div className="px-3 sm:px-4 py-2.5 flex items-center justify-between relative z-[70]">
                     <Link href="/" className="font-bold text-white tracking-wider flex items-center gap-2 active:opacity-80 transition-opacity">
-                        <img src="/ept-logo.jpg" alt="E.P.T. 2026 Poker League Logo" className="w-8 h-8 rounded-lg border border-white/20 shadow-md object-cover" />
+                        <img
+                            src="/ept-logo.jpg"
+                            alt="E.P.T. 2026 Poker League Logo"
+                            className={`w-8 h-8 rounded-lg border shadow-md object-cover ${
+                                isHighRoller ? 'border-[#ffd700] shadow-[0_0_12px_#ffd700]' : 'border-white/20'
+                            }`}
+                        />
                         <div className="flex flex-col">
-                            <span className="text-xs sm:text-sm font-black tracking-wider leading-none">E.P.T. 2026</span>
-                            <span className="text-[9px] text-gold font-mono font-bold tracking-widest mt-0.5">POKER LEAGUE</span>
+                            <span className="text-xs sm:text-sm font-black tracking-wider leading-none flex items-center gap-1.5">
+                                <span>E.P.T. 2026</span>
+                                {isHighRoller && (
+                                    <span className="px-1.5 py-0.2 rounded bg-gradient-to-r from-[#ffd700] to-amber-500 text-black text-[8px] font-mono font-black uppercase">
+                                        👑 VIP
+                                    </span>
+                                )}
+                            </span>
+                            <span className="text-[9px] text-gold font-mono font-bold tracking-widest mt-0.5">
+                                {isHighRoller ? '24K HIGH ROLLER' : 'POKER LEAGUE'}
+                            </span>
                         </div>
                     </Link>
 

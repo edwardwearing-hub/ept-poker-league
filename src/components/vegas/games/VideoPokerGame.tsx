@@ -9,6 +9,7 @@ import VegasWinSplash from '../VegasWinSplash';
 import { playCardSound, playChipSound, playWinSound, playJackpotSound } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getVideoPokerAdvice } from '@/lib/vegas/VegasStrategyEngine';
+import { useKonamiHighRoller } from '@/components/EasterEggs';
 
 interface Props {
   bankroll: number;
@@ -104,6 +105,7 @@ const PAYTABLE_DISPLAY = [
 ];
 
 export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutorial }: Props) {
+  const { isHighRoller } = useKonamiHighRoller();
   const [deck, setDeck] = useState<CardModel[]>([]);
   const [cards, setCards] = useState<CardModel[]>([]);
   const [held, setHeld] = useState<boolean[]>([false, false, false, false, false]);
@@ -357,7 +359,13 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
             </div>
 
             {/* Main Video Poker CRT Felt Arena */}
-            <div className="relative rounded-2xl bg-[radial-gradient(ellipse_at_center,_#1d4ed8_0%,_#1e3a8a_45%,_#09132c_100%)] border-2 border-blue-400/40 p-4 sm:p-6 shadow-[inset_0_0_50px_rgba(0,0,0,0.85)] min-h-[290px] flex flex-col justify-between items-center space-y-4">
+            <div
+              className={`relative rounded-2xl border-2 p-4 sm:p-6 shadow-[inset_0_0_50px_rgba(0,0,0,0.85)] min-h-[290px] flex flex-col justify-between items-center space-y-4 ${
+                isHighRoller
+                  ? 'bg-[radial-gradient(ellipse_at_center,_#b8860b_0%,_#755405_45%,_#3d2901_100%)] border-[#ffd700]'
+                  : 'bg-[radial-gradient(ellipse_at_center,_#1d4ed8_0%,_#1e3a8a_45%,_#09132c_100%)] border-blue-400/40'
+              }`}
+            >
               {/* Status Message */}
               <div className="text-center min-h-[28px] relative z-10">
                 {message && (

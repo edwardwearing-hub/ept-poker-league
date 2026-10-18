@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useKonamiHighRoller } from '@/components/EasterEggs';
 
 export interface CardModel {
   rank: string;
@@ -33,6 +34,7 @@ export default function VegasCard({
   onClick,
   className = '',
 }: Props) {
+  const { isHighRoller } = useKonamiHighRoller();
   const isRed = card?.suit === '♥' || card?.suit === '♦';
   const isRoyalty = ['A', 'K', 'Q', 'J'].includes(card?.rank || '');
 
@@ -42,6 +44,22 @@ export default function VegasCard({
     lg: 'w-14 h-20 sm:w-16 sm:h-24 text-sm rounded-xl',
     xl: 'w-18 h-26 sm:w-20 sm:h-28 text-base rounded-xl',
   }[size];
+
+  const pipColorClass = isHighRoller
+    ? isRed
+      ? 'text-rose-400 drop-shadow-[0_0_6px_rgba(251,113,133,0.65)]'
+      : 'text-[#ffd700] drop-shadow-[0_0_6px_rgba(255,215,0,0.65)]'
+    : isRed
+    ? 'text-red-600'
+    : 'text-zinc-950';
+
+  const centerPipColorClass = isHighRoller
+    ? isRed
+      ? 'text-rose-400 drop-shadow-[0_0_8px_rgba(251,113,133,0.75)]'
+      : 'text-[#ffd700] drop-shadow-[0_0_8px_rgba(255,215,0,0.75)]'
+    : isRed
+    ? 'text-red-600'
+    : 'text-zinc-900';
 
   // 3D Card Container
   return (
@@ -62,12 +80,16 @@ export default function VegasCard({
       >
         {/* CARD FRONT */}
         <div
-          className={`absolute inset-0 w-full h-full rounded-[inherit] bg-gradient-to-b from-white via-zinc-50 to-zinc-200 border ${
-            isRoyalty ? 'border-amber-400/90 shadow-[inset_0_0_8px_rgba(212,175,55,0.4)]' : 'border-zinc-300'
+          className={`absolute inset-0 w-full h-full rounded-[inherit] border ${
+            isHighRoller
+              ? 'bg-gradient-to-b from-zinc-900 via-[#12100a] to-black border-[#ffd700] shadow-[inset_0_0_12px_rgba(255,215,0,0.35)]'
+              : `bg-gradient-to-b from-white via-zinc-50 to-zinc-200 ${
+                  isRoyalty ? 'border-amber-400/90 shadow-[inset_0_0_8px_rgba(212,175,55,0.4)]' : 'border-zinc-300'
+                }`
           } flex flex-col justify-between p-1 sm:p-1.5 [backface-visibility:hidden] overflow-hidden`}
         >
           {/* Top Left Rank & Suit */}
-          <div className={`leading-none flex flex-col items-start ${isRed ? 'text-red-600' : 'text-zinc-950'}`}>
+          <div className={`leading-none flex flex-col items-start ${pipColorClass}`}>
             <span className="font-mono tracking-tighter text-[11px] sm:text-xs leading-none drop-shadow-sm font-black">
               {card?.rank}
             </span>
@@ -76,18 +98,14 @@ export default function VegasCard({
 
           {/* Center Suit Art */}
           <div
-            className={`absolute inset-0 flex items-center justify-center pointer-events-none select-none transition-transform group-hover:scale-110 ${
-              isRed ? 'text-red-600' : 'text-zinc-900'
-            }`}
+            className={`absolute inset-0 flex items-center justify-center pointer-events-none select-none transition-transform group-hover:scale-110 ${centerPipColorClass}`}
           >
             <span className="text-xl sm:text-2xl drop-shadow-md opacity-90">{card?.suit}</span>
           </div>
 
           {/* Bottom Right Inverted Rank & Suit */}
           <div
-            className={`leading-none flex flex-col items-end rotate-180 self-end ${
-              isRed ? 'text-red-600' : 'text-zinc-950'
-            }`}
+            className={`leading-none flex flex-col items-end rotate-180 self-end ${pipColorClass}`}
           >
             <span className="font-mono tracking-tighter text-[11px] sm:text-xs leading-none drop-shadow-sm font-black">
               {card?.rank}
@@ -96,19 +114,29 @@ export default function VegasCard({
           </div>
 
           {/* Subtle glossy sheen line across top corner */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent pointer-events-none opacity-60" />
+          <div
+            className={`absolute inset-0 pointer-events-none ${
+              isHighRoller
+                ? 'bg-gradient-to-tr from-transparent via-[#ffd700]/20 to-transparent opacity-80'
+                : 'bg-gradient-to-tr from-transparent via-white/40 to-transparent opacity-60'
+            }`}
+          />
         </div>
 
-        {/* CARD BACK (Classic VIP Casino Back) */}
+        {/* CARD BACK (Classic VIP Casino Back or 24K Obsidian Crown Back) */}
         <div
-          className="absolute inset-0 w-full h-full rounded-[inherit] bg-gradient-to-br from-blue-900 via-indigo-950 to-blue-950 border-2 border-white/40 shadow-lg flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden"
+          className={`absolute inset-0 w-full h-full rounded-[inherit] border-2 shadow-lg flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden ${
+            isHighRoller
+              ? 'bg-gradient-to-br from-zinc-950 via-[#241a04] to-black border-[#ffd700]'
+              : 'bg-gradient-to-br from-blue-900 via-indigo-950 to-blue-950 border-white/40'
+          }`}
         >
-          <div className="w-[86%] h-[86%] rounded border-2 border-gold/40 bg-[radial-gradient(#ffd700_1px,transparent_1px)] [background-size:6px_6px] opacity-80 flex flex-col items-center justify-center shadow-inner">
+          <div className="w-[86%] h-[86%] rounded border-2 border-gold/60 bg-[radial-gradient(#ffd700_1px,transparent_1px)] [background-size:6px_6px] opacity-85 flex flex-col items-center justify-center shadow-inner">
             <span className="text-gold font-mono text-[9px] font-black uppercase tracking-widest drop-shadow">
-              VEGAS
+              {isHighRoller ? '👑 24K' : 'VEGAS'}
             </span>
-            <span className="text-white/40 text-[7px] uppercase font-bold tracking-tighter">
-              VIP CLUB
+            <span className="text-white/60 text-[7px] uppercase font-bold tracking-tighter">
+              {isHighRoller ? 'OBSIDIAN' : 'VIP CLUB'}
             </span>
           </div>
           {/* Back reflective gloss */}

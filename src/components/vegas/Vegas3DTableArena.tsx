@@ -2,6 +2,7 @@
 
 import React from 'react';
 import VegasFeltSilkscreen from './VegasFeltSilkscreen';
+import { useKonamiHighRoller } from '@/components/EasterEggs';
 
 interface Props {
   children: React.ReactNode;
@@ -28,16 +29,20 @@ export default function Vegas3DTableArena({
   shoeCardsRemaining = 184,
   className = '',
 }: Props) {
-  // Felt background color theme based on game - vibrant, luminous casino felts
-  const feltThemeClasses = {
-    blackjack: 'from-[#0e823b] via-[#0a6a2f] to-[#054b20]',
-    baccarat: 'from-[#831843] via-[#5b0829] to-[#280412]',
-    holdem: 'from-[#1d4ed8] via-[#1e3a8a] to-[#0f172a]',
-    craps: 'from-[#0e823b] via-[#0a6a2f] to-[#054b20]',
-    roulette: 'from-[#0e853e] via-[#0a6e33] to-[#054e23]',
-    paigow: 'from-[#0f766e] via-[#115e59] to-[#042f2e]',
-    generic: 'from-[#0e823b] via-[#0a6a2f] to-[#054b20]',
-  }[gameType];
+  const { isHighRoller } = useKonamiHighRoller();
+
+  // Felt background color theme based on game - vibrant, luminous casino felts (or 24K Royal Gold in Konami Mode)
+  const feltThemeClasses = isHighRoller
+    ? 'from-[#b8860b] via-[#855e06] to-[#422c02]'
+    : {
+        blackjack: 'from-[#0e823b] via-[#0a6a2f] to-[#054b20]',
+        baccarat: 'from-[#831843] via-[#5b0829] to-[#280412]',
+        holdem: 'from-[#1d4ed8] via-[#1e3a8a] to-[#0f172a]',
+        craps: 'from-[#0e823b] via-[#0a6a2f] to-[#054b20]',
+        roulette: 'from-[#0e853e] via-[#0a6e33] to-[#054e23]',
+        paigow: 'from-[#0f766e] via-[#115e59] to-[#042f2e]',
+        generic: 'from-[#0e823b] via-[#0a6a2f] to-[#054b20]',
+      }[gameType];
 
   return (
     <div
@@ -46,9 +51,13 @@ export default function Vegas3DTableArena({
       {/* 3D Curved Casino Table Assembly (Crisp High-DPI Perspective) */}
       <div className="relative w-full rounded-[2.2rem] flex flex-col justify-between">
         {/* LAYER 1: OUTER PADDED LEATHER ARMREST RAIL (Beveled & Stitched Cushion) */}
-        <div className="relative w-full rounded-[2.2rem] p-3 sm:p-5 bg-gradient-to-b from-[#202024] via-[#0d0d10] to-[#1c1c20] border-4 border-[#2e2e34] shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_3px_6px_rgba(255,255,255,0.22),inset_0_-8px_16px_rgba(0,0,0,0.9)]">
+        <div
+          className={`relative w-full rounded-[2.2rem] p-3 sm:p-5 bg-gradient-to-b from-[#202024] via-[#0d0d10] to-[#1c1c20] border-4 ${
+            isHighRoller ? 'border-gold shadow-[0_0_50px_rgba(255,215,0,0.45),inset_0_3px_6px_rgba(255,255,255,0.22)]' : 'border-[#2e2e34] shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_3px_6px_rgba(255,255,255,0.22),inset_0_-8px_16px_rgba(0,0,0,0.9)]'
+          }`}
+        >
           {/* Double Stitching Detail */}
-          <div className="absolute inset-2 sm:inset-3 rounded-[1.8rem] border border-dashed border-amber-600/35 pointer-events-none" />
+          <div className="absolute inset-2 sm:inset-3 rounded-[1.8rem] border border-dashed border-amber-500/50 pointer-events-none" />
 
           {/* LAYER 2: MAHOGANY WOOD RACETRACK INLAY */}
           <div className="relative w-full rounded-[1.8rem] p-2 sm:p-3 bg-gradient-to-b from-[#34160a] via-[#481c10] to-[#1e0b04] border-2 border-[#5c2415] shadow-[inset_0_4px_12px_rgba(0,0,0,0.85),0_2px_4px_rgba(255,255,255,0.12)]">
@@ -58,11 +67,13 @@ export default function Vegas3DTableArena({
 
             {/* LAYER 3: THE FELT TABLE BED */}
             <div
-              className={`relative w-full rounded-[1.5rem] min-h-[410px] sm:min-h-[500px] border-2 border-gold/50 shadow-[inset_0_0_60px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col justify-between p-2.5 sm:p-6 ${
-                tableFeltImage ? 'bg-cover bg-center' : `bg-gradient-to-b ${feltThemeClasses}`
+              className={`relative w-full rounded-[1.5rem] min-h-[410px] sm:min-h-[500px] border-2 ${
+                isHighRoller ? 'border-[#ffd700] shadow-[inset_0_0_65px_rgba(0,0,0,0.85),0_0_30px_rgba(255,215,0,0.35)]' : 'border-gold/50 shadow-[inset_0_0_60px_rgba(0,0,0,0.9)]'
+              } overflow-hidden flex flex-col justify-between p-2.5 sm:p-6 ${
+                tableFeltImage && !isHighRoller ? 'bg-cover bg-center' : `bg-gradient-to-b ${feltThemeClasses}`
               }`}
               style={
-                tableFeltImage
+                tableFeltImage && !isHighRoller
                   ? {
                       backgroundImage: `radial-gradient(circle at 50% 30%, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%), url('${tableFeltImage}')`,
                     }
@@ -73,8 +84,9 @@ export default function Vegas3DTableArena({
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
-                  background:
-                    'radial-gradient(ellipse 65% 55% at 50% 25%, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 55%, transparent 75%)',
+                  background: isHighRoller
+                    ? 'radial-gradient(ellipse 70% 60% at 50% 25%, rgba(255,235,120,0.28) 0%, rgba(212,175,55,0.06) 55%, transparent 78%)'
+                    : 'radial-gradient(ellipse 65% 55% at 50% 25%, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 55%, transparent 75%)',
                 }}
               />
 
@@ -88,10 +100,10 @@ export default function Vegas3DTableArena({
               />
 
               {/* Crisp E.P.T. Custom Felt Watermark (Logo + Silkscreen) */}
-              {!tableFeltImage && (
+              {(!tableFeltImage || isHighRoller) && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 overflow-hidden">
-                  <div className="flex flex-col items-center opacity-20 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
-                    <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-2 border-gold/70 p-1 bg-black/40 backdrop-blur-[1px] shadow-[0_0_25px_rgba(212,175,55,0.4)] flex items-center justify-center overflow-hidden">
+                  <div className="flex flex-col items-center opacity-25 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                    <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-2 border-gold/80 p-1 bg-black/50 backdrop-blur-[1px] shadow-[0_0_25px_rgba(212,175,55,0.6)] flex items-center justify-center overflow-hidden">
                       <img
                         src="/ept-logo.jpg"
                         alt="EPT Poker League Felt Watermark"
@@ -99,11 +111,11 @@ export default function Vegas3DTableArena({
                       />
                     </div>
                     <div className="mt-2 text-center">
-                      <span className="text-[10px] sm:text-xs font-serif font-black tracking-[0.25em] text-gold uppercase">
-                        ★ {watermarkTitle} ★
+                      <span className="text-[10px] sm:text-xs font-serif font-black tracking-[0.25em] text-yellow-200 uppercase">
+                        ★ {isHighRoller ? `VIP 24K GOLD • ${watermarkTitle}` : watermarkTitle} ★
                       </span>
-                      <div className="text-[8px] font-mono tracking-widest text-emerald-100 uppercase mt-0.5">
-                        {watermarkSubtitle}
+                      <div className="text-[8px] font-mono tracking-widest text-yellow-100/90 uppercase mt-0.5">
+                        {isHighRoller ? `👑 KONAMI HIGH ROLLER SALON • ${watermarkSubtitle}` : watermarkSubtitle}
                       </div>
                     </div>
                   </div>

@@ -36,8 +36,20 @@ export function setSoundEnabled(enabled: boolean): void {
   window.dispatchEvent(new CustomEvent('ept_vegas_sound_change', { detail: enabled }));
 }
 
+function isKonamiHighRollerActive(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return (
+      document.documentElement.classList.contains('konami-high-roller') ||
+      localStorage.getItem('ept_konami_high_roller_v1') === 'true'
+    );
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Ceramic Casino Chip Clink
+ * Ceramic Casino Chip Clink (with 8-bit Gold Coin ring in Konami High Roller Mode)
  */
 export function playChipSound(): void {
   if (!isSoundEnabled()) return;
@@ -45,7 +57,25 @@ export function playChipSound(): void {
   if (!ctx) return;
 
   const now = ctx.currentTime;
-  
+
+  if (isKonamiHighRollerActive()) {
+    // 8-Bit Arcade Gold Coin Chime (B5 -> E6)
+    [987.77, 1318.51].forEach((freq, idx) => {
+      const t = now + idx * 0.045;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(0.09, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.14);
+    });
+    return;
+  }
+
   // Dual tone ceramic resonance
   const osc1 = ctx.createOscillator();
   const osc2 = ctx.createOscillator();
@@ -235,7 +265,7 @@ export function playSlotStop(): void {
 }
 
 /**
- * Win Arpeggio Chime
+ * Win Arpeggio Chime (8-Bit Arcade Victory Arpeggio in Konami High Roller Mode)
  */
 export function playWinSound(): void {
   if (!isSoundEnabled()) return;
@@ -243,17 +273,21 @@ export function playWinSound(): void {
   if (!ctx) return;
 
   const now = ctx.currentTime;
-  const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+  const highRoller = isKonamiHighRollerActive();
+  const notes = highRoller
+    ? [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98] // 6-note 8-bit fanfare
+    : [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
 
   notes.forEach((freq, idx) => {
-    const noteTime = now + idx * 0.09;
+    const step = highRoller ? 0.065 : 0.09;
+    const noteTime = now + idx * step;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
-    osc.type = 'triangle';
+    osc.type = highRoller ? 'square' : 'triangle';
     osc.frequency.setValueAtTime(freq, noteTime);
 
-    gain.gain.setValueAtTime(0.2, noteTime);
+    gain.gain.setValueAtTime(highRoller ? 0.12 : 0.2, noteTime);
     gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.35);
 
     osc.connect(gain);

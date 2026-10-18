@@ -24,14 +24,21 @@ export interface DealerEventPayload {
   netDelta?: number;
   sessionNet?: number;
   streakCount?: number;
+  highRoller?: boolean;
 }
 
 export async function fetchDealerComment(payload: DealerEventPayload): Promise<string> {
+  const isHighRoller =
+    payload.highRoller ??
+    (typeof window !== 'undefined' &&
+      (document.documentElement.classList.contains('konami-high-roller') ||
+        localStorage.getItem('ept_konami_high_roller_v1') === 'true'));
+
   try {
     const res = await fetch('/api/vegas/dealer-ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, highRoller: isHighRoller }),
     });
 
     if (!res.ok) {
@@ -39,9 +46,18 @@ export async function fetchDealerComment(payload: DealerEventPayload): Promise<s
     }
 
     const data = await res.json();
-    return data.comment || 'Place your chips upon the felt, darling!';
+    return data.comment || 'Place your chips upon the 24K felt, Your Highness!';
   } catch (err) {
     console.error('Dealer AI fetch failed:', err);
+    if (isHighRoller) {
+      if (payload.eventType === 'spin_win' || payload.eventType === 'big_win') {
+        return 'A royal strike on the 24K Gold felt, Your Highness! The Salon Privé vault bows to the Chairman of the E.P.T.';
+      }
+      if (payload.eventType === 'spin_loss') {
+        return 'Even in the 24K Salon Privé, variance teases the crown, Your Highness. Toss another £5,000 plaque!';
+      }
+      return 'Welcome to the Konami 24K Salon Privé, Chairman of the E.P.T. The £5,000 whale plaques await your command!';
+    }
     // Instant fallback
     if (payload.eventType === 'spin_win' || payload.eventType === 'big_win') {
       return "Magnificent hit, darling! The house pays out with pleasure.";

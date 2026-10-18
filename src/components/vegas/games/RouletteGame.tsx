@@ -10,6 +10,7 @@ import { playChipSound, playWinSound, isSoundEnabled, setSoundEnabled } from '@/
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getActivePlayerName } from '@/lib/poker-trainer/tracker';
 import { fetchDealerComment, DealerEventPayload } from '@/lib/vegas/VegasAiService';
+import { useKonamiHighRoller } from '@/components/EasterEggs';
 
 interface Props {
   bankroll: number;
@@ -26,6 +27,7 @@ interface BetAction {
 }
 
 export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutorial }: Props) {
+  const { isHighRoller } = useKonamiHighRoller();
   const [selectedChip, setSelectedChip] = useState<number>(25);
   const [soundOn, setSoundOn] = useState(true);
   const [voiceOn, setVoiceOn] = useState(false);
@@ -534,7 +536,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
             {/* Live AI Croupier Status Badge */}
             <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[8px] font-black uppercase tracking-wider border border-white/60 shadow flex items-center gap-1 whitespace-nowrap">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              <span>LIVE AI</span>
+              <span>{isHighRoller ? '👑 VIP AI' : 'LIVE AI'}</span>
             </span>
           </div>
 
@@ -543,7 +545,9 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
             <div className="flex items-center gap-2">
               <span className="text-xs font-black uppercase tracking-widest text-gold flex items-center gap-1.5">
                 <span>Sarah</span>
-                <span className="text-[10px] font-normal text-zinc-400">• Monte Carlo Croupier</span>
+                <span className="text-[10px] font-normal text-zinc-400">
+                  {isHighRoller ? '• 👑 24K Salon Privé Croupier' : '• Monte Carlo Croupier'}
+                </span>
               </span>
               {isAiThinking && (
                 <span className="text-[10px] font-mono text-cyan-400 animate-pulse flex items-center gap-1">
@@ -572,14 +576,21 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
         </button>
       </div>
 
-      {/* 3. THE MAIN EMERALD GREEN TABLE FELT WITH EPT WATERMARK & FINE TEXTURE */}
-      <div className="relative w-full rounded-2xl bg-[#0b7a37] p-2.5 sm:p-4 shadow-[inset_0_0_80px_rgba(0,0,0,0.85)] border-2 border-[#15803d] overflow-x-auto">
+      {/* 3. THE MAIN EMERALD GREEN (OR 24K GOLD KONAMI) TABLE FELT WITH EPT WATERMARK & FINE TEXTURE */}
+      <div
+        className={`relative w-full rounded-2xl p-2.5 sm:p-4 shadow-[inset_0_0_80px_rgba(0,0,0,0.85)] border-2 overflow-x-auto ${
+          isHighRoller
+            ? 'bg-gradient-to-b from-[#b8860b] via-[#855e06] to-[#422c02] border-[#ffd700] shadow-[inset_0_0_80px_rgba(0,0,0,0.85),0_0_35px_rgba(255,215,0,0.35)]'
+            : 'bg-[#0b7a37] border-[#15803d]'
+        }`}
+      >
         {/* Overhead Spotlighting Radial Beam */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background:
-              'radial-gradient(ellipse 70% 60% at 50% 35%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 65%, transparent 80%)',
+            background: isHighRoller
+              ? 'radial-gradient(ellipse 70% 60% at 50% 35%, rgba(255,235,120,0.28) 0%, rgba(212,175,55,0.05) 65%, transparent 80%)'
+              : 'radial-gradient(ellipse 70% 60% at 50% 35%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 65%, transparent 80%)',
           }}
         />
 
@@ -603,11 +614,13 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
               />
             </div>
             <div className="mt-2 text-center">
-              <span className="text-[10px] sm:text-xs font-serif font-black tracking-[0.25em] text-gold uppercase">
-                ★ E.P.T. 2026 POKER LEAGUE ★
+              <span className="text-[10px] sm:text-xs font-serif font-black tracking-[0.25em] text-yellow-200 uppercase">
+                ★ {isHighRoller ? 'VIP 24K GOLD • E.P.T. 2026 POKER LEAGUE' : 'E.P.T. 2026 POKER LEAGUE'} ★
               </span>
-              <div className="text-[8px] font-mono tracking-widest text-emerald-100 uppercase mt-0.5">
-                OFFICIAL VEGAS CASINO SUITE • 35:1 MONTE CARLO
+              <div className="text-[8px] font-mono tracking-widest text-yellow-100 uppercase mt-0.5">
+                {isHighRoller
+                  ? '👑 KONAMI HIGH ROLLER SALON • 35:1 MONTE CARLO'
+                  : 'OFFICIAL VEGAS CASINO SUITE • 35:1 MONTE CARLO'}
               </div>
             </div>
           </div>
@@ -654,7 +667,11 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
           </div>
 
           {/* B. THE ROULETTE FELT GRID (Framed in crisp white casino silkscreen) */}
-          <div className="flex-1 flex flex-col border-2 border-white rounded-2xl p-2 bg-[#0d853e]/90 shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)] backdrop-blur-[0.5px]">
+          <div
+            className={`flex-1 flex flex-col border-2 border-white rounded-2xl p-2 shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)] backdrop-blur-[0.5px] ${
+              isHighRoller ? 'bg-[#855e06]/90' : 'bg-[#0d853e]/90'
+            }`}
+          >
             {/* TOP SECTION: ZEROS (LEFT) + 3x12 NUMBERS (CENTER) + 2 TO 1 (RIGHT) */}
             <div className="flex items-stretch border-b-2 border-white">
               {/* 00 and 0 Left Column */}
@@ -957,9 +974,13 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
           </button>
         </div>
 
-        {/* Center: Recessed Dark Velvet Chip Tray (10, 25, 50, 100, 250) */}
-        <div className="rounded-full bg-[#0a0a0d] border border-amber-600/40 p-1.5 shadow-[inset_0_4px_10px_rgba(0,0,0,0.9)] flex items-center gap-1.5 sm:gap-3 max-w-full overflow-x-auto touch-pan-x">
-          {[10, 25, 50, 100, 250].map((val) => (
+        {/* Center: Recessed Dark Velvet Chip Tray (10, 25, 50, 100, 250 + 500, 1000, 5000 in Konami High Roller Mode) */}
+        <div
+          className={`rounded-full bg-[#0a0a0d] border p-1.5 shadow-[inset_0_4px_10px_rgba(0,0,0,0.9)] flex items-center gap-1.5 sm:gap-3 max-w-full overflow-x-auto touch-pan-x ${
+            isHighRoller ? 'border-[#ffd700] shadow-[0_0_20px_rgba(255,215,0,0.3)]' : 'border-amber-600/40'
+          }`}
+        >
+          {(isHighRoller ? [10, 25, 50, 100, 250, 500, 1000, 5000] : [10, 25, 50, 100, 250]).map((val) => (
             <VegasChip
               key={val}
               value={val}

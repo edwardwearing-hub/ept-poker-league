@@ -11,6 +11,7 @@ interface DealerRequest {
   netDelta?: number;
   sessionNet?: number;
   streakCount?: number;
+  highRoller?: boolean;
 }
 
 // Fallback pool of glamorous croupier remarks if Gemini is offline
@@ -50,7 +51,34 @@ const FALLBACK_RESPONSES: Record<string, string[]> = {
   ],
 };
 
-function getFallback(eventType: string): string {
+const HIGH_ROLLER_FALLBACK_RESPONSES: Record<string, string[]> = {
+  welcome: [
+    "Welcome to the secret 24K Gold Salon Privé, Your Highness. The £5,000 whale plaques are ready for the Chairman of the E.P.T.",
+    "The velvet ropes are closed for you, Your Excellency. Let us deal from the Black Obsidian & Gold Foil shoe!",
+  ],
+  bet_placed: [
+    "High-limit plaques on the 24K Gold felt, Your Highness! Even Macau's whales are watching this move.",
+    "A bold Chairman's wager in the Salon Privé, darling. The pit boss is sweating already!",
+  ],
+  spin_win: [
+    "Royal perfection on the 24K Gold felt, Your Highness! The Salon Privé vault pays out in solid gold.",
+    "Magnificent strike, Chairman of the E.P.T.! That Konami touch turns everything to 24K gold!",
+  ],
+  spin_loss: [
+    "A mere ripple in the royal treasury, Your Highness. Reach for the £5,000 diamond plaques!",
+    "The wheel tests the crown, darling, but the Salon Privé belongs to you.",
+  ],
+  big_win: [
+    "Sound the royal fanfare! The Chairman of the E.P.T. just shattered the 24K Salon Privé bank!",
+    "Vintage Dom Pérignon for Your Highness! What a colossal high-limit victory!",
+  ],
+};
+
+function getFallback(eventType: string, highRoller?: boolean): string {
+  if (highRoller) {
+    const vipList = HIGH_ROLLER_FALLBACK_RESPONSES[eventType] || HIGH_ROLLER_FALLBACK_RESPONSES.spin_win;
+    return vipList[Math.floor(Math.random() * vipList.length)];
+  }
   const list = FALLBACK_RESPONSES[eventType] || FALLBACK_RESPONSES.spin_win;
   return list[Math.floor(Math.random() * list.length)];
 }
@@ -62,7 +90,7 @@ export async function POST(req: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json({
-        comment: getFallback(body.eventType),
+        comment: getFallback(body.eventType, body.highRoller),
         source: 'fallback',
       });
     }
@@ -81,6 +109,11 @@ You are watching the player on the classic British fruit machine in the pub corn
 Your tone is authentic British pub banter, cheerful, warm, and humorous (occasionally using phrases like "guv'nor", "mate", "cracking hit", "pint of bitter", "nudge 'em down", "blimey").
 Always keep your answer very concise (strictly 1 to 2 short sentences).
 React directly to what happened on the fruit machine reels or feature board.`
+      : body.highRoller
+      ? `You are Sarah, the ultra-glamorous private host of the secret 24K Gold "Salon Privé" at the EPT Macau & Monte Carlo Casino, unlocked via the secret Konami Code.
+Your tone is regal, playfully reverent, witty, and ultra-luxury.
+Always keep your answer very concise (strictly 1 to 2 short sentences).
+Address the player as "Your Highness", "Chairman of the EPT", or "${player}" and reference the 24K gold felt, Black Obsidian cards, or £5,000 whale plaques.`
       : `You are Sarah, the glamorous, witty, and charismatic head croupier at the prestigious EPT Las Vegas Casino lounge.
 Your tone is sophisticated, slightly flirtatious, playful, and sharp (like a James Bond high-stakes casino host).
 Always keep your answer very concise (strictly 1 to 2 short sentences).
@@ -112,7 +145,7 @@ React directly to what happened at the table.`;
 
     const text = response.response.text().trim().replace(/^["']|["']$/g, '');
     return NextResponse.json({
-      comment: text || getFallback(body.eventType),
+      comment: text || getFallback(body.eventType, body.highRoller),
       source: 'gemini-2.5-flash',
     });
   } catch (error) {

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX, HeartCrack, Sparkles, X, Shuffle } from 'lucide-react';
-import { isSfxMuted, setSfxMuted, playChipClack, playChimeSuccess } from '@/lib/felt-audio';
+import { isSfxMuted, setSfxMuted, playChipClack, playChimeSuccess, playKonamiChiptuneFanfare } from '@/lib/felt-audio';
 import { triggerHaptic } from '@/lib/haptics';
 
 const BAD_BEAT_QUOTES = [
@@ -137,8 +137,73 @@ export function BadBeatReportButton() {
     );
 }
 
+const KONAMI_STORAGE_KEY = 'ept_konami_high_roller_v1';
+
+export function getKonamiHighRoller(): boolean {
+    if (typeof window === 'undefined') return false;
+    try {
+        return localStorage.getItem(KONAMI_STORAGE_KEY) === 'true';
+    } catch {
+        return false;
+    }
+}
+
+export function setKonamiHighRollerState(active: boolean) {
+    if (typeof window === 'undefined') return;
+    try {
+        localStorage.setItem(KONAMI_STORAGE_KEY, String(active));
+    } catch {
+        // ignore storage errors
+    }
+    document.documentElement.classList.toggle('konami-high-roller', active);
+    window.dispatchEvent(
+        new CustomEvent('ept_konami_high_roller_changed', { detail: { active } })
+    );
+}
+
+export function useKonamiHighRoller() {
+    const [isHighRoller, setIsHighRoller] = useState(false);
+
+    useEffect(() => {
+        const initial = getKonamiHighRoller();
+        setIsHighRoller(initial);
+        document.documentElement.classList.toggle('konami-high-roller', initial);
+
+        const handleChange = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            if (detail && typeof detail.active === 'boolean') {
+                setIsHighRoller(detail.active);
+            } else {
+                setIsHighRoller(getKonamiHighRoller());
+            }
+        };
+
+        window.addEventListener('ept_konami_high_roller_changed', handleChange);
+        return () => window.removeEventListener('ept_konami_high_roller_changed', handleChange);
+    }, []);
+
+    const toggleHighRoller = () => {
+        const next = !getKonamiHighRoller();
+        setKonamiHighRollerState(next);
+        setIsHighRoller(next);
+        return next;
+    };
+
+    return { isHighRoller, toggleHighRoller, setHighRoller: setKonamiHighRollerState };
+}
+
+const COIN_PARTICLES = Array.from({ length: 32 }, (_, i) => ({
+    id: i,
+    left: `${(i * 3.1 + (i % 3) * 1.7) % 98}%`,
+    delay: `${(i % 8) * 0.14}s`,
+    duration: `${2.2 + (i % 5) * 0.35}s`,
+    symbol: i % 4 === 0 ? '👑' : i % 2 === 0 ? '🪙' : '✨',
+}));
+
 export function KonamiHighRoller() {
-    const [unlocked, setUnlocked] = useState(false);
+    const { isHighRoller, toggleHighRoller } = useKonamiHighRoller();
+    const [bannerMessage, setBannerMessage] = useState<string | null>(null);
+    const [showCoinRain, setShowCoinRain] = useState(false);
 
     useEffect(() => {
         const code = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
@@ -148,17 +213,32 @@ export function KonamiHighRoller() {
             const active = (document.activeElement?.tagName || '').toLowerCase();
             if (active === 'input' || active === 'textarea') return;
 
-            if (e.key.toLowerCase() === code[keyIdx].toLowerCase()) {
+            const expected = code[keyIdx].toLowerCase();
+            const pressed = e.key.toLowerCase();
+
+            if (pressed === expected) {
                 keyIdx++;
                 if (keyIdx === code.length) {
                     keyIdx = 0;
                     triggerHaptic(50);
-                    playChimeSuccess();
-                    setUnlocked(true);
-                    setTimeout(() => setUnlocked(false), 5000);
+                    const nextState = !getKonamiHighRoller();
+                    setKonamiHighRollerState(nextState);
+                    if (nextState) {
+                        playKonamiChiptuneFanfare();
+                        setShowCoinRain(true);
+                        setTimeout(() => setShowCoinRain(false), 4500);
+                    } else {
+                        playChimeSuccess();
+                    }
+                    setBannerMessage(
+                        nextState
+                            ? '👑 24K Gold High Roller Salon Unlocked! Gold Felts, Obsidian Cards & £5k Plaques Active!'
+                            : '🎩 Standard Casino Felt Restored (Konami Mode Off)'
+                    );
+                    setTimeout(() => setBannerMessage(null), 5500);
                 }
             } else {
-                keyIdx = 0;
+                keyIdx = pressed === code[0].toLowerCase() ? 1 : 0;
             }
         };
 
@@ -166,14 +246,64 @@ export function KonamiHighRoller() {
         return () => window.removeEventListener('keydown', onKeyDown);
     }, []);
 
-    if (!unlocked) return null;
-
     return (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-600 text-black px-6 py-3 rounded-2xl shadow-[0_0_40px_rgba(255,215,0,0.8)] border-2 border-white flex items-center gap-3 animate-bounce">
-            <Sparkles size={20} className="text-black" />
-            <div className="font-black text-sm uppercase tracking-widest font-mono">
-                👑 High Roller Felt Mode Unlocked! Konami Code Champion!
-            </div>
-        </div>
+        <>
+            {/* 24K Gold Coin & Crown Shower when Konami Code is unlocked */}
+            {showCoinRain && (
+                <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
+                    <style>{`
+                        @keyframes konamiCoinFall {
+                            0% { transform: translateY(-10vh) rotate(0deg) scale(0.8); opacity: 1; }
+                            80% { opacity: 1; }
+                            100% { transform: translateY(108vh) rotate(720deg) scale(1.15); opacity: 0; }
+                        }
+                    `}</style>
+                    {COIN_PARTICLES.map((p) => (
+                        <div
+                            key={p.id}
+                            style={{
+                                left: p.left,
+                                animation: `konamiCoinFall ${p.duration} ease-in ${p.delay} forwards`,
+                            }}
+                            className="absolute -top-8 text-2xl sm:text-3xl drop-shadow-[0_0_12px_rgba(255,215,0,0.9)] select-none"
+                        >
+                            {p.symbol}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {isHighRoller && (
+                <button
+                    onClick={() => {
+                        triggerHaptic(20);
+                        playChipClack();
+                        const next = toggleHighRoller();
+                        setBannerMessage(
+                            next
+                                ? '👑 24K Gold High Roller Felt Mode Active!'
+                                : '🎩 Standard Casino Felt Restored'
+                        );
+                        setTimeout(() => setBannerMessage(null), 3500);
+                    }}
+                    className="fixed bottom-4 right-4 z-40 inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-gradient-to-r from-[#ffd700] via-[#ffe578] to-[#b8860b] text-black font-mono font-black text-[11px] uppercase tracking-wider shadow-[0_0_25px_rgba(255,215,0,0.65)] border-2 border-white/80 hover:scale-105 active:scale-95 transition cursor-pointer"
+                    title="Click to toggle 24K Gold High Roller Mode (Konami Code)"
+                >
+                    <Sparkles size={13} className="text-black" />
+                    <span>👑 24K Gold Felt: ON</span>
+                </button>
+            )}
+
+            {bannerMessage && (
+                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-yellow-600 via-yellow-300 to-yellow-600 text-black px-6 py-3.5 rounded-2xl shadow-[0_0_50px_rgba(255,215,0,0.9)] border-2 border-white flex items-center gap-3 animate-bounce">
+                    <Sparkles size={20} className="text-black shrink-0" />
+                    <div className="font-black text-xs sm:text-sm uppercase tracking-widest font-mono">
+                        {bannerMessage}
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
+
+
