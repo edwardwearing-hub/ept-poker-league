@@ -235,26 +235,35 @@ export function triggerKonamiCelebrationToggle() {
 export function KonamiArcadePadButton() {
     const { isHighRoller } = useKonamiHighRoller();
     const [isOpen, setIsOpen] = useState(false);
-    const [progress, setProgress] = useState(0);
+    const [enteredKeys, setEnteredKeys] = useState<{ key: string; label: string }[]>([]);
+    const [errorShake, setErrorShake] = useState(false);
 
-    const handlePadInput = (inputKey: string) => {
+    const handlePadInput = (inputKey: string, displayLabel: string) => {
         triggerHaptic(18);
         playChipClack();
+        setErrorShake(false);
 
-        const expected = KONAMI_SEQUENCE[progress].toLowerCase();
-        const pressed = inputKey.toLowerCase();
+        const nextBuffer = [...enteredKeys, { key: inputKey, label: displayLabel }];
 
-        if (pressed === expected) {
-            const nextStep = progress + 1;
-            if (nextStep === KONAMI_SEQUENCE.length) {
-                setProgress(0);
+        if (nextBuffer.length === KONAMI_SEQUENCE.length) {
+            const isMatch = nextBuffer.every(
+                (item, idx) => item.key.toLowerCase() === KONAMI_SEQUENCE[idx].toLowerCase()
+            );
+            if (isMatch) {
+                setEnteredKeys([]);
                 setIsOpen(false);
                 triggerKonamiCelebrationToggle();
             } else {
-                setProgress(nextStep);
+                triggerHaptic(40);
+                setEnteredKeys(nextBuffer);
+                setErrorShake(true);
+                setTimeout(() => {
+                    setEnteredKeys([]);
+                    setErrorShake(false);
+                }, 650);
             }
         } else {
-            setProgress(pressed === KONAMI_SEQUENCE[0].toLowerCase() ? 1 : 0);
+            setEnteredKeys(nextBuffer);
         }
     };
 
@@ -265,7 +274,8 @@ export function KonamiArcadePadButton() {
                 onClick={() => {
                     triggerHaptic(15);
                     playChipClack();
-                    setProgress(0);
+                    setEnteredKeys([]);
+                    setErrorShake(false);
                     setIsOpen(true);
                 }}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs transition active:scale-95 cursor-pointer ${
@@ -273,17 +283,17 @@ export function KonamiArcadePadButton() {
                         ? 'border-[#ffd700] bg-[#ffd700]/15 text-[#ffd700] shadow-[0_0_12px_rgba(255,215,0,0.3)]'
                         : 'border-amber-500/30 hover:border-gold/60 bg-amber-950/20 hover:bg-amber-950/40 text-amber-300'
                 }`}
-                title="Open 8-Bit Konami Code Keypad (Mobile & Desktop)"
+                title="Open E.P.T. Arcade Vault Controller"
             >
                 <Gamepad2 size={14} className={isHighRoller ? 'text-[#ffd700]' : 'text-amber-400'} />
                 <span className="font-mono text-[11px]">
-                    {isHighRoller ? '👑 VIP Pad: ON' : '🕹️ Secret Code Pad'}
+                    {isHighRoller ? '👑 VIP Pad: ON' : '🕹️ Arcade Pad'}
                 </span>
             </button>
 
             {isOpen && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="w-full max-w-sm bg-zinc-950 border-2 border-gold/60 rounded-3xl p-5 text-center relative shadow-[0_0_50px_rgba(212,175,55,0.35)]">
+                    <div className="w-full max-w-md bg-zinc-950 border-2 border-gold/60 rounded-3xl p-5 text-center relative shadow-[0_0_50px_rgba(212,175,55,0.35)]">
                         <button
                             type="button"
                             onClick={() => setIsOpen(false)}
@@ -294,102 +304,159 @@ export function KonamiArcadePadButton() {
                         </button>
 
                         <div className="text-[10px] font-mono font-black uppercase tracking-widest text-gold mb-1">
-                            🕹️ E.P.T. 8-Bit Pocket Controller
+                            🕹️ E.P.T. 16-Bit Master Controller
                         </div>
                         <h3 className="text-base font-black uppercase tracking-wider text-white mb-2">
-                            Enter Secret Konami Code
+                            Vault Override Sequence
                         </h3>
 
-                        {/* 10-Step Sequence Progress Bar */}
-                        <div className="flex items-center justify-center gap-1 mb-5 bg-black/80 border border-white/10 rounded-xl p-2">
-                            {KONAMI_LABELS.map((lbl, idx) => {
-                                const done = idx < progress;
-                                const current = idx === progress;
+                        {/* 10-Slot Encrypted Input Display (No Spoilers!) */}
+                        <div
+                            className={`flex items-center justify-center gap-1 mb-3 bg-black/90 border rounded-xl p-2 transition-colors ${
+                                errorShake
+                                    ? 'border-red-500 bg-red-950/40 animate-pulse'
+                                    : 'border-white/10'
+                            }`}
+                        >
+                            {Array.from({ length: 10 }).map((_, idx) => {
+                                const entry = enteredKeys[idx];
+                                const isCurrent = idx === enteredKeys.length;
                                 return (
                                     <span
                                         key={idx}
-                                        className={`w-6 h-6 rounded-md font-mono text-xs font-black flex items-center justify-center border transition-all ${
-                                            done
-                                                ? 'bg-[#ffd700] text-black border-white shadow-[0_0_10px_#ffd700] scale-105'
-                                                : current
-                                                ? 'bg-amber-500/20 text-gold border-gold animate-pulse'
-                                                : 'bg-zinc-900 text-zinc-500 border-white/10'
+                                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md font-mono text-[10px] sm:text-xs font-black flex items-center justify-center border transition-all ${
+                                            errorShake
+                                                ? 'bg-red-600/30 text-red-300 border-red-500'
+                                                : entry
+                                                ? 'bg-gold/25 text-[#ffd700] border-gold shadow-[0_0_8px_rgba(212,175,55,0.4)]'
+                                                : isCurrent
+                                                ? 'bg-zinc-900 text-gold/70 border-gold/50 animate-pulse'
+                                                : 'bg-zinc-900/80 text-zinc-600 border-white/10'
                                         }`}
                                     >
-                                        {lbl}
+                                        {entry ? entry.label : '•'}
                                     </span>
                                 );
                             })}
                         </div>
 
-                        {/* Classic Retro Controller Layout: D-Pad (Left) + B/A Buttons (Right) */}
-                        <div className="flex items-center justify-between gap-4 px-2 py-3 bg-gradient-to-b from-zinc-900 to-black rounded-2xl border border-white/15 shadow-inner">
-                            {/* D-PAD */}
-                            <div className="grid grid-cols-3 gap-1.5 w-32 h-32">
-                                <div />
+                        {/* Top L1 / L2 & R1 / R2 Shoulder Triggers */}
+                        <div className="grid grid-cols-4 gap-2 mb-2">
+                            {[
+                                { k: 'l1', l: 'L1' },
+                                { k: 'l2', l: 'L2' },
+                                { k: 'r2', l: 'R2' },
+                                { k: 'r1', l: 'R1' },
+                            ].map((btn) => (
                                 <button
+                                    key={btn.k}
                                     type="button"
-                                    onClick={() => handlePadInput('ArrowUp')}
-                                    className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-gold active:text-black border border-white/20 text-white font-black text-base flex items-center justify-center shadow active:scale-95 transition cursor-pointer"
+                                    onClick={() => handlePadInput(btn.k, btn.l)}
+                                    className="py-1.5 rounded-t-xl rounded-b-md bg-gradient-to-b from-zinc-700 to-zinc-900 hover:from-zinc-600 active:bg-gold active:text-black border border-white/20 text-zinc-200 font-mono font-black text-[11px] shadow active:scale-95 transition cursor-pointer"
                                 >
-                                    ↑
+                                    {btn.l}
                                 </button>
-                                <div />
-                                <button
-                                    type="button"
-                                    onClick={() => handlePadInput('ArrowLeft')}
-                                    className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-gold active:text-black border border-white/20 text-white font-black text-base flex items-center justify-center shadow active:scale-95 transition cursor-pointer"
-                                >
-                                    ←
-                                </button>
-                                <div className="rounded-lg bg-zinc-950 border border-white/5 flex items-center justify-center">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-zinc-800" />
+                            ))}
+                        </div>
+
+                        {/* Main Controller Body: D-Pad (Left) + 6-Button Arcade Cluster X/Y/Z & A/B/C (Right) */}
+                        <div className="flex flex-col gap-3 px-3 py-3.5 bg-gradient-to-b from-zinc-900 to-black rounded-2xl border border-white/15 shadow-inner">
+                            <div className="flex items-center justify-between gap-3">
+                                {/* 4-Way D-PAD */}
+                                <div className="grid grid-cols-3 gap-1 w-28 h-28 shrink-0">
+                                    <div />
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePadInput('ArrowUp', '↑')}
+                                        className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-gold active:text-black border border-white/20 text-white font-black text-sm flex items-center justify-center shadow active:scale-95 transition cursor-pointer"
+                                    >
+                                        ↑
+                                    </button>
+                                    <div />
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePadInput('ArrowLeft', '←')}
+                                        className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-gold active:text-black border border-white/20 text-white font-black text-sm flex items-center justify-center shadow active:scale-95 transition cursor-pointer"
+                                    >
+                                        ←
+                                    </button>
+                                    <div className="rounded-lg bg-zinc-950 border border-white/5 flex items-center justify-center">
+                                        <div className="w-2 h-2 rounded-full bg-zinc-800" />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePadInput('ArrowRight', '→')}
+                                        className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-gold active:text-black border border-white/20 text-white font-black text-sm flex items-center justify-center shadow active:scale-95 transition cursor-pointer"
+                                    >
+                                        →
+                                    </button>
+                                    <div />
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePadInput('ArrowDown', '↓')}
+                                        className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-gold active:text-black border border-white/20 text-white font-black text-sm flex items-center justify-center shadow active:scale-95 transition cursor-pointer"
+                                    >
+                                        ↓
+                                    </button>
+                                    <div />
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => handlePadInput('ArrowRight')}
-                                    className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-gold active:text-black border border-white/20 text-white font-black text-base flex items-center justify-center shadow active:scale-95 transition cursor-pointer"
-                                >
-                                    →
-                                </button>
-                                <div />
-                                <button
-                                    type="button"
-                                    onClick={() => handlePadInput('ArrowDown')}
-                                    className="rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-gold active:text-black border border-white/20 text-white font-black text-base flex items-center justify-center shadow active:scale-95 transition cursor-pointer"
-                                >
-                                    ↓
-                                </button>
-                                <div />
+
+                                {/* 6-Button Arcade Cluster (X, Y, Z top row / A, B, C bottom row) */}
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { k: 'x', l: 'X', color: 'from-sky-500 to-blue-700 border-sky-300' },
+                                        { k: 'y', l: 'Y', color: 'from-amber-400 to-amber-600 border-amber-200 text-black' },
+                                        { k: 'z', l: 'Z', color: 'from-purple-500 to-indigo-700 border-purple-300' },
+                                        { k: 'a', l: 'A', color: 'from-red-500 to-red-700 border-red-300' },
+                                        { k: 'b', l: 'B', color: 'from-emerald-500 to-green-700 border-emerald-300' },
+                                        { k: 'c', l: 'C', color: 'from-rose-500 to-pink-700 border-rose-300' },
+                                    ].map((btn) => (
+                                        <button
+                                            key={btn.k}
+                                            type="button"
+                                            onClick={() => handlePadInput(btn.k, btn.l)}
+                                            className={`w-11 h-11 rounded-full bg-gradient-to-b ${btn.color} hover:brightness-110 active:scale-90 border-2 text-white font-mono font-black text-sm shadow-lg flex items-center justify-center cursor-pointer`}
+                                        >
+                                            {btn.l}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
-                            {/* Crimson B & A Arcade Buttons */}
-                            <div className="flex items-center gap-3 pr-1">
-                                <div className="flex flex-col items-center gap-1 translate-y-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => handlePadInput('b')}
-                                        className="w-12 h-12 rounded-full bg-gradient-to-b from-red-500 to-red-700 hover:brightness-110 active:scale-90 border-2 border-red-300 text-white font-mono font-black text-base shadow-[0_4px_12px_rgba(239,68,68,0.5)] flex items-center justify-center cursor-pointer"
-                                    >
-                                        B
-                                    </button>
-                                    <span className="text-[9px] font-mono font-bold text-zinc-400">B</span>
-                                </div>
-                                <div className="flex flex-col items-center gap-1 -translate-y-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => handlePadInput('a')}
-                                        className="w-12 h-12 rounded-full bg-gradient-to-b from-red-500 to-red-700 hover:brightness-110 active:scale-90 border-2 border-red-300 text-white font-mono font-black text-base shadow-[0_4px_12px_rgba(239,68,68,0.5)] flex items-center justify-center cursor-pointer"
-                                    >
-                                        A
-                                    </button>
-                                    <span className="text-[9px] font-mono font-bold text-zinc-400">A</span>
-                                </div>
+                            {/* Center System Bar: SELECT, START, and CLEAR */}
+                            <div className="flex items-center justify-center gap-2.5 pt-2 border-t border-white/10">
+                                <button
+                                    type="button"
+                                    onClick={() => handlePadInput('select', 'SEL')}
+                                    className="px-3 py-1 rounded-full bg-zinc-800 hover:bg-zinc-700 active:scale-95 border border-white/20 text-[10px] font-mono font-black text-zinc-300 uppercase tracking-wider cursor-pointer"
+                                >
+                                    SELECT
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handlePadInput('start', 'STR')}
+                                    className="px-3 py-1 rounded-full bg-zinc-800 hover:bg-zinc-700 active:scale-95 border border-white/20 text-[10px] font-mono font-black text-zinc-300 uppercase tracking-wider cursor-pointer"
+                                >
+                                    START
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        triggerHaptic(10);
+                                        setEnteredKeys([]);
+                                        setErrorShake(false);
+                                    }}
+                                    className="px-2.5 py-1 rounded-full bg-red-950/50 hover:bg-red-900/60 active:scale-95 border border-red-500/40 text-[10px] font-mono font-bold text-red-300 uppercase tracking-wider cursor-pointer"
+                                >
+                                    RESET
+                                </button>
                             </div>
                         </div>
 
-                        <p className="text-[11px] text-zinc-400 font-mono mt-3">
-                            Tap <span className="text-gold font-bold">↑ ↑ ↓ ↓ ← → ← → B A</span> to toggle 24K High Roller Mode
+                        <p className="text-[10px] text-zinc-500 font-mono mt-3">
+                            {errorShake
+                                ? '❌ INVALID 10-KEY SEQUENCE — BUFFER RESET'
+                                : `ENTER 10-KEY CLASSIFIED CODE (${enteredKeys.length}/10)`}
                         </p>
                     </div>
                 </div>

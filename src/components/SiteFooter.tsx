@@ -184,7 +184,7 @@ export default function SiteFooter() {
                         <KonamiArcadePadButton />
                     </div>
                     <div className="text-[11px] text-zinc-600 font-mono hidden md:block">
-                        Tip: ↑ ↑ ↓ ↓ ← → ← → B A unlocks High Roller
+                        Tip: A classic 1986 10-key arcade cheat unlocks High Roller Mode
                     </div>
                 </div>
 
