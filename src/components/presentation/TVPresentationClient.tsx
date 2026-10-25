@@ -1234,14 +1234,17 @@ export default function TVPresentationClient({
         if (pool.length < 2) return [];
 
         const getDirectKOs = (attacker: ComputedPlayerProfile, target: ComputedPlayerProfile): number => {
-            const map = attacker.player.playerKnockouts || {};
-            const targetLower = target.player.name.toLowerCase().trim();
-            const targetFirst = targetLower.split(/\s+/)[0];
-            for (const [k, v] of Object.entries(map)) {
-                const kLower = k.toLowerCase().trim();
-                if (kLower === targetLower || kLower.split(/\s+/)[0] === targetFirst) {
-                    return Number(v) || 0;
-                }
+            const targetFirst = target.player.name.toLowerCase().trim().split(/\s+/)[0];
+            const bullied = (attacker.player.bulliedPlayer || '').toLowerCase();
+            if (bullied.includes(targetFirst)) {
+                const m = bullied.match(/\((\d+)\)/);
+                if (m) return parseInt(m[1], 10);
+            }
+            const rival = (target.player.rivalPlayer || '').toLowerCase();
+            const attackerFirst = attacker.player.name.toLowerCase().trim().split(/\s+/)[0];
+            if (rival.includes(attackerFirst)) {
+                const m = rival.match(/\((\d+)\)/);
+                if (m) return parseInt(m[1], 10);
             }
             return 0;
         };
@@ -1988,13 +1991,6 @@ export default function TVPresentationClient({
         const fighterB = computedProfiles[effectiveIdxB] || computedProfiles[1] || computedProfiles[0];
         if (!fighterA || !fighterB) return null;
 
-        const directKOsA = activeMatchup
-            ? activeMatchup.directKOsA
-            : Number(fighterA.player.playerKnockouts?.[fighterB.player.name] || 0);
-        const directKOsB = activeMatchup
-            ? activeMatchup.directKOsB
-            : Number(fighterB.player.playerKnockouts?.[fighterA.player.name] || 0);
-
         const comparisons = [
             {
                 label: 'Championship Points',
@@ -2005,11 +2001,11 @@ export default function TVPresentationClient({
                 higherWins: true
             },
             {
-                label: 'Direct H2H Knockouts (Sheet)',
-                valA: directKOsA,
-                valB: directKOsB,
-                fmtA: `${directKOsA} KOs vs ${fighterB.player.name.split(' ')[0]}`,
-                fmtB: `${directKOsB} KOs vs ${fighterA.player.name.split(' ')[0]}`,
+                label: 'Final Table Bonus Stack',
+                valA: fighterA.player.bonusChips || 0,
+                valB: fighterB.player.bonusChips || 0,
+                fmtA: `+${(fighterA.player.bonusChips || 0).toLocaleString()}`,
+                fmtB: `+${(fighterB.player.bonusChips || 0).toLocaleString()}`,
                 higherWins: true
             },
             {
