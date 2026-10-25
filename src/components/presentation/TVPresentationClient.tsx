@@ -2474,8 +2474,21 @@ export default function TVPresentationClient({
 
     const renderActiveSlideContent = () => {
         if (!currentSlide) return null;
+        const devPageScope =
+            currentSlide.type === 'player'
+                ? `presentation-page-${currentSlide.page}`
+                : `presentation-${currentSlide.type}`;
+        const devPageLabel =
+            currentSlide.type === 'player'
+                ? `Player Dossier • Page ${currentSlide.page}/3`
+                : currentSlide.label;
+
         return (
-            <div className="flex-1 min-h-0 flex flex-col gap-2.5 w-full overflow-hidden">
+            <div
+                data-dev-page-scope={devPageScope}
+                data-dev-page-label={devPageLabel}
+                className="flex-1 min-h-0 flex flex-col gap-2.5 w-full overflow-hidden"
+            >
                 {renderTopLoopControls()}
                 {currentSlide.type === 'player' && renderPlayerDossierSlide(currentSlide.profile, currentSlide.page)}
                 {currentSlide.type === 'tale_of_the_tape' && renderTaleOfTheTapeSlide()}

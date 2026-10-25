@@ -88,6 +88,7 @@ import {
   computeTotalAcademyChips,
   BASE_ACADEMY_BANKROLL,
 } from '@/lib/poker-trainer/leaderboard';
+import DevWrapper from '@/components/dev/DevWrapper';
 
 export const TOURNAMENT_BLIND_LEVELS = [
   { level: 1, sb: 5, bb: 10, ante: 0 },
@@ -2193,13 +2194,14 @@ export default function BotTrainerArena({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {/* =====================================================================
           LAYER C: GAME CONTROLS STRIP
           Poker variant pills, blind status, grouped Table Settings & Tools drawer,
           and prominent high-contrast Deal Hand CTA.
           ===================================================================== */}
-      <div className="glass-panel rounded-2xl px-3.5 sm:px-4 py-2 border border-white/15 shadow-md">
+      <DevWrapper id="table-controls-bar" label="Table Controls Bar">
+        <div className="glass-panel rounded-2xl px-3.5 sm:px-4 py-2 border border-white/15 shadow-md">
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Left: Compact Game Format Selector Pills + Live Blind Indicator */}
           <div className="flex items-center gap-2 overflow-x-auto max-w-full py-0.5 scrollbar-hide">
@@ -2624,12 +2626,17 @@ export default function BotTrainerArena({
             </div>
           </div>
         )}
-      </div>
+        </div>
+      </DevWrapper>
 
       {/* MAIN WORKSPACE: 3D STADIUM POKER TABLE (8 Cols) + CONDENSED TACTICAL DOCK (4 Cols) */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
         {/* LEFT COLUMN: AUTHENTIC 3D OVAL / STADIUM POKER TABLE + BOTTOM ACTION DOCK */}
-        <div className="xl:col-span-8 flex flex-col gap-3">
+        <DevWrapper
+          id="table-felt-container"
+          label="Table Felt Container"
+          className="xl:col-span-8 flex flex-col gap-3"
+        >
           {/* Tournament Blind Clock Bar */}
           <TournamentBlindClockBar
             config={timedBlindsConfig}
@@ -3472,14 +3479,19 @@ export default function BotTrainerArena({
               </div>
             )}
           </div>
-        </div>
+        </DevWrapper>
 
         {/* =====================================================
             RIGHT COLUMN: CONDENSED SINGLE-PANEL TACTICAL COACH & HUD DOCK
            ===================================================== */}
-        <div
-          className={`xl:col-span-4 rounded-2xl border p-4 transition-all bg-gradient-to-br ${hudTheme.bannerBg} ${hudTheme.borderColor} shadow-xl space-y-4`}
+        <DevWrapper
+          id="coach-hud-sidebar"
+          label="Coach HUD Sidebar"
+          className="xl:col-span-4"
         >
+          <div
+            className={`rounded-2xl border p-4 transition-all bg-gradient-to-br ${hudTheme.bannerBg} ${hudTheme.borderColor} shadow-xl space-y-4 h-full`}
+          >
           {/* Compact 3-Way Sub-Tabs Inside Right Dock: Coach & Math | Hand Ranks | Style & Leaks */}
           <div className="flex items-center justify-between gap-1.5 border-b border-white/10 pb-2.5">
             <div className="grid grid-cols-3 gap-1 bg-black/50 p-1 rounded-xl border border-white/10 w-full">
@@ -4167,7 +4179,8 @@ export default function BotTrainerArena({
               )}
             </div>
           )}
-        </div>
+          </div>
+        </DevWrapper>
       </div>
 
       {/* ========================================================

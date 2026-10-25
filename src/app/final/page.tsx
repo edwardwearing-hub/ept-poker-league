@@ -12,7 +12,13 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'December Grand Final | E.P.T. 2026 Poker League',
         description: 'Track the qualification cutoff, championship prize pool, and top contenders for the E.P.T. 2026 December Grand Final.',
-        images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'EPT December Grand Final' }],
+        images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'EPT December Grand Final' }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'December Grand Final | E.P.T. 2026 Poker League',
+        description: 'Track the qualification cutoff, championship prize pool, and top contenders for the E.P.T. 2026 December Grand Final.',
+        images: ['/og-image.jpg'],
     },
 };
 

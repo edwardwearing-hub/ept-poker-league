@@ -14,7 +14,13 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Official League Standings & Full Sheet | E.P.T. 2026',
         description: 'Complete statistical ledger, points, profit, and KOs for all players in the E.P.T. 2026 Poker League.',
-        images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'EPT League Table' }],
+        images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'EPT League Table Standings' }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Official League Standings & Full Sheet | E.P.T. 2026',
+        description: 'Complete statistical ledger, points, profit, and KOs for all players in the E.P.T. 2026 Poker League.',
+        images: ['/og-image.jpg'],
     },
 };
 

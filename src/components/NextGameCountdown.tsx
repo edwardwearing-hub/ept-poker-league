@@ -26,8 +26,11 @@ export default function NextGameCountdown({ initialTargetDate }: Props) {
         return initialTargetDate ? new Date(initialTargetDate) : null;
     });
 
-    const [timeLeft, setTimeLeft] = useState(() => {
-        return calculateDiff(initialTargetDate ? new Date(initialTargetDate) : null);
+    const [timeLeft, setTimeLeft] = useState({
+        days: 0,
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
     });
 
     const [futureDates, setFutureDates] = useState<{ raw: string; iso: string }[]>([]);
@@ -125,7 +128,10 @@ export default function NextGameCountdown({ initialTargetDate }: Props) {
 
     useEffect(() => {
         setIsMounted(true);
-    }, []);
+        if (initialTargetDate) {
+            setTimeLeft(calculateDiff(new Date(initialTargetDate)));
+        }
+    }, [initialTargetDate]);
 
     useEffect(() => {
         if (!isMounted) return;

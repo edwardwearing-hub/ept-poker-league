@@ -6,6 +6,8 @@ import MobileNav from "@/components/MobileNav";
 import SiteFooter from "@/components/SiteFooter";
 import OfflineDetector from "@/components/OfflineDetector";
 import AuthGuard from "@/components/auth/AuthGuard";
+import { DevModeDock } from "@/components/dev/DevWrapper";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { getGlobalStats } from '@/lib/data';
 
 const outfit = Outfit({
@@ -24,8 +26,13 @@ export const viewport: Viewport = {
   themeColor: "#121212",
 };
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : undefined)
+  || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined)
+  || 'https://ept-poker-league.vercel.app';
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://eptpoker.co.uk'),
+  metadataBase: new URL(siteUrl),
   title: {
     default: "E.P.T. 2026 Poker League",
     template: "%s | E.P.T. 2026 Poker League"
@@ -34,14 +41,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: "E.P.T. 2026 Poker League",
     description: "The official league tracker, live leaderboard, tournament reports, and GTO Poker Academy for E.P.T. 2026.",
-    url: "https://eptpoker.co.uk",
+    url: siteUrl,
     siteName: "E.P.T. 2026 Poker League",
     images: [
       {
-        url: "/ept-logo.jpg",
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "E.P.T. 2026 Poker League Official Logo",
+        alt: "E.P.T. 2026 Poker League Official Championship Banner",
       },
     ],
     locale: "en_GB",
@@ -51,7 +58,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "E.P.T. 2026 Poker League",
     description: "The official league tracker, live leaderboard, tournament reports, and GTO Poker Academy for E.P.T. 2026.",
-    images: ["/ept-logo.jpg"],
+    images: ["/og-image.jpg"],
   },
   robots: {
     index: true,
@@ -78,6 +85,9 @@ export default async function RootLayout({
         className={`${outfit.variable} antialiased bg-charcoal text-foreground min-h-screen`}
         suppressHydrationWarning
       >
+        {/* Google Analytics 4 */}
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+
         {/* Offline Detection Banner (Basement / Weak Signal Resilience) */}
         <OfflineDetector />
 
@@ -97,6 +107,7 @@ export default async function RootLayout({
               {children}
             </div>
             <SiteFooter />
+            <DevModeDock />
           </main>
         </AuthGuard>
       </body>

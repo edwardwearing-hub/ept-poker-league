@@ -1,14 +1,16 @@
 'use client';
 import { useState } from 'react';
 
+const PNG_ONLY_PLAYERS = new Set(['Dave Blackburn']);
+
 export default function WantedVideo({ playerName, className }: { playerName: string, className?: string }) {
-    const [videoError, setVideoError] = useState(false);
+    const [videoError, setVideoError] = useState(() => PNG_ONLY_PLAYERS.has(playerName));
     const classes = className || "absolute inset-0 w-full h-full object-cover grayscale contrast-125 object-top transition-opacity z-10";
 
-    if (videoError) {
+    if (videoError || PNG_ONLY_PLAYERS.has(playerName)) {
         return (
             <img 
-                src={`/videos/${playerName}.png`}
+                src={`/videos/${encodeURIComponent(playerName)}.png`}
                 alt={playerName}
                 className={classes}
                 onError={(e) => {
@@ -21,7 +23,8 @@ export default function WantedVideo({ playerName, className }: { playerName: str
 
     return (
         <video
-            src={`/videos/${playerName}.mp4`}
+            src={`/videos/${encodeURIComponent(playerName)}.mp4`}
+            preload="metadata"
             autoPlay
             loop
             muted

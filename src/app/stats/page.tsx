@@ -8,7 +8,13 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Player Statistics & League Analytics | E.P.T. 2026',
         description: 'Deep-dive statistical graphs, season highs, and knockout ratios for the E.P.T. 2026 Season.',
-        images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'EPT League Statistics' }],
+        images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'EPT League Statistics' }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Player Statistics & League Analytics | E.P.T. 2026',
+        description: 'Deep-dive statistical graphs, season highs, and knockout ratios for the E.P.T. 2026 Season.',
+        images: ['/og-image.jpg'],
     },
 };
 

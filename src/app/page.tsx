@@ -9,6 +9,7 @@ import SyndicateAnnouncementModal from "@/components/SyndicateAnnouncementModal"
 import ChampionshipCountdownBanner from "@/components/ChampionshipCountdownBanner";
 import PrizePoolCalculator from "@/components/PrizePoolCalculator";
 import HostOperationsBanner from "@/components/HostOperationsBanner";
+import DevWrapper from "@/components/dev/DevWrapper";
 import { getGlobalStats, getLeaderboardData } from "@/lib/data";
 import { GraduationCap, Dices, Sparkles, ArrowRight, Flame, Trophy, Crown } from "lucide-react";
 
@@ -22,14 +23,14 @@ export const metadata: Metadata = {
     title: 'E.P.T. 2026 Poker League | Official Standings, Final & Academy',
     description: 'The official live leaderboard, tournament reports, countdowns, player scouting profiles, and GTO Poker Academy for the E.P.T. 2026 Poker League.',
     siteName: 'E.P.T. 2026 Poker League',
-    images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'E.P.T. 2026 Poker League' }],
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'E.P.T. 2026 Poker League Championship Hub' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'E.P.T. 2026 Poker League',
     description: 'Live leaderboard, tournament reports, player profiles, and GTO Poker Academy.',
-    images: ['/ept-logo.jpg'],
+    images: ['/og-image.jpg'],
   },
 };
 
@@ -43,27 +44,35 @@ export default async function Home() {
   const gamesRemaining = Math.max(0, 9 - gamesPlayedOverall);
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-500 font-sans">
+    <div className="flex flex-col gap-12 animate-in fade-in duration-500 font-sans">
 
       {/* New Major Feature Launch Popup Announcement */}
       <SyndicateAnnouncementModal />
 
       {/* Next Game Countdown Section */}
-      <NextGameCountdown initialTargetDate={stats.nextGameDate} />
+      <DevWrapper id="home-countdown" label="Next Game Countdown">
+        <NextGameCountdown initialTargetDate={stats.nextGameDate} />
+      </DevWrapper>
 
       {/* December Grand Final Road to Crown Banner */}
-      <ChampionshipCountdownBanner 
-        totalPot={stats.totalPot} 
-        topContenders={players.slice(0, 4)} 
-        gamesPlayed={gamesPlayedOverall}
-        gamesRemaining={gamesRemaining}
-      />
+      <DevWrapper id="home-championship-banner" label="Championship Banner">
+        <ChampionshipCountdownBanner 
+          totalPot={stats.totalPot} 
+          topContenders={players.slice(0, 4)} 
+          gamesPlayed={gamesPlayedOverall}
+          gamesRemaining={gamesRemaining}
+        />
+      </DevWrapper>
 
       {/* Host Logistics: Live Prize Pool Calculator (Feature 5) */}
-      <PrizePoolCalculator />
+      <DevWrapper id="home-prize-calculator" label="Prize Pool Calculator">
+        <PrizePoolCalculator />
+      </DevWrapper>
 
       {/* Host Operations & Live Game Night Suite */}
-      <HostOperationsBanner />
+      <DevWrapper id="home-host-operations" label="Host Operations Banner">
+        <HostOperationsBanner />
+      </DevWrapper>
 
       {/* ============================================================== */}
       {/* FEATURE SPOTLIGHT: THE POKER ACADEMY & LAS VEGAS CASINO SUITE */}
@@ -243,23 +252,27 @@ export default async function Home() {
       </section>
 
       {/* Latest Report */}
-      <div className="mb-4 md:mb-8 pt-4 md:pt-8 border-t border-white/10">
-        <h3 className="text-xl sm:text-3xl font-bold text-white border-l-4 border-gold pl-3 sm:pl-4 mb-4 sm:mb-6">The Latest Gazette</h3>
-        <LastGameReport />
-      </div>
+      <DevWrapper id="home-latest-gazette" label="Latest Gazette Report">
+        <div className="mb-4 md:mb-8 pt-4 md:pt-8 border-t border-white/10">
+          <h3 className="text-xl sm:text-3xl font-bold text-white border-l-4 border-gold pl-3 sm:pl-4 mb-4 sm:mb-6">The Latest Gazette</h3>
+          <LastGameReport />
+        </div>
+      </DevWrapper>
 
       {/* Grid Layout for Widgets */}
       <div className="grid grid-cols-12 gap-6 sm:gap-8">
         {/* Main Content (Leaderboard) - Spans 8 cols */}
-        <div id="leaderboard" className="col-span-12 lg:col-span-8 space-y-6 scroll-mt-24">
-          <Leaderboard />
-        </div>
+        <DevWrapper id="home-leaderboard" label="League Standings Table" className="col-span-12 lg:col-span-8 space-y-6 scroll-mt-24">
+          <div id="leaderboard">
+            <Leaderboard />
+          </div>
+        </DevWrapper>
 
         {/* Sidebar Widgets (Wanted, Stats) - Spans 4 cols */}
-        <div className="col-span-12 lg:col-span-4 space-y-6 md:space-y-8">
+        <DevWrapper id="home-sidebar-widgets" label="Wanted Poster & Stats Sidebar" className="col-span-12 lg:col-span-4 space-y-6 md:space-y-8">
           <WantedPoster />
           <StatCorner />
-        </div>
+        </DevWrapper>
       </div>
     </div>
   );

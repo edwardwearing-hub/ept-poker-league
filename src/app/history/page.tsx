@@ -14,7 +14,13 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Session Archive | E.P.T. 2026 Poker League',
         description: 'Complete game logs, winners, payouts, and finish orders for the E.P.T. 2026 Season.',
-        images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'EPT Session Archive' }],
+        images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'EPT Session Archive' }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Session Archive | E.P.T. 2026 Poker League',
+        description: 'Complete game logs, winners, payouts, and finish orders for the E.P.T. 2026 Season.',
+        images: ['/og-image.jpg'],
     },
 };
 

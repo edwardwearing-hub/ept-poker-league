@@ -42,6 +42,7 @@ import HandOfTheWeekPuzzle from './HandOfTheWeekPuzzle';
 import InfoTooltip from './InfoTooltip';
 import { computeTotalAcademyChips } from '@/lib/poker-trainer/leaderboard';
 import { CANONICAL_PLAYER_NAMES } from '@/lib/roster';
+import DevWrapper, { DevModeDock } from '@/components/dev/DevWrapper';
 
 export type AcademyTab =
   | 'arena'
@@ -354,16 +355,17 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
 
   return (
     <div className="min-h-screen bg-[#0d0f12] text-white px-2.5 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 font-sans">
-      <div className="max-w-7xl mx-auto space-y-3 sm:space-y-3.5">
+      <div className="max-w-7xl mx-auto flex flex-col gap-3 sm:gap-3.5">
         
         {/* =====================================================================
             LAYER A: COMPACT ACADEMY HEADER
             Ultra-compact single/double-tier bar with zero wasted vertical height.
             ===================================================================== */}
-        <header
-          className={`rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 border transition-all bg-gradient-to-r ${hudThemeObj.bannerBg} ${hudThemeObj.borderColor} shadow-md`}
-          aria-label="Academy Status and Profile Bar"
-        >
+        <DevWrapper id="telemetry-strip" label="Telemetry Strip">
+          <header
+            className={`rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 border transition-all bg-gradient-to-r ${hudThemeObj.bannerBg} ${hudThemeObj.borderColor} shadow-md`}
+            aria-label="Academy Status and Profile Bar"
+          >
           <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
             
             {/* Left: Branding & Player Profile Switcher */}
@@ -507,7 +509,8 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
               </button>
             </div>
           </div>
-        </header>
+          </header>
+        </DevWrapper>
 
         {/* Guest Mode Warning Banner (Compact) */}
         {(activePlayerName === 'Guest Trainee' || activePlayerName.toLowerCase().startsWith('guest')) && (
