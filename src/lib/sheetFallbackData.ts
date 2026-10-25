@@ -114,7 +114,7 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "avgFinishPosition": 4,
         "avgWinnings": 70,
         "avgPoints": 4,
-        "bubbleFinishes": 0,
+        "bubbleFinishes": 2,
         "mostRebuysSingle": 1,
         "cashFlowHistory": [
             {
@@ -402,7 +402,7 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "avgFinishPosition": 4,
         "avgWinnings": 70,
         "avgPoints": 3,
-        "bubbleFinishes": 0,
+        "bubbleFinishes": 1,
         "mostRebuysSingle": 1,
         "cashFlowHistory": [
             {
@@ -583,7 +583,7 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "avgFinishPosition": 4,
         "avgWinnings": 80,
         "avgPoints": 2,
-        "bubbleFinishes": 0,
+        "bubbleFinishes": 3,
         "mostRebuysSingle": 1,
         "cashFlowHistory": [
             {

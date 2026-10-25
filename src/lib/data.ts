@@ -187,6 +187,45 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
             return parseFloat(val.toString().replace(/[^0-9.-]+/g, "")) || 0;
         };
 
+        // Pre-compute dynamic Bubble Finishes per player from Sheet1 game columns:
+        // Compare how many times a player finished 1 position after the last paid position in that game (e.g. 4th when 3rd paid, or 3rd when 2nd paid)
+        const dynamicBubblesByPlayer: Record<string, number> = {};
+        const sheet1DateRowIdx = jsonData.findIndex(
+            r => r && r[0] && r[0].toString().trim().toLowerCase() === "date"
+        );
+        if (sheet1DateRowIdx !== -1) {
+            const dateRowS1 = jsonData[sheet1DateRowIdx] || [];
+            for (let colStart = 1; colStart < dateRowS1.length; colStart += 3) {
+                const dateVal = dateRowS1[colStart];
+                if (!dateVal || dateVal.toString().trim() === "" || dateVal.toString().trim() === "???") continue;
+
+                const gameEntries: { name: string; place: number; winnings: number }[] = [];
+                for (let r = sheet1DateRowIdx + 5; r <= sheet1DateRowIdx + 15 && r < jsonData.length; r++) {
+                    const rData = jsonData[r];
+                    if (!rData || !rData[0]) continue;
+                    const pName =
+                        normalizePlayerName(rData[0].toString().trim()) ||
+                        rData[0].toString().trim();
+                    const pl = parseInt(rData[colStart]?.toString().trim() || "", 10);
+                    const win = parseMoney(rData[colStart + 1]);
+                    if (!isNaN(pl) && pl > 0) {
+                        gameEntries.push({ name: pName, place: pl, winnings: win });
+                    }
+                }
+
+                const paidPlaces = gameEntries.filter(e => e.winnings > 0).map(e => e.place);
+                if (paidPlaces.length > 0) {
+                    const lastPaidPlace = Math.max(...paidPlaces);
+                    const bubblePlace = lastPaidPlace + 1;
+                    gameEntries.forEach(e => {
+                        if (e.place === bubblePlace && e.winnings === 0) {
+                            dynamicBubblesByPlayer[e.name] = (dynamicBubblesByPlayer[e.name] || 0) + 1;
+                        }
+                    });
+                }
+            }
+        }
+
         // Main sheet data starts at index 6 in the new API response
         for (let i = 6; i < jsonData.length; i++) {
             const row = jsonData[i];
@@ -214,7 +253,7 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
             let avgFinish = 0;
             let avgWin = 0;
             let avgPts = 0;
-            let bubbleFinishes = 0;
+            let bubbleFinishes = dynamicBubblesByPlayer[matchedName] ?? 0;
             let mostRebuysSingle = 0;
             let totalTimesKnockedOut = 0;
             let uniquePlayersHijacked = new Set<string>();
@@ -240,13 +279,24 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
                     avgPts = parseMoney(pData[12][0]);
                     avgKo = parseMoney(pData[12][1]);
                 }
-                if (pData[15]) {
-                    const rawRebuyCell = (pData[15][0] ?? '').toString();
-                    const parsedRebuyVal = parseMoney(rawRebuyCell);
-                    mostRebuysSingle =
-                        rawRebuyCell.includes('£') || parsedRebuyVal >= 10
-                            ? Math.round(parsedRebuyVal / 10)
-                            : Math.round(parsedRebuyVal);
+
+                // Most Re-Buys in a Single Game: highest value from Row 23 (index 22, "Rebuys") divided by £10 (since every rebuy = £10)
+                const rebuyRow23 = pData[22] || [];
+                let maxRebuyMoneyRow23 = 0;
+                for (let c = 1; c < rebuyRow23.length; c++) {
+                    const cellMoney = parseMoney(rebuyRow23[c]);
+                    if (cellMoney > maxRebuyMoneyRow23) {
+                        maxRebuyMoneyRow23 = cellMoney;
+                    }
+                }
+                const a16Money = pData[15] ? parseMoney(pData[15][0]) : 0;
+                const highestRebuyMoney = Math.max(maxRebuyMoneyRow23, a16Money);
+                mostRebuysSingle =
+                    highestRebuyMoney >= 10
+                        ? Math.round(highestRebuyMoney / 10)
+                        : Math.round(highestRebuyMoney);
+
+                if (sheet1DateRowIdx === -1 && pData[15]) {
                     bubbleFinishes = parseInt(pData[15][1]) || 0;
                 }
                 if (pData[18]) {

@@ -587,13 +587,42 @@ export default function TVPresentationClient({
                     ? Math.round(((p.wins || 0) / p.gamesPlayed) * 100)
                     : 0;
 
-            const bubbleFromHistory = validPlaces.filter(v => v.place === 4).length;
+            // Dynamic Bubble Finishes: compare how many times this player finished 1 position after the last paid position in that game
+            // (e.g. finished 4th when money was paid down to 3rd, or finished 3rd when money was paid down to 2nd)
+            let bubbleFromHistory = 0;
+            history.forEach(session => {
+                const results = session.results || [];
+                const paidPlaces = results
+                    .filter(r => (r.winnings || 0) > 0)
+                    .map(r => parseInt(r.place, 10))
+                    .filter(n => !isNaN(n) && n > 0);
+                if (paidPlaces.length > 0) {
+                    const lastPaidPlace = Math.max(...paidPlaces);
+                    const bubblePlace = lastPaidPlace + 1;
+                    const pMatch = results.find(
+                        r => r.name.toLowerCase().trim() === pNameLower
+                    );
+                    if (
+                        pMatch &&
+                        parseInt(pMatch.place, 10) === bubblePlace &&
+                        (pMatch.winnings || 0) === 0
+                    ) {
+                        bubbleFromHistory += 1;
+                    }
+                }
+            });
             const bubbleCount =
-                p.bubbleFinishes !== undefined && p.bubbleFinishes > 0
+                bubbleFromHistory > 0
+                    ? bubbleFromHistory
+                    : p.bubbleFinishes !== undefined && p.bubbleFinishes > 0
                     ? p.bubbleFinishes
-                    : bubbleFromHistory;
+                    : 0;
 
             const maxRebuysSingle = p.mostRebuysSingle !== undefined ? p.mostRebuysSingle : 0;
+            const avgRebuysPerGame =
+                p.gamesPlayed > 0
+                    ? Number(((p.rebuys || 0) / p.gamesPlayed).toFixed(2))
+                    : 0;
             const timesEliminated = p.totalTimesKnockedOut !== undefined ? p.totalTimesKnockedOut : 0;
 
             const survivalRate =
@@ -636,6 +665,7 @@ export default function TVPresentationClient({
                 winRate,
                 bubbleCount,
                 maxRebuysSingle,
+                avgRebuysPerGame,
                 timesEliminated,
                 survivalRate,
                 cashPaid,
@@ -750,7 +780,7 @@ export default function TVPresentationClient({
                     title: 'II. Official Financial Ledger & Highest Payout',
                     text:
                         p.gamesPlayed > 0
-                            ? `Over ${p.gamesPlayed} appearances, ${p.name} has paid £${m.cashPaid} into the prize pool (${p.rebuys || 0} rebuys, ${p.addOns || 0} add-ons) and won £${p.winnings || 0} in gross payouts for an official net profit of ${
+                            ? `Over ${p.gamesPlayed} appearances, ${p.name} has paid £${m.cashPaid} into the prize pool (${p.rebuys || 0} rebuys, ${m.avgRebuysPerGame.toFixed(2)} avg rebuys/game, ${p.addOns || 0} add-ons @ £10 each) and won £${p.winnings || 0} in gross payouts for an official net profit of ${
                                   p.profit >= 0 ? `+£${p.profit}` : `-£${Math.abs(p.profit)}`
                               } (${m.roiPct >= 0 ? `+${m.roiPct}%` : `${m.roiPct}%`} ROI, £${avgWin} avg winnings/game). Highest single-game payout: £${m.highestWinAmount} (${m.highestWinLabel}).`
                             : `£0 paid in buy-ins and £0 won in payouts recorded on the 2026 season sheet.`
@@ -763,14 +793,14 @@ export default function TVPresentationClient({
                                   p.wins === 1 ? 'win' : 'wins'
                               }, ${m.winRate}% win rate) and ${m.podiumCount} top-3 finishes (${m.podiumRate}% podium rate). Worst recorded finish: ${formatOrdinal(m.worstPosition)} (${m.worstPositionLabel}), with an Average Finish Position of ${
                                   m.avgFinish > 0 ? m.avgFinish.toFixed(1) : 'N/A'
-                              } and ${m.bubbleCount} fourth-place bubble ${m.bubbleCount === 1 ? 'finish' : 'finishes'}.`
+                              } and ${m.bubbleCount} bubble ${m.bubbleCount === 1 ? 'finish' : 'finishes'} (finishing 1 spot outside the money).`
                             : `No tournament finishing positions recorded in the 2026 game history log.`
                 },
                 {
                     title: 'IV. Knockouts, Eliminations & Sheet Rivalry Log',
                     text:
                         p.gamesPlayed > 0
-                            ? `${p.name} has recorded ${p.knockOuts || 0} total season knockouts (${koRatio} KOs per game), with a single-game high of ${m.mostKOsInGame} KOs (${m.mostKOsLabel}). According to the player sheet knockout log, they have been knocked out ${m.timesEliminated} times (max ${m.maxRebuysSingle} rebuys in a single game). Sheet Rival (Most Knocked Out By): ${nemesisName} • Sheet Target (Most Knocked Out): ${pigeonName}.`
+                            ? `${p.name} has recorded ${p.knockOuts || 0} total season knockouts (${koRatio} KOs per game), with a single-game high of ${m.mostKOsInGame} KOs (${m.mostKOsLabel}). According to the player sheet knockout log, they have been knocked out ${m.timesEliminated} times (max ${m.maxRebuysSingle} rebuys in a single game, ${m.avgRebuysPerGame.toFixed(2)} avg/game). Sheet Rival (Most Knocked Out By): ${nemesisName} • Sheet Target (Most Knocked Out): ${pigeonName}.`
                             : `0 knockouts recorded, 0 times knocked out, and no head-to-head rivalries logged on the player sheet.`
                 }
             ];
@@ -902,17 +932,17 @@ export default function TVPresentationClient({
                 },
                 {
                     id: 'bubbles',
-                    label: '11. Bubble Finishes (4th)',
+                    label: '11. Bubble Finishes',
                     value: `${m.bubbleCount} 🫧`,
-                    subtext: 'Recorded 4th-Place Finishes',
+                    subtext: 'Finished 1 Spot Outside the Money',
                     category: 'placement',
                     highlightColor: 'text-purple-300 border-purple-500/30 bg-purple-950/20'
                 },
                 {
                     id: 'rebuys',
-                    label: '12. Total & Single-Game Rebuys',
+                    label: '12. Rebuys (Total, Max & Avg)',
                     value: `${p.rebuys || 0} (Max ${m.maxRebuysSingle})`,
-                    subtext: `${p.addOns || 0} Add-Ons • £${m.cashPaid} Total Cash Paid`,
+                    subtext: `${m.avgRebuysPerGame.toFixed(2)} Avg/Gm • ${p.addOns || 0} Add-Ons (£10 ea)`,
                     category: 'resilience',
                     highlightColor: 'text-blue-300 border-blue-500/30 bg-blue-950/20',
                     isLeagueRecord: (p.rebuys || 0) === maxLeagueRebuys && (p.rebuys || 0) > 0,
@@ -2830,7 +2860,7 @@ export default function TVPresentationClient({
                                     £{m.totalMoneySpent.toLocaleString()}
                                 </div>
                                 <span className="text-[10px] text-zinc-400">
-                                    Buy-ins + Rebuys + Add-Ons
+                                    {m.totalEntries} Buy-Ins + {m.totalRebuys} Rebuys + {m.totalAddOns} Add-Ons (@ £10)
                                 </span>
                             </div>
 
@@ -2899,9 +2929,9 @@ export default function TVPresentationClient({
                     {/* Bottom Page Switcher inside Left Panel */}
                     <div className="pt-2.5 border-t border-white/10 flex flex-col gap-2">
                         <div className="flex items-center justify-between text-[10px] text-zinc-400">
-                            <span className="uppercase tracking-widest font-bold">Rebuys &amp; Add-Ons</span>
+                            <span className="uppercase tracking-widest font-bold">Rebuys &amp; Add-Ons (£10 ea)</span>
                             <span className="font-mono text-zinc-200 font-bold">
-                                {m.totalRebuys} Rebuys • {m.totalAddOns} Add-Ons ({m.addOnAdoptionRate}% rate)
+                                {m.totalRebuys} Rebuys (£{m.totalRebuys * 10}) • {m.totalAddOns} Add-Ons (£{m.totalAddOns * 10})
                             </span>
                         </div>
                         <div className="grid grid-cols-3 gap-1.5">
