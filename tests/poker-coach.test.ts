@@ -17,6 +17,7 @@ describe('Poker Coach Advice & Table Context Tests', () => {
     bigBlind: 10,
     preset: 'free-play',
     liveCoachHints: true,
+    autoRebuy: true,
   };
 
   const createPlayer = (
@@ -29,6 +30,7 @@ describe('Poker Coach Advice & Table Context Tests', () => {
   ): TrainerPlayer => ({
     id,
     name: isHero ? 'Hero' : `Bot ${id}`,
+    avatar: '🎯',
     isHero,
     position,
     seatIndex: 0,

@@ -501,18 +501,22 @@ export default async function StatsPage() {
                         </thead>
                         <tbody className="divide-y divide-white/5 font-mono">
                             {history.map((session, idx) => {
+                                const getPos = (r: { place: string }) => {
+                                    const p = parseInt(r.place, 10);
+                                    return !isNaN(p) && p > 0 ? p : 99;
+                                };
                                 const paidResults = session.results.filter((r) => r.winnings > 0);
                                 const lastPaidPos =
                                     paidResults.length > 0
-                                        ? Math.max(...paidResults.map((r) => r.position))
+                                        ? Math.max(...paidResults.map((r) => getPos(r)))
                                         : 3;
                                 const bubblePos = lastPaidPos + 1;
                                 const bubblePlayer = session.results.find(
-                                    (r) => r.position === bubblePos && r.winnings === 0
+                                    (r) => getPos(r) === bubblePos && r.winnings === 0
                                 );
-                                const winner = session.results.find((r) => r.position === 1) || session.results[0];
-                                const second = session.results.find((r) => r.position === 2);
-                                const third = session.results.find((r) => r.position === 3);
+                                const winner = session.results.find((r) => getPos(r) === 1) || session.results[0];
+                                const second = session.results.find((r) => getPos(r) === 2);
+                                const third = session.results.find((r) => getPos(r) === 3);
                                 const sessionKOs = session.results.reduce((s, r) => s + (r.kos || 0), 0);
 
                                 return (

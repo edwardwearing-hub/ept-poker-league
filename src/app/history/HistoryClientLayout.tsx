@@ -32,14 +32,18 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                 const playerCount = session.results.length;
 
                 // Sort results by actual finishing position (fallback to points)
+                const getPos = (r: { place: string }) => {
+                    const p = parseInt(r.place, 10);
+                    return !isNaN(p) && p > 0 ? p : 99;
+                };
                 const sortedResults = [...session.results].sort(
-                    (a, b) => (a.position || 99) - (b.position || 99) || b.points - a.points
+                    (a, b) => getPos(a) - getPos(b) || b.points - a.points
                 );
-                const winner = sortedResults.find(r => r.position === 1) || sortedResults[0] || null;
+                const winner = sortedResults.find(r => getPos(r) === 1) || sortedResults[0] || null;
                 const paidResults = session.results.filter(r => r.winnings > 0);
-                const lastPaidPos = paidResults.length > 0 ? Math.max(...paidResults.map(r => r.position)) : 3;
+                const lastPaidPos = paidResults.length > 0 ? Math.max(...paidResults.map(r => getPos(r))) : 3;
                 const bubblePos = lastPaidPos + 1;
-                const bubblePlayer = sortedResults.find(r => r.position === bubblePos && r.winnings === 0);
+                const bubblePlayer = sortedResults.find(r => getPos(r) === bubblePos && r.winnings === 0);
                 const sessionKOs = session.results.reduce((s, r) => s + (r.kos || 0), 0);
 
                 // Dynamic banner message at the bottom of the card
@@ -129,7 +133,7 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                                             {/* Table Rows */}
                                             <div className="py-2 space-y-1">
                                                 {sortedResults.map((player, idx) => {
-                                                    const pos = player.position || idx + 1;
+                                                    const pos = getPos(player) !== 99 ? getPos(player) : idx + 1;
                                                     const isWinner = pos === 1;
                                                     const isBubble = pos === bubblePos && player.winnings === 0;
                                                     return (
