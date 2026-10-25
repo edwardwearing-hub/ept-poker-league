@@ -155,6 +155,13 @@ type BroadcastSlide =
           label: string;
           badge: string;
       }
+    | {
+          type: 'league_stats';
+          page: 1 | 2 | 3;
+          id: string;
+          label: string;
+          badge: string;
+      }
     | { type: 'tale_of_the_tape'; id: string; label: string; badge: string }
     | { type: 'season_awards'; id: string; label: string; badge: string }
     | { type: 'stacks_and_payouts'; id: string; label: string; badge: string };
@@ -983,7 +990,200 @@ export default function TVPresentationClient({
         });
     }, [players, history, reports, totalSeasonGames]);
 
-    // Build the full Broadcast Slide Deck (3 Pages per Player + Option 1 Special Interstitial Slides)
+    // Compute non-player-specific League Macro Telemetry, Nightly Session Logs, and Parity Benchmarks
+    const leagueMacroTelemetry = useMemo(() => {
+        const gamesCompleted = Math.max(history.length, totalSeasonGames, 1);
+        const totalEntriesFromPlayers = players.reduce((acc, p) => acc + (p.gamesPlayed || 0), 0);
+        const totalEntriesFromHistory = history.reduce((acc, s) => acc + (s.results?.length || 0), 0);
+        const totalEntries = Math.max(totalEntriesFromPlayers, totalEntriesFromHistory, 1);
+
+        const totalMoneySpent = players.reduce((acc, p) => acc + (p.cashPaid || 0), 0);
+        const totalWinningsPaid = players.reduce((acc, p) => acc + (p.winnings || 0), 0);
+        const totalNightlyPotsFromHistory = history.reduce((acc, s) => acc + (s.prizePot || 0), 0);
+        const totalNightlyPots = totalNightlyPotsFromHistory > 0 ? totalNightlyPotsFromHistory : totalMoneySpent;
+
+        const totalPointsAwarded = players.reduce((acc, p) => acc + (p.points || 0), 0);
+        const totalKnockouts = players.reduce((acc, p) => acc + (p.knockOuts || 0), 0);
+        const totalRebuys = players.reduce((acc, p) => acc + (p.rebuys || 0), 0);
+        const totalAddOns = players.reduce((acc, p) => acc + (p.addOns || 0), 0);
+        const totalBonusChips = players.reduce((acc, p) => acc + (p.bonusChips || 0), 0);
+
+        const avgPlayersPerGame = Number((totalEntries / gamesCompleted).toFixed(1));
+        const avgNightlyPot = Math.round(totalNightlyPots / gamesCompleted);
+        const avgSpendPerGame = Math.round(totalMoneySpent / gamesCompleted);
+        const avgPointsPerGame = Number((totalPointsAwarded / gamesCompleted).toFixed(1));
+        const avgKOsPerGame = Number((totalKnockouts / gamesCompleted).toFixed(1));
+        const rebuysPerGame = Number((totalRebuys / gamesCompleted).toFixed(2));
+        const addOnsPerGame = Number((totalAddOns / gamesCompleted).toFixed(1));
+
+        const addOnAdoptionRate = Math.min(100, Math.round((totalAddOns / totalEntries) * 100));
+        const rebuyFrequencyRate = Math.round((totalRebuys / totalEntries) * 100);
+
+        const koPointsTotal = totalKnockouts;
+        const placementPointsTotal = Math.max(0, totalPointsAwarded - koPointsTotal);
+        const placementPointsShare = Math.round((placementPointsTotal / Math.max(1, totalPointsAwarded)) * 100);
+        const koPointsShare = Math.max(0, 100 - placementPointsShare);
+
+        // Session-by-session non-player summary
+        let runningSidePot = 0;
+        let maxPlayersInGame = 0;
+        let maxPlayersDate = '2026 Season';
+        let minPlayersInGame = 99;
+        let biggestNightlyPot = 0;
+        let biggestPotLabel = '2026 Season';
+        let smallestNightlyPot = 999999;
+        let smallestPotLabel = '2026 Season';
+        let biggestSinglePayout = 0;
+        let mostKOsInSingleNight = 0;
+        let mostKOsNightLabel = '2026 Season';
+
+        const tierCounts: Record<number, { count: number; basePts: number; totalPts: number; totalCash: number }> = {
+            1: { count: 0, basePts: 10, totalPts: 0, totalCash: 0 },
+            2: { count: 0, basePts: 6, totalPts: 0, totalCash: 0 },
+            3: { count: 0, basePts: 4, totalPts: 0, totalCash: 0 },
+            4: { count: 0, basePts: 3, totalPts: 0, totalCash: 0 },
+            5: { count: 0, basePts: 2, totalPts: 0, totalCash: 0 },
+        };
+
+        const sessionSummaries = history.map((s, idx) => {
+            const gNum = idx + 1;
+            const pCount = s.results?.length || 0;
+            const pot = s.prizePot || 0;
+            const side = s.sidePot || 0;
+            runningSidePot += side;
+
+            const cleanDate = (s.date || `Game ${gNum}`).replace(/^[A-Za-z]+,\s*/, '');
+            const shortDate = cleanDate.replace(/,\s*\d{4}$/, '');
+
+            if (pCount > maxPlayersInGame) {
+                maxPlayersInGame = pCount;
+                maxPlayersDate = shortDate;
+            }
+            if (pCount > 0 && pCount < minPlayersInGame) {
+                minPlayersInGame = pCount;
+            }
+            if (pot > biggestNightlyPot) {
+                biggestNightlyPot = pot;
+                biggestPotLabel = `Game ${gNum} (${shortDate})`;
+            }
+            if (pot > 0 && pot < smallestNightlyPot) {
+                smallestNightlyPot = pot;
+                smallestPotLabel = `Game ${gNum} (${shortDate})`;
+            }
+
+            let nightPoints = 0;
+            let nightKOs = 0;
+            let nightPaidOut = 0;
+            const payoutsList: number[] = [];
+
+            (s.results || []).forEach(r => {
+                const pl = parseInt(r.place, 10);
+                const w = r.winnings || 0;
+                const pts = r.points || 0;
+                const kos = r.kos || 0;
+
+                nightPoints += pts;
+                nightKOs += kos;
+                nightPaidOut += w;
+                if (w > 0) payoutsList.push(w);
+                if (w > biggestSinglePayout) biggestSinglePayout = w;
+
+                if (pl >= 1 && pl <= 5 && tierCounts[pl]) {
+                    tierCounts[pl].count += 1;
+                    tierCounts[pl].totalPts += tierCounts[pl].basePts;
+                    tierCounts[pl].totalCash += w;
+                }
+            });
+
+            payoutsList.sort((a, b) => b - a);
+
+            if (nightKOs > mostKOsInSingleNight) {
+                mostKOsInSingleNight = nightKOs;
+                mostKOsNightLabel = `Game ${gNum} (${shortDate})`;
+            }
+
+            return {
+                gameNumber: gNum,
+                rawDate: s.date,
+                shortDate,
+                prizePot: pot,
+                sidePot: side,
+                cumulativeSidePot: runningSidePot,
+                playerCount: pCount,
+                nightPoints,
+                nightKOs,
+                nightPaidOut,
+                payoutsList,
+            };
+        });
+
+        if (minPlayersInGame === 99) minPlayersInGame = maxPlayersInGame;
+        if (smallestNightlyPot === 999999) smallestNightlyPot = biggestNightlyPot;
+        if (biggestSinglePayout === 0) {
+            biggestSinglePayout = Math.max(...computedProfiles.map(c => c.highestWinAmount), 0);
+        }
+
+        const activeRosterCount = players.filter(p => (p.gamesPlayed || 0) > 0).length || players.length || 1;
+        const uniqueWinnersCount = players.filter(p => (p.wins || 0) > 0).length;
+        const podiumFinishersCount = computedProfiles.filter(c => c.podiumCount > 0).length;
+        const profitableOrEvenCount = players.filter(p => (p.gamesPlayed || 0) > 0 && (p.profit || 0) >= 0).length;
+        const deficitCount = Math.max(0, activeRosterCount - profitableOrEvenCount);
+
+        const avgOutlayPerSeat = Number((totalMoneySpent / totalEntries).toFixed(2));
+        const avgWinningsPerSeat = Number((totalWinningsPaid / totalEntries).toFixed(2));
+        const avgPointsPerSeat = Number((totalPointsAwarded / totalEntries).toFixed(1));
+        const avgKOsPerSeat = Number((totalKnockouts / totalEntries).toFixed(2));
+
+        return {
+            gamesCompleted,
+            totalEntries,
+            activeRosterCount,
+            totalRosterCount: players.length,
+            totalMoneySpent,
+            totalWinningsPaid,
+            totalNightlyPots,
+            avgPlayersPerGame,
+            avgNightlyPot,
+            avgSpendPerGame,
+            avgPointsPerGame,
+            avgKOsPerGame,
+            totalPointsAwarded,
+            totalKnockouts,
+            totalRebuys,
+            totalAddOns,
+            totalBonusChips,
+            rebuysPerGame,
+            addOnsPerGame,
+            addOnAdoptionRate,
+            rebuyFrequencyRate,
+            koPointsTotal,
+            placementPointsTotal,
+            placementPointsShare,
+            koPointsShare,
+            maxPlayersInGame,
+            maxPlayersDate,
+            minPlayersInGame,
+            biggestNightlyPot,
+            biggestPotLabel,
+            smallestNightlyPot,
+            smallestPotLabel,
+            biggestSinglePayout,
+            mostKOsInSingleNight,
+            mostKOsNightLabel,
+            uniqueWinnersCount,
+            podiumFinishersCount,
+            profitableOrEvenCount,
+            deficitCount,
+            avgOutlayPerSeat,
+            avgWinningsPerSeat,
+            avgPointsPerSeat,
+            avgKOsPerSeat,
+            tierCounts,
+            sessionSummaries,
+        };
+    }, [players, history, computedProfiles, totalSeasonGames]);
+
+    // Build the full Broadcast Slide Deck (3 Pages per Player + 3 League Stats Pages + Special Interstitial Slides)
     const activePlayerProfiles = useMemo(() => {
         const filteredPlayers = onlyActiveFinalists
             ? computedProfiles.filter(cp => !eliminatedPlayers[cp.player.name])
@@ -993,6 +1193,31 @@ export default function TVPresentationClient({
 
     const broadcastSlides: BroadcastSlide[] = useMemo(() => {
         const slides: BroadcastSlide[] = [];
+
+        // Generic Non-Player-Specific League Statistics (3 Pages)
+        slides.push(
+            {
+                type: 'league_stats',
+                page: 1,
+                id: 'league_stats_p1',
+                label: 'League Stats (1/3)',
+                badge: '📊 LEAGUE • P1'
+            },
+            {
+                type: 'league_stats',
+                page: 2,
+                id: 'league_stats_p2',
+                label: 'Season Log (2/3)',
+                badge: '📅 LEAGUE • P2'
+            },
+            {
+                type: 'league_stats',
+                page: 3,
+                id: 'league_stats_p3',
+                label: 'Parity & Rules (3/3)',
+                badge: '📈 LEAGUE • P3'
+            }
+        );
 
         activePlayerProfiles.forEach(cp => {
             const firstName = cp.player.name.split(' ')[0];
@@ -1100,6 +1325,15 @@ export default function TVPresentationClient({
     const handleSelectPlayerPage = (playerName: string, page: 1 | 2 | 3) => {
         const targetIdx = broadcastSlides.findIndex(
             s => s.type === 'player' && s.profile.player.name === playerName && s.page === page
+        );
+        if (targetIdx !== -1) {
+            handleSelectSlide(targetIdx);
+        }
+    };
+
+    const handleSelectLeaguePage = (page: 1 | 2 | 3) => {
+        const targetIdx = broadcastSlides.findIndex(
+            s => s.type === 'league_stats' && s.page === page
         );
         if (targetIdx !== -1) {
             handleSelectSlide(targetIdx);
@@ -1290,6 +1524,7 @@ export default function TVPresentationClient({
     const renderTopLoopControls = () => {
         const activePlayerName = currentSlide?.type === 'player' ? currentSlide.profile.player.name : null;
         const activePlayerPage = currentSlide?.type === 'player' ? currentSlide.page : null;
+        const activeLeaguePage = currentSlide?.type === 'league_stats' ? currentSlide.page : null;
 
         return (
             <div className="bg-zinc-950/95 border border-gold/30 rounded-2xl px-3.5 py-2 shadow-xl relative overflow-hidden shrink-0">
@@ -1378,8 +1613,29 @@ export default function TVPresentationClient({
                         </button>
                     </div>
 
-                    {/* Right: Active Player 3-Page Tabs + Slide Counter */}
+                    {/* Right: Active League/Player 3-Page Tabs + Slide Counter */}
                     <div className="flex items-center gap-2">
+                        {activeLeaguePage && (
+                            <div className="flex items-center gap-1 bg-black/80 px-2 py-0.5 rounded-xl border border-emerald-400/40">
+                                <span className="text-[9px] font-mono uppercase text-emerald-300 mr-1">
+                                    League Pages:
+                                </span>
+                                {([1, 2, 3] as const).map(pg => (
+                                    <button
+                                        key={pg}
+                                        onClick={() => handleSelectLeaguePage(pg)}
+                                        className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-black uppercase transition cursor-pointer ${
+                                            activeLeaguePage === pg
+                                                ? 'bg-emerald-400 text-black shadow'
+                                                : 'text-zinc-400 hover:text-white bg-zinc-900'
+                                        }`}
+                                    >
+                                        P{pg}/3
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
                         {activePlayerName && activePlayerPage && (
                             <div className="flex items-center gap-1 bg-black/80 px-2 py-0.5 rounded-xl border border-gold/40">
                                 <span className="text-[9px] font-mono uppercase text-zinc-400 mr-1">
@@ -1419,8 +1675,36 @@ export default function TVPresentationClient({
                     </div>
                 </div>
 
-                {/* Compact Single-Row Player & Special Slide Strip (1 Pill per Player + 3 Specials) */}
+                {/* Compact Single-Row League Stats, Player & Special Slide Strip */}
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                    {/* Dedicated 3-Page Generic League Stats Pill */}
+                    <button
+                        onClick={() => {
+                            if (activeLeaguePage) {
+                                const nextPg = ((activeLeaguePage % 3) + 1) as 1 | 2 | 3;
+                                handleSelectLeaguePage(nextPg);
+                            } else {
+                                handleSelectLeaguePage(1);
+                            }
+                        }}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border shrink-0 transition-all cursor-pointer ${
+                            activeLeaguePage
+                                ? 'bg-gradient-to-r from-emerald-500/35 via-teal-500/25 to-black border-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.4)]'
+                                : 'bg-emerald-950/35 border-emerald-500/40 hover:border-emerald-400'
+                        }`}
+                        title="View 3-Page Generic League-Wide Statistics (Click again to cycle P1 → P2 → P3)"
+                    >
+                        <BarChart3 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span className="text-[11px] font-black uppercase text-white whitespace-nowrap">
+                            League Stats
+                        </span>
+                        <span className={`px-1 py-0.2 rounded text-[8px] font-mono font-black ${
+                            activeLeaguePage ? 'bg-emerald-400 text-black' : 'bg-emerald-900/70 text-emerald-300'
+                        }`}>
+                            {activeLeaguePage ? `${activeLeaguePage}/3` : '3 Pages'}
+                        </span>
+                    </button>
+
                     {activePlayerProfiles.map(cp => {
                         const isPlayerActive = activePlayerName === cp.player.name;
                         const eliminated = !!eliminatedPlayers[cp.player.name];
@@ -1470,7 +1754,7 @@ export default function TVPresentationClient({
                     {includeSpecialSlides &&
                         broadcastSlides
                             .map((s, idx) => ({ s, idx }))
-                            .filter(item => item.s.type !== 'player')
+                            .filter(item => item.s.type !== 'player' && item.s.type !== 'league_stats')
                             .map(({ s, idx }) => {
                                 const isSelected = idx === safeSlideIdx;
                                 return (
@@ -2472,11 +2756,700 @@ export default function TVPresentationClient({
         );
     };
 
+    // =========================================================================
+    // SLIDE TYPE 0: GENERIC LEAGUE MACRO TELEMETRY (3 NON-PLAYER PAGES)
+    // =========================================================================
+    const renderLeagueStatsSlide = (page: 1 | 2 | 3) => {
+        const m = leagueMacroTelemetry;
+
+        return (
+            <div className="grid grid-cols-12 gap-4 flex-1 min-h-0">
+                {/* LEFT 4 COLUMNS: LEAGUE SEASON IDENTITY & GLOBAL TOTALS */}
+                <div className="col-span-4 bg-gradient-to-b from-zinc-900/95 via-zinc-950/95 to-black border border-emerald-500/30 rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden shadow-2xl">
+                    <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none bg-emerald-500" />
+                    <div className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full blur-3xl opacity-15 pointer-events-none bg-amber-500" />
+
+                    {/* Top Identity Header */}
+                    <div>
+                        <div className="flex items-start justify-between gap-2 mb-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/25 via-emerald-900/40 to-black border-2 border-emerald-400/50 flex flex-col items-center justify-center shadow-[0_0_25px_rgba(16,185,129,0.25)] shrink-0">
+                                    <span className="text-xl leading-none">🏆</span>
+                                    <span className="text-[9px] font-black text-emerald-300 uppercase tracking-widest mt-0.5">
+                                        2026
+                                    </span>
+                                </div>
+                                <div>
+                                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-[9px] font-black uppercase tracking-widest mb-1">
+                                        <span>📊 Live Google Sheets Telemetry</span>
+                                    </div>
+                                    <h2 className="text-2xl font-serif font-black text-white uppercase tracking-tight leading-none">
+                                        League Macro Report
+                                    </h2>
+                                    <p className="text-[11px] text-zinc-400 font-medium mt-1">
+                                        Aggregate E.P.T. Season Statistics • Non-Player Overview
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Season Completion Progress Bar */}
+                        <div className="bg-black/60 border border-white/10 rounded-xl p-3 mb-3">
+                            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest mb-1.5">
+                                <span className="text-zinc-400">Regular Season Progress</span>
+                                <span className="text-emerald-400">
+                                    {m.gamesCompleted} Games Completed • {m.activeRosterCount}/{m.totalRosterCount} Roster Active
+                                </span>
+                            </div>
+                            <div className="w-full h-2.5 bg-zinc-900 rounded-full overflow-hidden border border-white/10 p-0.5">
+                                <div
+                                    className="h-full rounded-full bg-gradient-to-r from-emerald-600 via-emerald-400 to-amber-400 transition-all duration-700"
+                                    style={{ width: `${Math.min(100, Math.round((m.gamesCompleted / 10) * 100))}%` }}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between text-[10px] text-zinc-400 mt-1.5 font-mono">
+                                <span>Total Entries Logged: <strong className="text-white">{m.totalEntries} Seats</strong></span>
+                                <span>Avg Turnout: <strong className="text-emerald-300">{m.avgPlayersPerGame.toFixed(1)} / Night</strong></span>
+                            </div>
+                        </div>
+
+                        {/* 2x3 Primary League Totals Grid */}
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-zinc-900/80 border border-white/10 rounded-xl p-2.5">
+                                <span className="text-[9px] uppercase tracking-widest text-zinc-400 font-bold block">
+                                    Total League Money Spent
+                                </span>
+                                <div className="text-xl font-black font-mono text-white mt-0.5">
+                                    £{m.totalMoneySpent.toLocaleString()}
+                                </div>
+                                <span className="text-[10px] text-zinc-400">
+                                    Buy-ins + Rebuys + Add-Ons
+                                </span>
+                            </div>
+
+                            <div className="bg-zinc-900/80 border border-emerald-500/30 rounded-xl p-2.5">
+                                <span className="text-[9px] uppercase tracking-widest text-emerald-400 font-bold block">
+                                    Nightly Prize Pots
+                                </span>
+                                <div className="text-xl font-black font-mono text-emerald-400 mt-0.5">
+                                    £{m.totalNightlyPots.toLocaleString()}
+                                </div>
+                                <span className="text-[10px] text-zinc-400">
+                                    £{m.totalWinningsPaid.toLocaleString()} distributed to date
+                                </span>
+                            </div>
+
+                            <div className="bg-amber-950/25 border border-amber-500/35 rounded-xl p-2.5">
+                                <span className="text-[9px] uppercase tracking-widest text-amber-400 font-bold block">
+                                    Grand Final Vault
+                                </span>
+                                <div className="text-xl font-black font-mono text-amber-400 mt-0.5">
+                                    £{totalPot.toLocaleString()}
+                                </div>
+                                <span className="text-[10px] text-amber-200/70">
+                                    Accumulated Season Side Pot
+                                </span>
+                            </div>
+
+                            <div className="bg-zinc-900/80 border border-sky-500/30 rounded-xl p-2.5">
+                                <span className="text-[9px] uppercase tracking-widest text-sky-400 font-bold block">
+                                    Total League Points
+                                </span>
+                                <div className="text-xl font-black font-mono text-sky-300 mt-0.5">
+                                    {m.totalPointsAwarded.toLocaleString()} <span className="text-xs font-sans">PTS</span>
+                                </div>
+                                <span className="text-[10px] text-zinc-400">
+                                    {m.placementPointsTotal} Placement + {m.koPointsTotal} KO
+                                </span>
+                            </div>
+
+                            <div className="bg-zinc-900/80 border border-rose-500/30 rounded-xl p-2.5">
+                                <span className="text-[9px] uppercase tracking-widest text-rose-400 font-bold block">
+                                    Total Knockouts
+                                </span>
+                                <div className="text-xl font-black font-mono text-rose-400 mt-0.5">
+                                    {m.totalKnockouts} <span className="text-xs font-sans">KOs</span>
+                                </div>
+                                <span className="text-[10px] text-zinc-400">
+                                    {m.avgKOsPerGame.toFixed(1)} eliminations per game
+                                </span>
+                            </div>
+
+                            <div className="bg-zinc-900/80 border border-purple-500/30 rounded-xl p-2.5">
+                                <span className="text-[9px] uppercase tracking-widest text-purple-400 font-bold block">
+                                    Final Bonus Chips
+                                </span>
+                                <div className="text-xl font-black font-mono text-purple-300 mt-0.5">
+                                    {m.totalBonusChips.toLocaleString()}
+                                </div>
+                                <span className="text-[10px] text-zinc-400">
+                                    500 chips per league point
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bottom Page Switcher inside Left Panel */}
+                    <div className="pt-2.5 border-t border-white/10 flex flex-col gap-2">
+                        <div className="flex items-center justify-between text-[10px] text-zinc-400">
+                            <span className="uppercase tracking-widest font-bold">Rebuys &amp; Add-Ons</span>
+                            <span className="font-mono text-zinc-200 font-bold">
+                                {m.totalRebuys} Rebuys • {m.totalAddOns} Add-Ons ({m.addOnAdoptionRate}% rate)
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5">
+                            {([
+                                { p: 1 as const, title: '1/3 • Economy' },
+                                { p: 2 as const, title: '2/3 • Nightly Log' },
+                                { p: 3 as const, title: '3/3 • Parity & Rules' },
+                            ]).map((item) => (
+                                <button
+                                    key={item.p}
+                                    onClick={() => handleSelectLeaguePage(item.p)}
+                                    className={`py-1.5 px-2 rounded-lg text-[10px] font-black uppercase tracking-wider border transition-all ${
+                                        page === item.p
+                                            ? 'bg-emerald-500 text-black border-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
+                                            : 'bg-zinc-900/90 text-zinc-400 border-white/10 hover:text-white'
+                                    }`}
+                                >
+                                    {item.title}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* RIGHT 8 COLUMNS: PAGE-SPECIFIC MACRO TELEMETRY */}
+                <div className="col-span-8 flex flex-col gap-3 min-h-0">
+                    {/* =========================================================
+                        PAGE 1: MACRO ECONOMY, AVERAGES & POT TRAJECTORY
+                    ========================================================= */}
+                    {page === 1 && (
+                        <div className="flex-1 flex flex-col justify-between gap-3 min-h-0">
+                            {/* Top 4x2 Macro Telemetry Cards */}
+                            <div className="grid grid-cols-4 gap-2.5">
+                                <div className="bg-zinc-900/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                                        Avg Nightly Prize Pot
+                                    </span>
+                                    <div className="text-2xl font-black font-mono text-emerald-400 my-1">
+                                        £{Math.round(m.avgNightlyPot)}
+                                    </div>
+                                    <span className="text-[10px] text-zinc-400">
+                                        Range: £{m.smallestNightlyPot} – £{m.biggestNightlyPot}
+                                    </span>
+                                </div>
+
+                                <div className="bg-zinc-900/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                                        Peak Nightly Pot
+                                    </span>
+                                    <div className="text-2xl font-black font-mono text-amber-400 my-1">
+                                        £{m.biggestNightlyPot}
+                                    </div>
+                                    <span className="text-[10px] text-zinc-400 truncate">
+                                        {m.biggestPotLabel} • Top Single Payout £{m.biggestSinglePayout}
+                                    </span>
+                                </div>
+
+                                <div className="bg-zinc-900/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                                        Table Attendance
+                                    </span>
+                                    <div className="text-2xl font-black font-mono text-white my-1">
+                                        {m.avgPlayersPerGame.toFixed(1)} <span className="text-xs font-sans text-zinc-400">AVG</span>
+                                    </div>
+                                    <span className="text-[10px] text-zinc-400 truncate">
+                                        Peak: {m.maxPlayersInGame} ({m.maxPlayersDate}) • Min: {m.minPlayersInGame}
+                                    </span>
+                                </div>
+
+                                <div className="bg-zinc-900/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                                        Avg Spend Per Seat
+                                    </span>
+                                    <div className="text-2xl font-black font-mono text-sky-300 my-1">
+                                        £{m.avgOutlayPerSeat.toFixed(2)}
+                                    </div>
+                                    <span className="text-[10px] text-zinc-400">
+                                        £{Math.round(m.avgSpendPerGame)} total table spend / game
+                                    </span>
+                                </div>
+
+                                <div className="bg-zinc-900/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                                        Add-On Adoption Rate
+                                    </span>
+                                    <div className="text-2xl font-black font-mono text-emerald-300 my-1">
+                                        {m.addOnAdoptionRate}%
+                                    </div>
+                                    <span className="text-[10px] text-zinc-400">
+                                        {m.totalAddOns} Add-Ons across {m.totalEntries} entries ({m.addOnsPerGame.toFixed(1)}/game)
+                                    </span>
+                                </div>
+
+                                <div className="bg-zinc-900/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                                        Rebuy Frequency
+                                    </span>
+                                    <div className="text-2xl font-black font-mono text-orange-400 my-1">
+                                        {m.rebuyFrequencyRate}%
+                                    </div>
+                                    <span className="text-[10px] text-zinc-400">
+                                        {m.totalRebuys} Total Rebuys ({m.rebuysPerGame.toFixed(2)} per game)
+                                    </span>
+                                </div>
+
+                                <div className="bg-zinc-900/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                                        Nightly Action Tempo
+                                    </span>
+                                    <div className="text-2xl font-black font-mono text-rose-400 my-1">
+                                        {m.avgKOsPerGame.toFixed(1)} <span className="text-xs font-sans text-zinc-400">KOs/G</span>
+                                    </div>
+                                    <span className="text-[10px] text-zinc-400 truncate">
+                                        Peak Carnage: {m.mostKOsInSingleNight} KOs ({m.mostKOsNightLabel})
+                                    </span>
+                                </div>
+
+                                <div className="bg-zinc-900/90 border border-white/10 rounded-2xl p-3 flex flex-col justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                                        Points Per Session
+                                    </span>
+                                    <div className="text-2xl font-black font-mono text-purple-300 my-1">
+                                        {m.avgPointsPerGame.toFixed(1)} <span className="text-xs font-sans text-zinc-400">PTS/G</span>
+                                    </div>
+                                    <span className="text-[10px] text-zinc-400">
+                                        {m.placementPointsShare}% Placement • {m.koPointsShare}% Bounties
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Bottom Widescreen Chart: Nightly Prize Pot vs Cumulative Final Vault */}
+                            <div className="flex-1 bg-zinc-900/90 border border-white/10 rounded-2xl p-4 flex flex-col justify-between min-h-0">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 block">
+                                            Season Financial Trajectory (Games 1 – {m.gamesCompleted})
+                                        </span>
+                                        <h3 className="text-base font-serif font-bold text-white">
+                                            Nightly Prize Pots, Cumulative Grand Final Vault &amp; Attendance
+                                        </h3>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider">
+                                        <span className="flex items-center gap-1.5 text-emerald-400">
+                                            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" /> Nightly Pot (£)
+                                        </span>
+                                        <span className="flex items-center gap-1.5 text-amber-400">
+                                            <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block" /> Cumulative Final Vault (£)
+                                        </span>
+                                        <span className="flex items-center gap-1.5 text-sky-300">
+                                            <span className="w-2 h-2 rounded-full bg-sky-400 inline-block" /> Players Seated
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Custom Bar + Metric Strip for All Completed Sessions */}
+                                <div className="flex-1 grid grid-cols-9 gap-2.5 items-end pt-4 pb-1 min-h-0">
+                                    {m.sessionSummaries.map((s) => {
+                                        const maxChartVal = Math.max(240, m.biggestNightlyPot, totalPot);
+                                        const potHeightPct = Math.max(12, Math.round((s.prizePot / maxChartVal) * 100));
+                                        const vaultHeightPct = Math.max(8, Math.round((s.cumulativeSidePot / maxChartVal) * 100));
+
+                                        return (
+                                            <div
+                                                key={s.gameNumber}
+                                                className="h-full flex flex-col justify-between bg-black/45 border border-white/5 rounded-xl p-2 hover:border-emerald-500/40 transition-all"
+                                            >
+                                                {/* Top Session Badges */}
+                                                <div className="flex items-center justify-between text-[9px] font-mono">
+                                                    <span className="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 font-bold">
+                                                        {s.playerCount}P
+                                                    </span>
+                                                    <span className="text-rose-400 font-bold">
+                                                        {s.nightKOs} KO
+                                                    </span>
+                                                </div>
+
+                                                {/* Dual Bars Container */}
+                                                <div className="flex-1 flex items-end justify-center gap-2 py-2 min-h-0">
+                                                    {/* Nightly Prize Pot Bar */}
+                                                    <div className="flex flex-col items-center justify-end h-full w-6">
+                                                        <span className="text-[9px] font-mono font-black text-emerald-300 mb-1">
+                                                            £{s.prizePot}
+                                                        </span>
+                                                        <div
+                                                            className="w-full rounded-t-md bg-gradient-to-t from-emerald-700 to-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.25)]"
+                                                            style={{ height: `${potHeightPct}%` }}
+                                                        />
+                                                    </div>
+
+                                                    {/* Cumulative Final Vault Bar */}
+                                                    <div className="flex flex-col items-center justify-end h-full w-6">
+                                                        <span className="text-[9px] font-mono font-bold text-amber-300 mb-1">
+                                                            £{s.cumulativeSidePot}
+                                                        </span>
+                                                        <div
+                                                            className="w-full rounded-t-md bg-gradient-to-t from-amber-700 to-amber-400 opacity-90"
+                                                            style={{ height: `${vaultHeightPct}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Bottom Game Label */}
+                                                <div className="pt-1.5 border-t border-white/10 text-center">
+                                                    <div className="text-[10px] font-black text-white uppercase tracking-wider">
+                                                        Game {s.gameNumber}
+                                                    </div>
+                                                    <div className="text-[9px] text-zinc-400 font-mono truncate">
+                                                        {s.shortDate}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* =========================================================
+                        PAGE 2: GAME-BY-GAME SEASON SESSION CHRONICLE (NON-PLAYER)
+                    ========================================================= */}
+                    {page === 2 && (
+                        <div className="flex-1 flex flex-col justify-between gap-3 min-h-0">
+                            <div className="bg-zinc-900/90 border border-white/10 rounded-2xl p-3.5 flex-1 flex flex-col justify-between min-h-0">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 block">
+                                            Official Session Log • Non-Player Macro Breakdown
+                                        </span>
+                                        <h3 className="text-base font-serif font-bold text-white">
+                                            Game-by-Game Turnout, Prize Pools, Payout Splits &amp; Table Action
+                                        </h3>
+                                    </div>
+                                    <div className="text-right text-[10px] font-mono text-zinc-400">
+                                        <span>Total Nightly Prize Pools: <strong className="text-emerald-400">£{m.totalNightlyPots}</strong></span>
+                                        <span className="mx-2">•</span>
+                                        <span>Side Pot Vault Added: <strong className="text-amber-400">£{totalPot}</strong></span>
+                                    </div>
+                                </div>
+
+                                {/* 3x3 Grid of Completed Games */}
+                                <div className="grid grid-cols-3 gap-2.5 flex-1 min-h-0">
+                                    {m.sessionSummaries.map((s) => (
+                                        <div
+                                            key={s.gameNumber}
+                                            className="bg-black/55 border border-white/10 rounded-xl p-3 flex flex-col justify-between hover:border-emerald-500/40 transition-all"
+                                        >
+                                            <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+                                                        Game #{s.gameNumber}
+                                                    </span>
+                                                    <span className="text-xs font-bold text-zinc-200">
+                                                        {s.rawDate}
+                                                    </span>
+                                                </div>
+                                                <span className="text-[10px] font-mono font-bold text-sky-300 bg-sky-500/10 border border-sky-500/25 px-2 py-0.5 rounded">
+                                                    {s.playerCount} Players
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-4 gap-1.5 my-1.5 text-center">
+                                                <div className="bg-zinc-900/90 rounded-lg p-1.5 border border-white/5">
+                                                    <span className="text-[8px] uppercase text-zinc-400 block">Prize Pot</span>
+                                                    <span className="text-sm font-mono font-black text-emerald-400">
+                                                        £{s.prizePot}
+                                                    </span>
+                                                </div>
+                                                <div className="bg-zinc-900/90 rounded-lg p-1.5 border border-white/5">
+                                                    <span className="text-[8px] uppercase text-zinc-400 block">Vault +</span>
+                                                    <span className="text-sm font-mono font-black text-amber-400">
+                                                        +£{s.sidePot}
+                                                    </span>
+                                                </div>
+                                                <div className="bg-zinc-900/90 rounded-lg p-1.5 border border-white/5">
+                                                    <span className="text-[8px] uppercase text-zinc-400 block">Points</span>
+                                                    <span className="text-sm font-mono font-black text-sky-300">
+                                                        {s.nightPoints}
+                                                    </span>
+                                                </div>
+                                                <div className="bg-zinc-900/90 rounded-lg p-1.5 border border-white/5">
+                                                    <span className="text-[8px] uppercase text-zinc-400 block">Total KOs</span>
+                                                    <span className="text-sm font-mono font-black text-rose-400">
+                                                        {s.nightKOs}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between text-[10px] pt-1 border-t border-white/5">
+                                                <span className="text-zinc-400 uppercase tracking-wider font-bold text-[9px]">
+                                                    Payout Structure:
+                                                </span>
+                                                <div className="flex items-center gap-1 font-mono font-bold">
+                                                    {s.payoutsList.length > 0 ? (
+                                                        s.payoutsList.map((amt, idx) => (
+                                                            <span
+                                                                key={idx}
+                                                                className={`px-1.5 py-0.5 rounded text-[9px] ${
+                                                                    idx === 0
+                                                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                                                        : idx === 1
+                                                                        ? 'bg-zinc-700/50 text-zinc-200'
+                                                                        : 'bg-amber-900/30 text-amber-400/90'
+                                                                }`}
+                                                            >
+                                                                {idx + 1}st: £{amt}
+                                                            </span>
+                                                        ))
+                                                    ) : (
+                                                        <span className="text-zinc-400">Recorded in Sheet</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Bottom Summary Strip */}
+                            <div className="bg-zinc-900/90 border border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-6">
+                                    <div>
+                                        <span className="text-zinc-400 uppercase text-[10px] font-bold mr-2">Biggest Night:</span>
+                                        <span className="font-mono font-black text-emerald-400">£{m.biggestNightlyPot} ({m.biggestPotLabel})</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-zinc-400 uppercase text-[10px] font-bold mr-2">Tightest Night:</span>
+                                        <span className="font-mono font-bold text-zinc-200">£{m.smallestNightlyPot} ({m.smallestPotLabel})</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-zinc-400 uppercase text-[10px] font-bold mr-2">Most Action:</span>
+                                        <span className="font-mono font-black text-rose-400">{m.mostKOsInSingleNight} KOs ({m.mostKOsNightLabel})</span>
+                                    </div>
+                                </div>
+                                <div className="font-mono text-[11px] text-amber-300 font-bold">
+                                    Grand Final Vault Contribution: £10–£20 / Night → £{totalPot} Total
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* =========================================================
+                        PAGE 3: LEAGUE PARITY, FINISH DISTRIBUTIONS & SCORING CHARTER
+                    ========================================================= */}
+                    {page === 3 && (
+                        <div className="flex-1 grid grid-cols-12 gap-3 min-h-0">
+                            {/* Left 7 Cols: Points & Prize Distribution by Finish Position */}
+                            <div className="col-span-7 bg-zinc-900/90 border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 block">
+                                        Season Placement &amp; Bounty Breakdown
+                                    </span>
+                                    <h3 className="text-base font-serif font-bold text-white mb-3">
+                                        Where All {m.totalPointsAwarded} League Points &amp; £{m.totalWinningsPaid.toLocaleString()} Were Won
+                                    </h3>
+
+                                    <div className="space-y-2.5">
+                                        {([
+                                            { pos: 1, label: '1st Place' },
+                                            { pos: 2, label: '2nd Place' },
+                                            { pos: 3, label: '3rd Place' },
+                                            { pos: 4, label: '4th Place' },
+                                            { pos: 5, label: '5th Place' },
+                                        ] as const).map((tierMeta) => {
+                                            const t = m.tierCounts[tierMeta.pos] || {
+                                                count: 0,
+                                                basePts: 0,
+                                                totalPts: 0,
+                                                totalCash: 0,
+                                            };
+                                            const cashSharePct =
+                                                m.totalWinningsPaid > 0
+                                                    ? Math.round((t.totalCash / m.totalWinningsPaid) * 100)
+                                                    : 0;
+                                            const ptsSharePct =
+                                                m.totalPointsAwarded > 0
+                                                    ? Math.round((t.totalPts / m.totalPointsAwarded) * 100)
+                                                    : 0;
+
+                                            return (
+                                                <div
+                                                    key={tierMeta.pos}
+                                                    className="bg-black/50 border border-white/10 rounded-xl p-2.5 flex flex-col gap-1.5"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-xs font-black">
+                                                                {tierMeta.label}
+                                                            </span>
+                                                            <span className="text-xs text-zinc-300 font-bold">
+                                                                {t.basePts} Base Pts × {t.count} Games
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-3 font-mono text-xs">
+                                                            <span className="text-sky-300 font-black">
+                                                                {t.totalPts} PTS ({ptsSharePct}%)
+                                                            </span>
+                                                            <span className="text-emerald-400 font-black">
+                                                                £{t.totalCash.toLocaleString()} ({cashSharePct}%)
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="w-full h-2 bg-zinc-900 rounded-full overflow-hidden flex gap-0.5">
+                                                        <div
+                                                            className="h-full bg-sky-500 rounded-l-full"
+                                                            style={{ width: `${ Math.max(4, ptsSharePct) }%` }}
+                                                        />
+                                                        <div
+                                                            className="h-full bg-emerald-500 rounded-r-full"
+                                                            style={{ width: `${ Math.max(2, cashSharePct / 2) }%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {/* Knockout Bounty Pool Row */}
+                                        <div className="bg-rose-950/25 border border-rose-500/30 rounded-xl p-2.5 flex items-center justify-between">
+                                            <div>
+                                                <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono text-xs font-black mr-2">
+                                                    KO Bounty Pool
+                                                </span>
+                                                <span className="text-xs text-zinc-300 font-bold">
+                                                    1.0 Pt per Elimination × {m.totalKnockouts} KOs
+                                                </span>
+                                            </div>
+                                            <span className="font-mono text-xs font-black text-rose-400">
+                                                {m.koPointsTotal} PTS ({m.koPointsShare}% of all League Points)
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Expected Value Per Single Seat Benchmark */}
+                                <div className="pt-3 border-t border-white/10">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 block mb-2">
+                                        Average Single-Entry Seat Benchmark ({m.totalEntries} Total Seats)
+                                    </span>
+                                    <div className="grid grid-cols-4 gap-2 text-center">
+                                        <div className="bg-black/50 border border-white/5 rounded-lg p-2">
+                                            <span className="text-[9px] text-zinc-400 uppercase block">Avg Outlay / Seat</span>
+                                            <span className="text-sm font-mono font-black text-white">£{m.avgOutlayPerSeat.toFixed(2)}</span>
+                                        </div>
+                                        <div className="bg-black/50 border border-white/5 rounded-lg p-2">
+                                            <span className="text-[9px] text-zinc-400 uppercase block">Avg Return / Seat</span>
+                                            <span className="text-sm font-mono font-black text-emerald-400">£{m.avgWinningsPerSeat.toFixed(2)}</span>
+                                        </div>
+                                        <div className="bg-black/50 border border-white/5 rounded-lg p-2">
+                                            <span className="text-[9px] text-zinc-400 uppercase block">Avg Points / Seat</span>
+                                            <span className="text-sm font-mono font-black text-sky-300">{m.avgPointsPerSeat.toFixed(1)} PTS</span>
+                                        </div>
+                                        <div className="bg-black/50 border border-white/5 rounded-lg p-2">
+                                            <span className="text-[9px] text-zinc-400 uppercase block">Avg KOs / Seat</span>
+                                            <span className="text-sm font-mono font-black text-rose-400">{m.avgKOsPerSeat.toFixed(2)} KOs</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right 5 Cols: League Competitive Parity & Official Charter */}
+                            <div className="col-span-5 flex flex-col justify-between gap-3">
+                                {/* Competitive Parity Card */}
+                                <div className="bg-zinc-900/90 border border-white/10 rounded-2xl p-4 flex-1 flex flex-col justify-between">
+                                    <div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 block">
+                                            Competitive Parity Index
+                                        </span>
+                                        <h3 className="text-base font-serif font-bold text-white mb-3">
+                                            Field Balance Across {m.gamesCompleted} Sessions
+                                        </h3>
+
+                                        <div className="grid grid-cols-2 gap-2.5">
+                                            <div className="bg-black/50 border border-white/10 rounded-xl p-3">
+                                                <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-bold block">
+                                                    Unique Night Winners
+                                                </span>
+                                                <div className="text-2xl font-black font-mono text-amber-400 mt-0.5">
+                                                    {m.uniqueWinnersCount} <span className="text-xs text-zinc-400 font-sans">/ {m.gamesCompleted} Games</span>
+                                                </div>
+                                                <span className="text-[10px] text-zinc-400">
+                                                    {Math.round((m.uniqueWinnersCount / Math.max(1, m.gamesCompleted)) * 100)}% title variety rate
+                                                </span>
+                                            </div>
+
+                                            <div className="bg-black/50 border border-white/10 rounded-xl p-3">
+                                                <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-bold block">
+                                                    Unique Podium Finishers
+                                                </span>
+                                                <div className="text-2xl font-black font-mono text-emerald-400 mt-0.5">
+                                                    {m.podiumFinishersCount} <span className="text-xs text-zinc-400 font-sans">/ {m.activeRosterCount} Active</span>
+                                                </div>
+                                                <span className="text-[10px] text-zinc-400">
+                                                    {Math.round((m.podiumFinishersCount / Math.max(1, m.activeRosterCount)) * 100)}% of active players cashed
+                                                </span>
+                                            </div>
+
+                                            <div className="bg-black/50 border border-white/10 rounded-xl p-3">
+                                                <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-bold block">
+                                                    In-Profit / Break-Even
+                                                </span>
+                                                <div className="text-2xl font-black font-mono text-emerald-300 mt-0.5">
+                                                    {m.profitableOrEvenCount} <span className="text-xs text-zinc-400 font-sans">Players</span>
+                                                </div>
+                                                <span className="text-[10px] text-zinc-400">
+                                                    Net bankroll &ge; £0 this season
+                                                </span>
+                                            </div>
+
+                                            <div className="bg-black/50 border border-white/10 rounded-xl p-3">
+                                                <span className="text-[9px] uppercase tracking-wider text-zinc-400 font-bold block">
+                                                    Chasing Recovery
+                                                </span>
+                                                <div className="text-2xl font-black font-mono text-rose-400 mt-0.5">
+                                                    {m.deficitCount} <span className="text-xs text-zinc-400 font-sans">Players</span>
+                                                </div>
+                                                <span className="text-[10px] text-zinc-400">
+                                                    Hunting the £{totalPot} Final Vault
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Official Scoring & Final Stack Conversion Charter */}
+                                    <div className="bg-emerald-950/20 border border-emerald-500/30 rounded-xl p-3 mt-3">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 block mb-1.5">
+                                            Official E.P.T. 2026 Scoring &amp; Final Charter
+                                        </span>
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-zinc-300 font-mono">
+                                            <div>• 1st Place: <strong className="text-white">10 PTS</strong></div>
+                                            <div>• 2nd Place: <strong className="text-white">6 PTS</strong></div>
+                                            <div>• 3rd Place: <strong className="text-white">4 PTS</strong></div>
+                                            <div>• 4th Place: <strong className="text-white">3 PTS</strong></div>
+                                            <div>• 5th Place: <strong className="text-white">2 PTS</strong></div>
+                                            <div>• Knockout: <strong className="text-rose-400">+1 PT / KO</strong></div>
+                                        </div>
+                                        <div className="mt-2 pt-2 border-t border-white/10 text-[10px] text-amber-300 font-mono">
+                                            Grand Final Stack Formula: <strong>20,000 Base + (500 × League Points)</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     const renderActiveSlideContent = () => {
         if (!currentSlide) return null;
         const devPageScope =
             currentSlide.type === 'player'
                 ? `presentation-page-${currentSlide.page}`
+                : currentSlide.type === 'league_stats'
+                ? `presentation-league-stats-${currentSlide.page}`
                 : `presentation-${currentSlide.type}`;
         const devPageLabel =
             currentSlide.type === 'player'
@@ -2490,6 +3463,7 @@ export default function TVPresentationClient({
                 className="flex-1 min-h-0 flex flex-col gap-2.5 w-full overflow-hidden"
             >
                 {renderTopLoopControls()}
+                {currentSlide.type === 'league_stats' && renderLeagueStatsSlide(currentSlide.page)}
                 {currentSlide.type === 'player' && renderPlayerDossierSlide(currentSlide.profile, currentSlide.page)}
                 {currentSlide.type === 'tale_of_the_tape' && renderTaleOfTheTapeSlide()}
                 {currentSlide.type === 'season_awards' && renderSeasonAwardsSlide()}
