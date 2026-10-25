@@ -48,6 +48,12 @@ export default function BountiesClient({ players, initialView = 'rankings' }: Pr
     // The Hijack King: Most unique players hijacked
     const hijackKings = [...players].sort((a, b) => (b.uniquePlayersHijacked?.length || 0) - (a.uniquePlayersHijacked?.length || 0)).slice(0, 3);
 
+    // The Re-Buy Sponsor: Most total rebuys (tie-break by avg rebuys/game)
+    const rebuyLeaders = [...players].sort((a, b) => (b.rebuys || 0) - (a.rebuys || 0) || (b.mostRebuysSingle || 0) - (a.mostRebuysSingle || 0)).slice(0, 3);
+
+    // The Bubble Specialist: Most bubble finishes (1 spot outside the money)
+    const bubbleLeaders = [...players].sort((a, b) => (b.bubbleFinishes || 0) - (a.bubbleFinishes || 0)).slice(0, 3);
+
     // Sorted players for Wanted posters (by rank / points)
     const sortedForWanted = [...players].sort((a, b) => a.rank - b.rank);
 
@@ -208,6 +214,87 @@ export default function BountiesClient({ players, initialView = 'rankings' }: Pr
                                         <div className="text-right">
                                             <span className={`text-2xl font-black ${i === 0 ? 'text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]' : 'text-zinc-500'}`}>{p.uniquePlayersHijacked?.length || 0}</span>
                                             <span className="text-[10px] text-zinc-500 uppercase block">Targets</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* The Re-Buy Sponsor */}
+                        <div className="border-4 border-blue-600 bg-black p-6 relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/pixel-weave.png')] opacity-10 pointer-events-none" />
+                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <Award size={120} />
+                            </div>
+                            <h2 className="text-2xl font-black text-blue-400 uppercase mb-6 flex items-center gap-2">
+                                <Award className="w-6 h-6" /> The Re-Buy Sponsor
+                            </h2>
+                            <p className="text-xs text-zinc-500 uppercase tracking-widest mb-6 border-b border-zinc-900 pb-2">
+                                Most Re-Buys (@ £10 ea • Max Single Game &amp; Avg/Gm)
+                            </p>
+
+                            <div className="space-y-4 relative z-10">
+                                {rebuyLeaders.map((p, i) => {
+                                    const avgReb = p.gamesPlayed > 0 ? ((p.rebuys || 0) / p.gamesPlayed).toFixed(2) : '0.00';
+                                    return (
+                                        <div key={p.name} className={`flex items-center justify-between p-3 ${i === 0 ? 'bg-blue-950/40 border border-blue-500/40 rounded-lg' : 'border-b border-zinc-900'}`}>
+                                            <div className="flex items-center gap-4">
+                                                <span className={`text-xl font-black ${i === 0 ? 'text-blue-400' : 'text-zinc-600'}`}>#{i + 1}</span>
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-10 h-10 rounded-full overflow-hidden bg-zinc-900 border-2 ${i === 0 ? 'border-blue-500' : 'border-zinc-800'}`}>
+                                                        <img src={getAvatarFilename(p.name)} alt={p.name} className="w-full h-full object-cover" />
+                                                    </div>
+                                                    <div>
+                                                        <span className={`font-bold uppercase block ${i === 0 ? 'text-white' : 'text-zinc-400'}`}>{p.name}</span>
+                                                        <span className="text-[10px] font-mono text-zinc-500">
+                                                            Max {p.mostRebuysSingle || 0} in 1 game • {avgReb} avg/gm
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className={`text-2xl font-black ${i === 0 ? 'text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'text-zinc-500'}`}>{p.rebuys || 0}</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase block">Re-Buys (£{(p.rebuys || 0) * 10})</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* The Bubble Specialist */}
+                        <div className="border-4 border-pink-600 bg-black p-6 relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/pixel-weave.png')] opacity-10 pointer-events-none" />
+                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <Skull size={120} />
+                            </div>
+                            <h2 className="text-2xl font-black text-pink-400 uppercase mb-6 flex items-center gap-2">
+                                <Skull className="w-6 h-6" /> The Bubble Specialist
+                            </h2>
+                            <p className="text-xs text-zinc-500 uppercase tracking-widest mb-6 border-b border-zinc-900 pb-2">
+                                Most Bubble Finishes (1 Spot Outside the Money)
+                            </p>
+
+                            <div className="space-y-4 relative z-10">
+                                {bubbleLeaders.map((p, i) => (
+                                    <div key={p.name} className={`flex items-center justify-between p-3 ${i === 0 ? 'bg-pink-950/40 border border-pink-500/40 rounded-lg' : 'border-b border-zinc-900'}`}>
+                                        <div className="flex items-center gap-4">
+                                            <span className={`text-xl font-black ${i === 0 ? 'text-pink-400' : 'text-zinc-600'}`}>#{i + 1}</span>
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-10 h-10 rounded-full overflow-hidden bg-zinc-900 border-2 ${i === 0 ? 'border-pink-500' : 'border-zinc-800'}`}>
+                                                    <img src={getAvatarFilename(p.name)} alt={p.name} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div>
+                                                    <span className={`font-bold uppercase block ${i === 0 ? 'text-white' : 'text-zinc-400'}`}>{p.name}</span>
+                                                    <span className="text-[10px] font-mono text-zinc-500">
+                                                        Across {p.gamesPlayed} appearances
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className={`text-2xl font-black ${i === 0 ? 'text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]' : 'text-zinc-500'}`}>{p.bubbleFinishes || 0}</span>
+                                            <span className="text-[10px] text-zinc-500 uppercase block">Bubbles 🫧</span>
                                         </div>
                                     </div>
                                 ))}

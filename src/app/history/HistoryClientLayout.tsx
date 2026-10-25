@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { GameHistorySession } from '@/lib/data';
-import { ChevronDown, Trophy, Users, Coins } from 'lucide-react';
+import { ChevronDown, Trophy, Users, Coins, Skull } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -31,13 +31,20 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                 const isExpanded = expandedCard === session.date;
                 const playerCount = session.results.length;
 
-                // Sort results by points/winnings for the expanded view
-                const sortedResults = [...session.results].sort((a, b) => b.points - a.points);
-                const winner = sortedResults.length > 0 ? sortedResults[0] : null;
+                // Sort results by actual finishing position (fallback to points)
+                const sortedResults = [...session.results].sort(
+                    (a, b) => (a.position || 99) - (b.position || 99) || b.points - a.points
+                );
+                const winner = sortedResults.find(r => r.position === 1) || sortedResults[0] || null;
+                const paidResults = session.results.filter(r => r.winnings > 0);
+                const lastPaidPos = paidResults.length > 0 ? Math.max(...paidResults.map(r => r.position)) : 3;
+                const bubblePos = lastPaidPos + 1;
+                const bubblePlayer = sortedResults.find(r => r.position === bubblePos && r.winnings === 0);
+                const sessionKOs = session.results.reduce((s, r) => s + (r.kos || 0), 0);
 
                 // Dynamic banner message at the bottom of the card
                 const statBanner = winner && winner.winnings > 0
-                    ? `${winner.name} took home £${winner.winnings} on ${session.date}!`
+                    ? `${winner.name} took home £${winner.winnings} on ${session.date}!${bubblePlayer ? ` (${bubblePlayer.name} finished on the ${bubblePos === 3 ? '3rd' : '4th'}-place Bubble 🫧)` : ''}`
                     : winner
                         ? `${winner.name} secured the win with ${winner.points} pts!`
                         : "A quiet night on the felt.";
@@ -76,8 +83,15 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                                     </h2>
                                     <div className="text-xs sm:text-sm font-bold text-zinc-500 uppercase tracking-widest mt-1.5 sm:mt-2 flex items-center gap-3 sm:gap-4 flex-wrap">
                                         <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {playerCount} Players</span>
+                                        <span className="flex items-center gap-1 text-ept-red"><Skull className="w-3.5 h-3.5" /> {sessionKOs} KOs</span>
+                                        <span className="text-emerald-400/80 font-mono text-[11px]">Top {lastPaidPos} Paid</span>
                                         {winner && (
                                             <span className="flex items-center gap-1 text-gold/80"><Trophy className="w-3.5 h-3.5" /> {winner.name}</span>
+                                        )}
+                                        {bubblePlayer && (
+                                            <span className="text-purple-300 text-[11px] font-mono">
+                                                🫧 Bubble ({bubblePos === 3 ? '3rd' : '4th'}): {bubblePlayer.name}
+                                            </span>
                                         )}
                                     </div>
                                 </div>
@@ -105,7 +119,7 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                                         <div className="px-3 sm:px-6 py-3 sm:py-4">
                                             {/* Table Headers */}
                                             <div className="grid grid-cols-5 md:grid-cols-12 gap-2 sm:gap-4 pb-2 sm:pb-3 border-b border-white/10 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-                                                <div className="col-span-1 text-center">Rnk</div>
+                                                <div className="col-span-1 text-center">Pos</div>
                                                 <div className="col-span-2 md:col-span-4">Player</div>
                                                 <div className="col-span-1 md:col-span-2 text-center">KOs</div>
                                                 <div className="col-span-1 md:col-span-2 text-center">Points</div>
@@ -115,32 +129,51 @@ export default function HistoryClientLayout({ initialSessions }: { initialSessio
                                             {/* Table Rows */}
                                             <div className="py-2 space-y-1">
                                                 {sortedResults.map((player, idx) => {
-                                                    const isWinner = idx === 0;
+                                                    const pos = player.position || idx + 1;
+                                                    const isWinner = pos === 1;
+                                                    const isBubble = pos === bubblePos && player.winnings === 0;
                                                     return (
                                                         <div key={idx} className={clsx(
                                                             "grid grid-cols-5 md:grid-cols-12 gap-2 sm:gap-4 py-2 sm:py-3 items-center rounded-lg px-1.5 sm:px-2 transition-colors text-xs sm:text-sm",
-                                                            isWinner ? "bg-gold/10 border border-gold/20" : "hover:bg-white/5 border border-transparent"
+                                                            isWinner
+                                                                ? "bg-gold/10 border border-gold/20"
+                                                                : isBubble
+                                                                ? "bg-purple-950/25 border border-purple-500/30"
+                                                                : "hover:bg-white/5 border border-transparent"
                                                         )}>
-                                                            <div className={clsx("col-span-1 font-black font-mono text-center text-xs sm:text-sm", isWinner ? "text-gold" : "text-white")}>
-                                                                #{idx + 1}
+                                                            <div className={clsx(
+                                                                "col-span-1 font-black font-mono text-center text-xs sm:text-sm",
+                                                                isWinner ? "text-gold" : isBubble ? "text-purple-300" : "text-white"
+                                                            )}>
+                                                                #{pos}
                                                             </div>
                                                             <div className="col-span-2 md:col-span-4 font-bold uppercase tracking-widest flex items-center gap-1.5 min-w-0">
                                                                 {isWinner && <Trophy className="w-3 h-3 text-gold shrink-0" />}
-                                                                <div className="min-w-0">
-                                                                    <span className={clsx("truncate block", isWinner ? "text-white" : "text-zinc-300")}>{player.name}</span>
+                                                                <div className="min-w-0 flex items-center gap-2 flex-wrap">
+                                                                    <span className={clsx("truncate block", isWinner ? "text-white" : "text-zinc-300")}>
+                                                                        {player.name}
+                                                                    </span>
+                                                                    {isBubble && (
+                                                                        <span className="px-1.5 py-0.5 rounded bg-purple-500/20 border border-purple-500/40 text-purple-300 text-[9px] font-mono font-bold uppercase">
+                                                                            🫧 Bubble
+                                                                        </span>
+                                                                    )}
                                                                     {player.winnings > 0 && (
                                                                         <span className="md:hidden text-[9px] text-green-400 font-mono font-bold block">+£{player.winnings}</span>
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                            <div className="col-span-1 md:col-span-2 font-mono text-center text-zinc-400 font-bold text-xs sm:text-sm">
-                                                                {player.kos !== undefined && player.kos > 0 ? player.kos : '-'}
+                                                            <div className="col-span-1 md:col-span-2 font-mono text-center text-ept-red font-bold text-xs sm:text-sm">
+                                                                {player.kos !== undefined && player.kos > 0 ? `${player.kos} ☠️` : '-'}
                                                             </div>
                                                             <div className="col-span-1 md:col-span-2 font-mono text-center text-gold font-bold text-xs sm:text-sm">
                                                                 {player.points}
                                                             </div>
-                                                            <div className={clsx("hidden md:block col-span-3 font-mono text-right font-black", player.winnings > 0 ? "text-green-400" : "text-zinc-600")}>
-                                                                {player.winnings > 0 ? `+£${player.winnings}` : '-'}
+                                                            <div className={clsx(
+                                                                "hidden md:block col-span-3 font-mono text-right font-black",
+                                                                player.winnings > 0 ? "text-green-400" : isBubble ? "text-purple-300" : "text-zinc-600"
+                                                            )}>
+                                                                {player.winnings > 0 ? `+£${player.winnings}` : isBubble ? '£0 (Bubble)' : '-'}
                                                             </div>
                                                         </div>
                                                     );

@@ -170,6 +170,9 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
     // Dynamic Sarcastic Roasts and In-Depth Dossier Generator
     const getPlayerDossier = (p: Player) => {
         const nameLower = p.name.toLowerCase();
+        const seasonGames = Math.max(gamesPlayedOverall, 9);
+        const attPct = seasonGames > 0 ? ((p.gamesPlayed / seasonGames) * 100).toFixed(1) : '0.0';
+        const avgReb = p.gamesPlayed > 0 ? ((p.rebuys || 0) / p.gamesPlayed).toFixed(2) : '0.00';
 
         // 1. Missing in Action / Zero games played (e.g. Stephen Flood)
         if (p.gamesPlayed === 0) {
@@ -178,7 +181,7 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
                 statusColor: "border-red-500 bg-red-950/50 text-red-400 animate-pulse",
                 fearLevel: "100% Extreme Fear",
                 attendanceRate: "0.0% (Ghost Mode)",
-                nemesis: "The £20 Entry Fee & His Alarm Clock",
+                nemesis: "The £10 Entry Fee & His Alarm Clock",
                 bulliedTarget: "His Own Living Room Sofa",
                 quote: "You can't lose chips if you're too terrified to turn up.",
                 verdict: "Rumour has it Stephen is so utterly paralyzed by the fear of facing the Wearing Dynasty and Daly Clan that he hasn't dared set foot near a poker table all season. Zero games, zero buy-ins, zero cards dealt. Currently undefeated in the 'Staying in Bed' division.",
@@ -193,59 +196,59 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
                 statusBadge: "🎒 WITNESS PROTECTION / TOURIST",
                 statusColor: "border-orange-500 bg-orange-950/40 text-orange-400",
                 fearLevel: "85% Mildly Traumatized",
-                attendanceRate: "14.3% (One and Done)",
-                nemesis: "The Entire Poker Table",
-                bulliedTarget: "His Lone £20 Note",
+                attendanceRate: `${attPct}% (One and Done)`,
+                nemesis: p.rivalPlayer && p.rivalPlayer !== 'None' ? p.rivalPlayer : "The Entire Poker Table",
+                bulliedTarget: "His Lone £20 Outlay (£10 Buy-In + £10 Add-On)",
                 quote: "Showed up once, saw the blood on the felt, never came back.",
-                verdict: "Showed up for a single session, realized in horror what the sharks in this league do to casuals, dropped £20, and promptly entered the Witness Protection Program. Decided preserving his emotional well-being was worth more than chasing points.",
+                verdict: `Showed up for a single session, realized in horror what the sharks in this league do to casuals, dropped £${p.cashPaid || 20} (@ £10 buy-in + £10 add-on), and promptly entered the Witness Protection Program.`,
                 isZero: false,
                 isAfraid: true
             };
         }
 
         // 3. Luke Daly (high rebuys, big pot donor)
-        if (p.rebuys >= 3 || (p.profit <= -60 && p.gamesPlayed >= 5)) {
+        if (nameLower.includes('luke')) {
             return {
                 statusBadge: "🏦 VIP LEAGUE ATM",
                 statusColor: "border-blue-500 bg-blue-950/40 text-blue-400",
                 fearLevel: "0% (Fearless to a fault)",
-                attendanceRate: `${Math.round((p.gamesPlayed / 7) * 100)}% (Dedicated)`,
+                attendanceRate: `${attPct}% (Dedicated)`,
                 nemesis: p.rivalPlayer && p.rivalPlayer !== 'None' ? p.rivalPlayer : "Liam Duxbury",
                 bulliedTarget: p.bulliedPlayer && p.bulliedPlayer !== 'None' ? p.bulliedPlayer : "The Rebuy Button",
-                quote: "Another £10 rebuy? Stick it on my tab.",
-                verdict: `Tied for the league lead in rebuys! Has pumped £${p.cashPaid || 170} into the prize vault and watched £${Math.abs(p.profit)} vanish into thin air. Eliminated 7 souls with high aggression, but rebuys faster than a runaway train. Still sitting 3rd through pure stubborn refusal to quit.`,
+                quote: `Another £10 rebuy? Stick it on my tab (${p.rebuys || 0} total, ${avgReb}/game).`,
+                verdict: `Leads the league in rebuys (${p.rebuys || 0} total, max ${p.mostRebuysSingle || 0} in a single game, ${avgReb} avg/game)! Has pumped £${p.cashPaid || 220} into the prize vault (@ £10 each) and cashed £${p.winnings || 100}. Eliminated ${p.knockOuts} souls with high aggression and sits at #${p.rank} with ${p.points} points.`,
                 isZero: false,
                 isAfraid: false
             };
         }
 
         // 4. Liam Duxbury (Apex Predator)
-        if (p.rank === 1 || p.knockOuts >= 12) {
+        if (nameLower.includes('liam')) {
             return {
                 statusBadge: "🦈 LEAGUE APEX PREDATOR",
                 statusColor: "border-gold bg-gold/20 text-gold shadow-[0_0_20px_rgba(212,175,55,0.4)]",
                 fearLevel: "Causes Terror in Everyone Else",
-                attendanceRate: "100% (Relentless)",
+                attendanceRate: `${attPct}% (Relentless)`,
                 nemesis: p.rivalPlayer && p.rivalPlayer !== 'None' ? p.rivalPlayer : "Edward Wearing",
                 bulliedTarget: p.bulliedPlayer && p.bulliedPlayer !== 'None' ? p.bulliedPlayer : "Luke Daly",
                 quote: "I didn't come to play cards, I came to collect bounties.",
-                verdict: `A ruthless killing machine with ${p.knockOuts} knockouts (more than double the rest of the table) and a mountain of ${p.bonusChips?.toLocaleString() || '31,000'} bonus chips. Cashes £70 on average and bullies Luke Daly for breakfast. If the table doesn't orchestrate a coup against him in Game 8, the trophy is already his.`,
+                verdict: `A ruthless killing machine with ${p.knockOuts} knockouts (${p.avgKnockouts?.toFixed(2) || '2.00'} KOs/game), ${p.wins || 2} tournament titles, ${p.bubbleFinishes || 0} bubble finishes, and ${(p.bonusChips || 38000).toLocaleString()} bonus chips (+£${p.profit} net profit on £${p.cashPaid} paid).`,
                 isZero: false,
                 isAfraid: false
             };
         }
 
-        // 5. Edward Wearing (Break-even bounty warlord)
+        // 5. Edward Wearing (Bounty Warlord)
         if (nameLower.includes('edward')) {
             return {
-                statusBadge: "⚖️ THE BREAK-EVEN WARLORD",
+                statusBadge: "⚖️ THE CHAMPIONSHIP WARLORD",
                 statusColor: "border-gold/60 bg-black text-gold",
                 fearLevel: "Ice Cold",
-                attendanceRate: "100% (Flawless)",
+                attendanceRate: `${attPct}% (Flawless)`,
                 nemesis: p.rivalPlayer && p.rivalPlayer !== 'None' ? p.rivalPlayer : "Liam Duxbury",
                 bulliedTarget: p.bulliedPlayer && p.bulliedPlayer !== 'None' ? p.bulliedPlayer : "Anyone with chips",
-                quote: "Exactly £140 in, exactly £140 out. Zero financial bleeding.",
-                verdict: "The absolute master of equilibrium. Exactly £140 spent, exactly £140 recouped. Zero financial risk, maximum psychological warfare. The reigning bounty boss who refuses to die, trailing Liam by just 15 points with everything on the line.",
+                quote: `£${p.cashPaid} paid in (@ £10 ea), £${p.winnings} won back (${p.profit >= 0 ? `+£${p.profit}` : `-£${Math.abs(p.profit)}`}).`,
+                verdict: `Flawless ${p.gamesPlayed}/${seasonGames} attendance with ${p.points} points, ${p.wins || 2} tournament victories, ${p.knockOuts} knockouts, ${p.bubbleFinishes || 0} bubble finishes, and +${(p.bonusChips || 32500).toLocaleString()} bonus chips (${p.rebuys || 0} rebuys, ${avgReb}/game).`,
                 isZero: false,
                 isAfraid: false
             };
@@ -257,11 +260,11 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
                 statusBadge: "🧠 THE POKER CHEAT CODE",
                 statusColor: "border-emerald-500 bg-emerald-950/40 text-emerald-400",
                 fearLevel: "Terrifyingly Efficient",
-                attendanceRate: "42.9% (Selective Sniper)",
-                nemesis: "Full-Time Commitment",
-                bulliedTarget: "The Entire Pot",
-                quote: "3 games, 2 tournament trophies, +£100 in the bag.",
-                verdict: "An absurd 66.7% tournament victory rate and +£100 pure financial profit in only 3 appearances. If Dave actually showed up to every game, the rest of the league would have to take out a second mortgage to pay him.",
+                attendanceRate: `${attPct}% (Selective Sniper)`,
+                nemesis: p.rivalPlayer && p.rivalPlayer !== 'None' ? p.rivalPlayer : "Full-Time Commitment",
+                bulliedTarget: p.bulliedPlayer && p.bulliedPlayer !== 'None' ? p.bulliedPlayer : "The Entire Pot",
+                quote: `${p.gamesPlayed} games, ${p.wins || 3} tournament trophies, +£${p.profit} in the bag.`,
+                verdict: `An absurd ${((p.winPercentage || 0) * 100).toFixed(0)}% tournament victory rate (${p.wins || 3} wins in ${p.gamesPlayed} appearances) and +£${p.profit} pure financial profit (£${p.winnings} won on £${p.cashPaid} spent, ${p.rebuys || 0} rebuys).`,
                 isZero: false,
                 isAfraid: false
             };
@@ -273,11 +276,11 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
                 statusBadge: "🛡️ THE IRON DUCHESS",
                 statusColor: "border-purple-500 bg-purple-950/40 text-purple-300",
                 fearLevel: "Unshakable",
-                attendanceRate: "100% (Iron Discipline)",
+                attendanceRate: `${attPct}% (Iron Discipline)`,
                 nemesis: p.rivalPlayer && p.rivalPlayer !== 'None' ? p.rivalPlayer : "The Final Table Bubble",
-                bulliedTarget: "Reckless Bluffers",
-                quote: "100% attendance, max add-ons, waiting for the boys to crash.",
-                verdict: "Flawless 100% season attendance and max add-ons every single month. Patiently floating in 4th place without making reckless blunders, poised to claim a podium spot the moment the leaders overplay their hands.",
+                bulliedTarget: p.bulliedPlayer && p.bulliedPlayer !== 'None' ? p.bulliedPlayer : "Reckless Bluffers",
+                quote: `${attPct}% attendance, ${p.rebuys || 1} rebuy (${avgReb}/gm), £${p.winnings} cashed.`,
+                verdict: `Flawless ${p.gamesPlayed}/${seasonGames} season attendance with ${p.points} points, ${p.knockOuts} knockouts, and £${p.winnings} in gross winnings on £${p.cashPaid} spent (${p.rebuys || 1} rebuy, ${p.addOns || 9} add-ons @ £10 each).`,
                 isZero: false,
                 isAfraid: false
             };
@@ -289,11 +292,11 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
                 statusBadge: "🎯 THE GHOST HITMAN",
                 statusColor: "border-cyan-500 bg-cyan-950/40 text-cyan-400",
                 fearLevel: "Silent Danger",
-                attendanceRate: "42.9% (Precision Sniper)",
-                nemesis: "Calendar Conflicts",
-                bulliedTarget: "Mid-Stacks",
-                quote: "3 games, 1 win, +£40. In, out, nobody gets hurt.",
-                verdict: "Shows up once in a blue moon, stacks 5 people, collects a tournament trophy and £40 in clean cash, then vanishes back into thin air. Surgical efficiency with zero emotional baggage.",
+                attendanceRate: `${attPct}% (Precision Sniper)`,
+                nemesis: p.rivalPlayer && p.rivalPlayer !== 'None' ? p.rivalPlayer : "Calendar Conflicts",
+                bulliedTarget: p.bulliedPlayer && p.bulliedPlayer !== 'None' ? p.bulliedPlayer : "Mid-Stacks",
+                quote: `${p.gamesPlayed} games, ${p.wins || 1} win, ${p.knockOuts} KOs, ${p.profit >= 0 ? `+£${p.profit}` : `-£${Math.abs(p.profit)}`}.`,
+                verdict: `Surgical efficiency across ${p.gamesPlayed} appearances: ${p.wins || 1} tournament victory, ${p.knockOuts} knockouts (${p.avgKnockouts?.toFixed(2) || '1.25'} KOs/game), £${p.winnings} won on £${p.cashPaid} spent (${p.rebuys || 0} rebuys).`,
                 isZero: false,
                 isAfraid: false
             };
@@ -305,11 +308,11 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
                 statusBadge: "🎲 THE LOOSE CANNON",
                 statusColor: "border-amber-500 bg-amber-950/40 text-amber-300",
                 fearLevel: "Chaotic Neutral",
-                attendanceRate: "71.4% (Frequent Flyer)",
-                nemesis: "Discipline",
-                bulliedTarget: "Tight Folders",
+                attendanceRate: `${attPct}% (Frequent Flyer)`,
+                nemesis: p.rivalPlayer && p.rivalPlayer !== 'None' ? p.rivalPlayer : "Discipline",
+                bulliedTarget: p.bulliedPlayer && p.bulliedPlayer !== 'None' ? p.bulliedPlayer : "Tight Folders",
                 quote: "If I have two cards, I have a chance.",
-                verdict: "Maximum table volume and zero fear. Will gladly fire two rebuys and call off your stack with 7-2 offsuit just to see if the poker gods are feeling funny. A lethal wildcard with a trophy under his belt.",
+                verdict: `${p.gamesPlayed} appearances, ${p.wins || 1} tournament victory, ${p.knockOuts} knockouts, ${p.bubbleFinishes || 1} bubble finish, and ${p.rebuys || 3} rebuys (max ${p.mostRebuysSingle || 2} in a single game, ${avgReb}/game).`,
                 isZero: false,
                 isAfraid: false
             };
@@ -321,27 +324,27 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
                 statusBadge: "⛏️ THE BLUE-COLLAR GRINDER",
                 statusColor: "border-zinc-500 bg-zinc-900/60 text-zinc-300",
                 fearLevel: "Patient & Resilient",
-                attendanceRate: "71.4% (Reliable Veteran)",
-                nemesis: "Bad River Cards",
-                bulliedTarget: "Table Donators",
-                quote: "5 games in, max add-ons paid, waiting for the heater.",
-                verdict: "Quiet, dedicated, and never misses an add-on. Has spent £100 and recouped £60. A solid veteran who just needs one hot deck on final night to spoil everyone else's plans.",
+                attendanceRate: `${attPct}% (Reliable Veteran)`,
+                nemesis: p.rivalPlayer && p.rivalPlayer !== 'None' ? p.rivalPlayer : "Bad River Cards",
+                bulliedTarget: p.bulliedPlayer && p.bulliedPlayer !== 'None' ? p.bulliedPlayer : "Table Donators",
+                quote: `${p.gamesPlayed} games in, 0 rebuys, £${p.winnings} cashed.`,
+                verdict: `Quiet, disciplined, and 0 rebuys across ${p.gamesPlayed} appearances. Has spent £${p.cashPaid} (@ £10 buy-ins & add-ons) and recouped £${p.winnings} with ${p.knockOuts} knockouts.`,
                 isZero: false,
                 isAfraid: false
             };
         }
 
-        // 11. Nathen Benson (Philanthropist)
+        // 11. Nathen Benson (Bubble King / Philanthropist)
         if (nameLower.includes('nathen') || nameLower.includes('nathan')) {
             return {
-                statusBadge: "❤️ THE CHARITY PHILANTHROPIST",
+                statusBadge: "🫧 THE BUBBLE SPECIALIST",
                 statusColor: "border-rose-500 bg-rose-950/40 text-rose-300",
-                fearLevel: "Harmless (For Now)",
-                attendanceRate: "57.1% (Generous Patron)",
-                nemesis: "Showdowns",
-                bulliedTarget: "His Wallet (-£80)",
-                quote: "I'm not losing, I'm investing in my friends' happiness.",
-                verdict: "Four games played, zero wins, 1 knockout, and an incredibly generous £80 donated directly into his friends' pockets. A beloved patron of the league whose optimism defies all mathematical reality.",
+                fearLevel: "Dangerous Underdog",
+                attendanceRate: `${attPct}% (Consistent Contender)`,
+                nemesis: p.rivalPlayer && p.rivalPlayer !== 'None' ? p.rivalPlayer : "Showdowns",
+                bulliedTarget: p.bulliedPlayer && p.bulliedPlayer !== 'None' ? p.bulliedPlayer : "The Money Bubble",
+                quote: `${p.bubbleFinishes || 3} bubble finishes (1 spot outside the money) & £${p.winnings} won!`,
+                verdict: `Across ${p.gamesPlayed} appearances, Nathen holds the league record with ${p.bubbleFinishes || 3} bubble finishes (finishing 1 spot outside the money in Games 5, 6, and 8) plus £${p.winnings} in payouts and ${p.knockOuts} knockouts.`,
                 isZero: false,
                 isAfraid: false
             };
@@ -353,11 +356,11 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
             statusBadge: p.profit >= 0 ? "📈 SOLID OPERATOR" : "📉 UNDERCOVER AGENT",
             statusColor: p.profit >= 0 ? "border-emerald-500/50 bg-emerald-950/30 text-emerald-300" : "border-zinc-700 bg-zinc-900 text-zinc-400",
             fearLevel: "Moderate",
-            attendanceRate: `${Math.round((p.gamesPlayed / 7) * 100)}%`,
+            attendanceRate: `${attPct}%`,
             nemesis: p.rivalPlayer || "The Deck",
             bulliedTarget: p.bulliedPlayer || "Unknown",
             quote: `Fought through ${p.gamesPlayed} games for ${p.points} points.`,
-            verdict: `${p.name} sits at #${p.rank} with ${p.gamesPlayed} games played and ${profitSign} profit. Still mathematically dangerous with 2 games left.`,
+            verdict: `${p.name} sits at #${p.rank} with ${p.gamesPlayed} games played and ${profitSign} profit.`,
             isZero: p.gamesPlayed === 0,
             isAfraid: p.gamesPlayed <= 1
         };
@@ -671,67 +674,83 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
                                     </div>
 
                                     {/* In-Depth Spreadsheet Metrics Grid */}
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-4 bg-black/60 border border-white/5 rounded-2xl text-center">
+                                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-4 bg-black/60 border border-white/5 rounded-2xl text-center">
                                         {/* Attendance */}
                                         <div className="p-2 bg-white/5 rounded-xl">
                                             <span className="text-[9px] text-zinc-500 font-bold uppercase block">Attendance</span>
-                                            <span className={`text-sm font-black font-mono ${dossier.isZero ? 'text-red-400' : 'text-white'}`}>
-                                                {player.gamesPlayed}/7 ({dossier.attendanceRate})
+                                            <span className={`text-xs font-black font-mono ${dossier.isZero ? 'text-red-400' : 'text-white'}`}>
+                                                {player.gamesPlayed}/{Math.max(gamesPlayedOverall, 9)} ({((player.gamesPlayed / Math.max(gamesPlayedOverall, 9)) * 100).toFixed(0)}%)
                                             </span>
                                         </div>
 
                                         {/* Tournament Wins */}
                                         <div className="p-2 bg-white/5 rounded-xl">
                                             <span className="text-[9px] text-zinc-500 font-bold uppercase block">Tourney Wins</span>
-                                            <span className="text-sm font-black text-gold font-mono">
+                                            <span className="text-xs font-black text-gold font-mono">
                                                 {player.wins || 0} Wins ({winRatePercent})
                                             </span>
                                         </div>
 
                                         {/* Financial Profit / Loss */}
                                         <div className="p-2 bg-white/5 rounded-xl">
-                                            <span className="text-[9px] text-zinc-500 font-bold uppercase block">Net Profit / ROI</span>
-                                            <span className={`text-sm font-black font-mono ${profitColor}`}>
-                                                {profitSign}
+                                            <span className="text-[9px] text-zinc-500 font-bold uppercase block">Profit / Won</span>
+                                            <span className={`text-xs font-black font-mono ${profitColor}`}>
+                                                {profitSign} (£{player.winnings || 0})
                                             </span>
                                         </div>
 
                                         {/* Knockouts */}
                                         <div className="p-2 bg-white/5 rounded-xl">
-                                            <span className="text-[9px] text-zinc-500 font-bold uppercase block">Total Knockouts</span>
-                                            <span className="text-sm font-black text-ept-red font-mono">
-                                                {player.knockOuts || 0} KOs
+                                            <span className="text-[9px] text-zinc-500 font-bold uppercase block">Knockouts (KO&apos;d)</span>
+                                            <span className="text-xs font-black text-ept-red font-mono">
+                                                {player.knockOuts || 0} KOs ({player.totalTimesKnockedOut || 0} KO&apos;d)
                                             </span>
                                         </div>
 
                                         {/* Average Finish */}
                                         <div className="p-2 bg-white/5 rounded-xl">
                                             <span className="text-[9px] text-zinc-500 font-bold uppercase block">Avg Finish</span>
-                                            <span className="text-sm font-black text-zinc-300 font-mono">
-                                                {player.avgFinishPosition && player.avgFinishPosition > 0 ? `${player.avgFinishPosition}th Place` : dossier.isZero ? 'Did Not Show' : 'N/A'}
+                                            <span className="text-xs font-black text-cyan-300 font-mono">
+                                                {player.avgFinishPosition && player.avgFinishPosition > 0 ? `${player.avgFinishPosition.toFixed(1)}` : dossier.isZero ? 'Did Not Show' : 'N/A'}
+                                            </span>
+                                        </div>
+
+                                        {/* Bubble Finishes */}
+                                        <div className="p-2 bg-purple-950/30 border border-purple-500/20 rounded-xl">
+                                            <span className="text-[9px] text-purple-300 font-bold uppercase block">Bubble Finishes</span>
+                                            <span className="text-xs font-black text-purple-300 font-mono">
+                                                {player.bubbleFinishes || 0} Bubbles 🫧
                                             </span>
                                         </div>
 
                                         {/* Total Cash Paid in Buy-ins */}
                                         <div className="p-2 bg-white/5 rounded-xl">
-                                            <span className="text-[9px] text-zinc-500 font-bold uppercase block">Total Invested</span>
-                                            <span className="text-sm font-black text-zinc-300 font-mono">
+                                            <span className="text-[9px] text-zinc-500 font-bold uppercase block">Paid (@ £10 ea)</span>
+                                            <span className="text-xs font-black text-zinc-300 font-mono">
                                                 £{player.cashPaid || 0}
                                             </span>
                                         </div>
 
-                                        {/* Rebuys & Addons */}
+                                        {/* Rebuys (Max & Avg) */}
                                         <div className="p-2 bg-white/5 rounded-xl">
-                                            <span className="text-[9px] text-zinc-500 font-bold uppercase block">Rebuys / Addons</span>
-                                            <span className="text-sm font-black text-blue-400 font-mono">
-                                                {player.rebuys || 0} Reb / {player.addOns || 0} Add
+                                            <span className="text-[9px] text-zinc-500 font-bold uppercase block">Rebuys (Max • Avg)</span>
+                                            <span className="text-xs font-black text-blue-400 font-mono">
+                                                {player.rebuys || 0} (Max {player.mostRebuysSingle || 0} • {player.gamesPlayed > 0 ? ((player.rebuys || 0) / player.gamesPlayed).toFixed(2) : '0.00'}/gm)
+                                            </span>
+                                        </div>
+
+                                        {/* Addons */}
+                                        <div className="p-2 bg-white/5 rounded-xl">
+                                            <span className="text-[9px] text-zinc-500 font-bold uppercase block">Add-Ons (@ £10)</span>
+                                            <span className="text-xs font-black text-emerald-400 font-mono">
+                                                {player.addOns || 0} (£{(player.addOns || 0) * 10})
                                             </span>
                                         </div>
 
                                         {/* Bonus Chip Stack */}
                                         <div className="p-2 bg-white/5 rounded-xl">
                                             <span className="text-[9px] text-zinc-500 font-bold uppercase block">Bonus Chips</span>
-                                            <span className="text-sm font-black text-gold font-mono">
+                                            <span className="text-xs font-black text-gold font-mono">
                                                 {player.bonusChips ? player.bonusChips.toLocaleString() : '0'}
                                             </span>
                                         </div>

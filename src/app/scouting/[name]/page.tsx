@@ -1,8 +1,7 @@
-
 import type { Metadata } from 'next';
 import { getLeaderboardData } from "@/lib/data";
 import { generateScoutingReport } from "@/lib/report-generator";
-import { ArrowLeft, Target, Trophy, Skull, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Target, Trophy, Skull, TrendingUp, Coins, Layers } from 'lucide-react';
 import CashFlowChart from "@/components/CashFlowChart";
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -24,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const decodedName = decodeURIComponent(name);
     return {
         title: `${decodedName} - Scouting Report`,
-        description: `Career statistics, nemesis matchups, finish positions, and telemetry for ${decodedName} in the E.P.T. 2026 Poker League.`,
+        description: `Career statistics, nemesis matchups, finish positions, re-buy averages, bubble finishes, and telemetry for ${decodedName} in the E.P.T. 2026 Poker League.`,
         openGraph: {
             title: `${decodedName} | E.P.T. 2026 Scouting Dossier`,
             description: `Career statistics, nemesis matchups, and telemetry for ${decodedName}.`,
@@ -34,7 +33,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PlayerProfile({ params }: Props) {
-    // Await the params object
     const { name } = await params;
     const decodedName = decodeURIComponent(name);
     const players = await getLeaderboardData();
@@ -45,6 +43,50 @@ export default async function PlayerProfile({ params }: Props) {
     }
 
     const report = generateScoutingReport(player);
+
+    const avgRebuysPerGame =
+        player.gamesPlayed > 0
+            ? ((player.rebuys || 0) / player.gamesPlayed).toFixed(2)
+            : '0.00';
+    const winPct =
+        player.winPercentage !== undefined
+            ? (player.winPercentage * 100).toFixed(1)
+            : player.gamesPlayed > 0
+            ? (((player.wins || 0) / player.gamesPlayed) * 100).toFixed(1)
+            : '0.0';
+    const avgPts =
+        player.avgPoints !== undefined
+            ? player.avgPoints.toFixed(2)
+            : player.gamesPlayed > 0
+            ? (player.points / player.gamesPlayed).toFixed(2)
+            : '0.00';
+    const avgWinnings =
+        player.avgWinnings !== undefined
+            ? player.avgWinnings.toFixed(2)
+            : player.gamesPlayed > 0
+            ? ((player.winnings || 0) / player.gamesPlayed).toFixed(2)
+            : '0.00';
+    const avgKOs =
+        player.avgKnockouts !== undefined
+            ? player.avgKnockouts.toFixed(2)
+            : player.gamesPlayed > 0
+            ? ((player.knockOuts || 0) / player.gamesPlayed).toFixed(2)
+            : '0.00';
+    const timesEliminated = player.totalTimesKnockedOut !== undefined ? player.totalTimesKnockedOut : 0;
+    const survivalRate =
+        player.gamesPlayed > 0
+            ? Math.max(
+                  0,
+                  Math.min(
+                      100,
+                      Math.round(
+                          ((player.gamesPlayed - Math.min(player.gamesPlayed, timesEliminated)) /
+                              player.gamesPlayed) *
+                              100
+                      )
+                  )
+              )
+            : 0;
 
     return (
         <HijackWrapper
@@ -97,13 +139,13 @@ export default async function PlayerProfile({ params }: Props) {
 
                         <div className="text-center md:text-left w-full">
                             <div className="inline-block px-3 py-1 bg-gold/10 text-gold text-xs font-bold uppercase tracking-wider rounded-full mb-2">
-                                Rank #{player.rank}
+                                Rank #{player.rank} • {player.gamesPlayed} Games Played
                             </div>
                             <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mb-2 break-words">{player.name}</h1>
 
-                            {/* Dynamic Season Telemetry Badges (Feature 1) */}
+                            {/* Dynamic Season Telemetry Badges */}
                             {player.badges && player.badges.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mt-3">
+                                <div className="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
                                     {player.badges.map(badge => (
                                         <span
                                             key={badge.id}
@@ -127,20 +169,30 @@ export default async function PlayerProfile({ params }: Props) {
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-3 gap-2 sm:gap-8 mt-4 sm:mt-6 bg-black/30 md:bg-transparent p-3 md:p-0 rounded-xl border border-white/5 md:border-none">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mt-4 sm:mt-6 bg-black/30 md:bg-transparent p-3 md:p-0 rounded-xl border border-white/5 md:border-none">
                                 <div>
                                     <div className="text-zinc-500 text-[10px] sm:text-xs uppercase tracking-wider font-bold">Points</div>
-                                    <div className="text-lg sm:text-3xl font-bold text-white">{player.points}</div>
+                                    <div className="text-lg sm:text-3xl font-bold text-white font-mono">{player.points}</div>
+                                    <div className="text-[10px] text-zinc-400 font-mono">{avgPts} / game</div>
                                 </div>
                                 <div>
-                                    <div className="text-zinc-500 text-[10px] sm:text-xs uppercase tracking-wider font-bold">Winnings</div>
-                                    <div className="text-lg sm:text-3xl font-bold text-green-400">£{player.winnings}</div>
+                                    <div className="text-zinc-500 text-[10px] sm:text-xs uppercase tracking-wider font-bold">Gross Winnings</div>
+                                    <div className="text-lg sm:text-3xl font-bold text-green-400 font-mono">£{player.winnings}</div>
+                                    <div className="text-[10px] text-zinc-400 font-mono">£{avgWinnings} / game</div>
                                 </div>
                                 <div>
-                                    <div className="text-zinc-500 text-[10px] sm:text-xs uppercase tracking-wider font-bold">Profit</div>
-                                    <div className={`text-lg sm:text-3xl font-bold ${player.profit >= 0 ? 'text-green-500' : 'text-ept-red'}`}>
-                                        {player.profit >= 0 ? '+' : ''}{player.profit}
+                                    <div className="text-zinc-500 text-[10px] sm:text-xs uppercase tracking-wider font-bold">Net Profit</div>
+                                    <div className={`text-lg sm:text-3xl font-bold font-mono ${player.profit >= 0 ? 'text-green-500' : 'text-ept-red'}`}>
+                                        {player.profit >= 0 ? `+£${player.profit}` : `-£${Math.abs(player.profit)}`}
                                     </div>
+                                    <div className="text-[10px] text-zinc-400 font-mono">£{player.cashPaid || 0} Paid (@ £10)</div>
+                                </div>
+                                <div>
+                                    <div className="text-zinc-500 text-[10px] sm:text-xs uppercase tracking-wider font-bold">Bonus Chips</div>
+                                    <div className="text-lg sm:text-3xl font-bold text-gold font-mono">
+                                        +{(player.bonusChips || 0).toLocaleString()}
+                                    </div>
+                                    <div className="text-[10px] text-zinc-400 font-mono">500 / league pt</div>
                                 </div>
                             </div>
 
@@ -152,106 +204,169 @@ export default async function PlayerProfile({ params }: Props) {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Combat Stats */}
-                    <div className="glass-panel p-6 rounded-xl">
+                {/* Official Google Sheet Telemetry Breakdown (3 Panels) */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Panel 1: Re-Buys, Add-Ons & £10 Financials */}
+                    <div className="glass-panel p-6 rounded-xl border border-white/10">
                         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <Target className="text-ept-red" /> Aggression Stats
+                            <Coins className="text-gold" /> £10 Ledger &amp; Re-Buy Telemetry
                         </h3>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span className="text-zinc-400">Knock Outs</span>
-                                <span className="text-xl font-bold text-white">{player.knockOuts} ☠️</span>
+                        <div className="space-y-3 text-sm font-mono">
+                            <div className="flex justify-between items-center p-2.5 bg-white/5 rounded-lg">
+                                <span className="text-zinc-400 font-sans">Buy-Ins (@ £10)</span>
+                                <span className="font-bold text-white">{player.gamesPlayed} (£{player.gamesPlayed * 10})</span>
                             </div>
-                            <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span className="text-zinc-400">Games Played</span>
-                                <span className="text-xl font-bold text-white">{player.gamesPlayed}</span>
+                            <div className="flex justify-between items-center p-2.5 bg-white/5 rounded-lg">
+                                <span className="text-zinc-400 font-sans">Total Re-Buys (@ £10)</span>
+                                <span className="font-bold text-blue-300">{player.rebuys || 0} (£{(player.rebuys || 0) * 10})</span>
                             </div>
-                            <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                                <span className="text-zinc-400">Survival Rate</span>
-                                <span className="text-xl font-bold text-white">
-                                    {player.gamesPlayed > 0 ? Math.round(((player.gamesPlayed - player.rebuys) / player.gamesPlayed) * 100) : 0}%
-                                </span>
+                            <div className="flex justify-between items-center p-2.5 bg-white/5 rounded-lg">
+                                <span className="text-zinc-400 font-sans">Most Re-Buys (Single Game)</span>
+                                <span className="font-bold text-orange-300">{player.mostRebuysSingle || 0} (£{(player.mostRebuysSingle || 0) * 10})</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2.5 bg-white/5 rounded-lg">
+                                <span className="text-zinc-400 font-sans">Average Re-Buys / Game</span>
+                                <span className="font-bold text-sky-300">{avgRebuysPerGame} / game</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2.5 bg-white/5 rounded-lg">
+                                <span className="text-zinc-400 font-sans">Add-Ons (@ £10)</span>
+                                <span className="font-bold text-emerald-300">{player.addOns || 0} (£{(player.addOns || 0) * 10})</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Arch-Nemesis & Rivalries Card */}
-                    <div className="glass-panel p-6 rounded-xl border-l-4 border-ept-red">
-                        <h3 className="text-lg font-bold text-white mb-4 flex items-center justify-between">
-                            <span className="flex items-center gap-2">
-                                <Skull className="text-ept-red" /> Arch-Nemesis & Rivalries
-                            </span>
-                            <span className="text-[10px] uppercase font-mono font-bold text-zinc-500 tracking-wider">
-                                Head-to-Head
-                            </span>
+                    {/* Panel 2: Placements & Dynamic Bubble Finishes */}
+                    <div className="glass-panel p-6 rounded-xl border border-white/10">
+                        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <Layers className="text-purple-400" /> Placements &amp; Bubble Finishes
                         </h3>
-                        <div className="space-y-4">
-                            {/* Arch-Nemesis Highlight Card */}
-                            {player.archNemesis && player.archNemesis.name !== 'None' ? (
-                                <div className="p-4 bg-gradient-to-r from-red-950/40 via-charcoal-card to-red-950/20 border border-ept-red/40 rounded-xl relative overflow-hidden">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-ept-red flex items-center gap-1">
-                                            <span>⚔️</span> Arch-Nemesis
-                                        </span>
-                                        <span className="text-xs font-mono font-black text-ept-red px-2 py-0.5 rounded bg-ept-red/20 border border-ept-red/40">
-                                            {player.archNemesis.knockouts} Eliminating KOs
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-3 mb-1">
-                                        <img
-                                            src={getAvatarFilename(player.archNemesis.name)}
-                                            alt={player.archNemesis.name}
-                                            className="w-10 h-10 rounded-lg border border-ept-red/50 object-cover bg-zinc-900"
-                                        />
-                                        <div className="text-xl font-black text-white">
-                                            {player.archNemesis.name}
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-white/10">
-                                        <span className="text-zinc-400">Head-to-Head Record:</span>
-                                        <span className={`font-mono font-bold ${player.archNemesis.chipDifferential >= 0 ? 'text-green-400' : 'text-ept-red'}`}>
-                                            {player.archNemesis.headToHeadNotes}
-                                        </span>
-                                    </div>
+                        <div className="space-y-3 text-sm font-mono">
+                            <div className="flex justify-between items-center p-2.5 bg-white/5 rounded-lg">
+                                <span className="text-zinc-400 font-sans">1st-Place Wins (Win %)</span>
+                                <span className="font-bold text-gold">{player.wins || 0} ({winPct}%)</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2.5 bg-white/5 rounded-lg">
+                                <span className="text-zinc-400 font-sans">Average Finish Position</span>
+                                <span className="font-bold text-cyan-300">
+                                    {player.avgFinishPosition && player.avgFinishPosition > 0
+                                        ? `${player.avgFinishPosition.toFixed(1)}`
+                                        : 'N/A'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center p-2.5 bg-purple-950/30 border border-purple-500/30 rounded-lg">
+                                <div>
+                                    <span className="text-purple-200 font-sans font-bold block">Bubble Finishes 🫧</span>
+                                    <span className="text-[10px] text-zinc-400 font-sans">1 Spot Outside Money Cutoff</span>
                                 </div>
-                            ) : (
-                                <div className="p-4 bg-ept-red/10 border border-ept-red/20 rounded-lg">
-                                    <div className="text-xs font-bold uppercase tracking-widest text-ept-red mb-2">My Nemesis</div>
-                                    <div className="flex items-center gap-3">
-                                        {player.rivalPlayer && player.rivalPlayer !== 'None' && (
-                                            <img
-                                                src={getAvatarFilename(player.rivalPlayer)}
-                                                alt={player.rivalPlayer}
-                                                className="w-10 h-10 rounded-lg border border-ept-red/40 object-cover bg-zinc-900"
-                                            />
-                                        )}
-                                        <span className="text-lg font-bold text-white">{player.rivalPlayer || "None"}</span>
-                                    </div>
-                                </div>
-                            )}
+                                <span className="text-xl font-black text-purple-300">{player.bubbleFinishes || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2.5 bg-white/5 rounded-lg">
+                                <span className="text-zinc-400 font-sans">Games Played</span>
+                                <span className="font-bold text-white">{player.gamesPlayed} / 9</span>
+                            </div>
+                        </div>
+                    </div>
 
-                            {/* Bullied Player */}
-                            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
-                                <div className="text-xs font-bold uppercase tracking-widest text-green-500 mb-1">My Pigeon (Favorite Target)</div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        {player.bulliedPlayer && player.bulliedPlayer !== 'None' && (
-                                            <img
-                                                src={getAvatarFilename(player.bulliedPlayer)}
-                                                alt={player.bulliedPlayer}
-                                                className="w-9 h-9 rounded-lg border border-green-500/40 object-cover bg-zinc-900"
-                                            />
-                                        )}
-                                        <span className="text-base font-bold text-white">{player.bulliedPlayer || "None"}</span>
-                                    </div>
-                                    <span className="text-xs font-mono text-green-400 font-bold">Exploited Target</span>
-                                </div>
+                    {/* Panel 3: Combat & Knockout Telemetry */}
+                    <div className="glass-panel p-6 rounded-xl border border-white/10">
+                        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <Target className="text-ept-red" /> Knockout &amp; Elimination Log
+                        </h3>
+                        <div className="space-y-3 text-sm font-mono">
+                            <div className="flex justify-between items-center p-2.5 bg-white/5 rounded-lg">
+                                <span className="text-zinc-400 font-sans">Total Knockouts (Row 37 / Col M)</span>
+                                <span className="text-lg font-bold text-ept-red">{player.knockOuts} ☠️</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2.5 bg-white/5 rounded-lg">
+                                <span className="text-zinc-400 font-sans">Average KOs / Game</span>
+                                <span className="font-bold text-white">{avgKOs} KOs/gm</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2.5 bg-white/5 rounded-lg">
+                                <span className="text-zinc-400 font-sans">Times Knocked Out (Rows 17–21)</span>
+                                <span className="font-bold text-zinc-200">{timesEliminated} ⚰️</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2.5 bg-white/5 rounded-lg">
+                                <span className="text-zinc-400 font-sans">Table Survival Rate</span>
+                                <span className="font-bold text-emerald-400">{survivalRate}%</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                {/* End 2-col Grid */}
+
+                {/* Arch-Nemesis & Rivalries Card */}
+                <div className="glass-panel p-6 rounded-xl border-l-4 border-ept-red">
+                    <h3 className="text-lg font-bold text-white mb-4 flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                            <Skull className="text-ept-red" /> Arch-Nemesis &amp; Sheet Rivalry Log
+                        </span>
+                        <span className="text-[10px] uppercase font-mono font-bold text-zinc-500 tracking-wider">
+                            Rows 17–37 Head-to-Head
+                        </span>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Arch-Nemesis Highlight Card */}
+                        {player.archNemesis && player.archNemesis.name !== 'None' ? (
+                            <div className="p-4 bg-gradient-to-r from-red-950/40 via-charcoal-card to-red-950/20 border border-ept-red/40 rounded-xl relative overflow-hidden">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-ept-red flex items-center gap-1">
+                                        <span>⚔️</span> Arch-Nemesis (Most Knocked Out By)
+                                    </span>
+                                    <span className="text-xs font-mono font-black text-ept-red px-2 py-0.5 rounded bg-ept-red/20 border border-ept-red/40">
+                                        {player.archNemesis.knockouts} Eliminating KOs
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-3 mb-1">
+                                    <img
+                                        src={getAvatarFilename(player.archNemesis.name)}
+                                        alt={player.archNemesis.name}
+                                        className="w-10 h-10 rounded-lg border border-ept-red/50 object-cover bg-zinc-900"
+                                    />
+                                    <div className="text-xl font-black text-white">
+                                        {player.archNemesis.name}
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-white/10">
+                                    <span className="text-zinc-400">Head-to-Head Record:</span>
+                                    <span className={`font-mono font-bold ${player.archNemesis.chipDifferential >= 0 ? 'text-green-400' : 'text-ept-red'}`}>
+                                        {player.archNemesis.headToHeadNotes}
+                                    </span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="p-4 bg-ept-red/10 border border-ept-red/20 rounded-lg">
+                                <div className="text-xs font-bold uppercase tracking-widest text-ept-red mb-2">My Nemesis (Most Knocked Out By)</div>
+                                <div className="flex items-center gap-3">
+                                    {player.rivalPlayer && player.rivalPlayer !== 'None' && (
+                                        <img
+                                            src={getAvatarFilename(player.rivalPlayer)}
+                                            alt={player.rivalPlayer}
+                                            className="w-10 h-10 rounded-lg border border-ept-red/40 object-cover bg-zinc-900"
+                                        />
+                                    )}
+                                    <span className="text-lg font-bold text-white">{player.rivalPlayer || "None"}</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Bullied Player */}
+                        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex flex-col justify-between">
+                            <div className="text-xs font-bold uppercase tracking-widest text-green-500 mb-1">My Pigeon (Most Knocked Out Target — Col M)</div>
+                            <div className="flex items-center justify-between mt-2">
+                                <div className="flex items-center gap-3">
+                                    {player.bulliedPlayer && player.bulliedPlayer !== 'None' && (
+                                        <img
+                                            src={getAvatarFilename(player.bulliedPlayer)}
+                                            alt={player.bulliedPlayer}
+                                            className="w-10 h-10 rounded-lg border border-green-500/40 object-cover bg-zinc-900"
+                                        />
+                                    )}
+                                    <span className="text-xl font-black text-white">{player.bulliedPlayer || "None"}</span>
+                                </div>
+                                <span className="text-xs font-mono text-green-400 font-bold">Favorite Target</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 {/* AI Poker Academy & Personalized Game Improvement Plan */}
                 <PlayerAcademyCoachingProfile playerName={player.name} />
@@ -283,7 +398,7 @@ export default async function PlayerProfile({ params }: Props) {
                         <CashFlowChart data={player.cashFlowHistory || []} />
                     </div>
                 </div>
-            </div >
+            </div>
         </HijackWrapper>
     );
 }
