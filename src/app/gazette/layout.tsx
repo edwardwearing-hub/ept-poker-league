@@ -6,7 +6,8 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'The Gazette | E.P.T. 2026 Poker League',
         description: 'Exclusive episode recaps, dramatic hands, and high-stakes storylines from The E.P.T. 2026 Poker League.',
-        images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'The EPT Gazette' }],
+        url: '/gazette',
+        images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'The EPT Gazette' }],
     },
 };
 

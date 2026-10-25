@@ -11,7 +11,8 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'TV Final Table Broadcast & Player Showcase | E.P.T. 2026',
         description: 'Auto-looping player league reports, career stats, and live championship broadcast.',
-        images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'EPT TV Final Table' }],
+        url: '/presentation',
+        images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'EPT TV Final Table' }],
     },
 };
 

@@ -6,7 +6,8 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Poker Engine & Hands Arena | E.P.T. 2026',
         description: 'Play live hands against the Poker AI Engine and practice preflop ranges in the E.P.T. 2026 League.',
-        images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'EPT Poker Engine' }],
+        url: '/game',
+        images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'EPT Poker Engine' }],
     },
 };
 

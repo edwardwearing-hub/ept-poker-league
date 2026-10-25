@@ -6,7 +6,8 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Casino Syndicate RPG | E.P.T. 2026',
         description: 'Build your underground poker empire and generate passive chip flow in the E.P.T. 2026 Syndicate RPG.',
-        images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'EPT Casino Syndicate RPG' }],
+        url: '/syndicate',
+        images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'EPT Casino Syndicate RPG' }],
     },
 };
 

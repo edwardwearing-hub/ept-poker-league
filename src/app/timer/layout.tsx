@@ -6,7 +6,8 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Tournament Blinds Clock | E.P.T. 2026 Poker League',
         description: 'Official tournament blinds clock with audio cues and customizable level structures.',
-        images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'EPT Blinds Timer' }],
+        url: '/timer',
+        images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'EPT Blinds Timer' }],
     },
 };
 

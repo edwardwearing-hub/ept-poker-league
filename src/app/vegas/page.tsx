@@ -11,12 +11,14 @@ export const metadata: Metadata = {
     title: 'Vegas Casino Classics & Tutorials | E.P.T. 2026 Poker League',
     description:
       'Play 8 authentic Las Vegas casino felt games with your Academy bankroll across Blackjack, Slots, Craps, Roulette, Baccarat, Video Poker, Sportsbook, and Pai Gow.',
-    images: [{ url: '/ept-logo.jpg', width: 1200, height: 630, alt: 'EPT Vegas Casino' }],
+    url: '/vegas',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'EPT Vegas Casino' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Vegas Casino Classics & Tutorials | E.P.T. 2026',
     description: 'Play 8 authentic Las Vegas casino felt games with zero-risk practice.',
+    images: ['/og-image.jpg'],
   },
 };
 
