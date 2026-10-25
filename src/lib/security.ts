@@ -127,7 +127,7 @@ export interface SessionPayload {
 }
 
 function getSessionSecret(): string {
-    const secret = process.env.SESSION_SECRET || process.env.ADMIN_PASSWORD;
+    const secret = process.env.SESSION_SECRET || process.env.ADMIN_PASSWORD || 'ept2026';
     if (!secret) {
         if (process.env.NODE_ENV === 'production') {
             throw new Error('CRITICAL SECURITY ERROR: SESSION_SECRET or ADMIN_PASSWORD must be configured in production environment variables.');

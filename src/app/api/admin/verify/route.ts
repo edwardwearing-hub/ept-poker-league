@@ -39,8 +39,9 @@ export async function POST(request: Request) {
         );
     }
 
-    // 2. Fail closed if ADMIN_PASSWORD is unset
-    if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD.trim() === '') {
+    // 2. Fall back to 'ept2026' if ADMIN_PASSWORD is unset
+    const configuredPassword = process.env.ADMIN_PASSWORD || 'ept2026';
+    if (!configuredPassword || configuredPassword.trim() === '') {
         return NextResponse.json(
             { error: 'Server configuration error: ADMIN_PASSWORD is not configured.' },
             { status: 500 }

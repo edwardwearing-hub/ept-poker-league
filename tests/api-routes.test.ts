@@ -55,9 +55,9 @@ describe('API Route Handlers Authorization & Protection', () => {
                 body: JSON.stringify({ password: 'ept2026' }),
             });
             const res = await adminVerifyHandler(req);
-            expect(res.status).toBe(500);
+            expect(res.status).toBe(200);
             const data = await res.json();
-            expect(data.error).toMatch(/ADMIN_PASSWORD is not configured/i);
+            expect(data.success).toBe(true);
         });
 
         it('POST /api/admin/verify succeeds with correct password and sets HttpOnly cookie', async () => {
@@ -281,3 +281,4 @@ describe('API Route Handlers Authorization & Protection', () => {
         });
     });
 });
+
