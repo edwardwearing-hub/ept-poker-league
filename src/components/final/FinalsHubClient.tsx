@@ -33,6 +33,7 @@ import { useRouter } from 'next/navigation';
 import { getAvatarFilename } from '@/lib/avatars';
 import PlayerGameMentions, { GazetteReport } from './PlayerGameMentions';
 import TrophyShowcaseClient from '@/components/3d/TrophyShowcaseClient';
+import WantedVideo from '@/components/WantedVideo';
 
 interface Player {
     name: string;
@@ -639,20 +640,34 @@ export default function FinalsHubClient({ players, totalPot, history = [], repor
                                     {/* Dossier Header */}
                                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                                         <div className="flex items-center gap-4">
-                                            {/* 8-bit Avatar */}
-                                            <div className={`relative w-16 h-16 rounded-2xl overflow-hidden border-2 shrink-0 bg-zinc-900 shadow-lg ${
-                                                dossier.isZero ? 'border-red-600 grayscale' : player.rank === 1 ? 'border-gold' : 'border-white/20'
-                                            }`}>
-                                                <img 
-                                                    src={getAvatarFilename(player.name)} 
-                                                    alt={player.name} 
-                                                    className="w-full h-full object-cover" 
-                                                />
-                                                <span className={`absolute bottom-0 right-0 text-[9px] font-black px-1.5 py-0.5 leading-none rounded-tl ${
-                                                    player.rank === 1 ? 'bg-gold text-black' : 'bg-black/80 text-white'
+                                            {/* Prominent Doubled AI Video + Corner 8-bit Avatar */}
+                                            <div className="relative shrink-0">
+                                                <div className={`relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 bg-zinc-900 shadow-lg ${
+                                                    dossier.isZero ? 'border-red-600 grayscale' : player.rank === 1 ? 'border-gold' : 'border-white/20'
                                                 }`}>
-                                                    #{player.rank}
-                                                </span>
+                                                    <WantedVideo
+                                                        playerName={player.name}
+                                                        className="absolute inset-0 w-full h-full object-cover object-top z-10"
+                                                    />
+                                                    <img 
+                                                        src={getAvatarFilename(player.name)} 
+                                                        alt={player.name} 
+                                                        className="w-full h-full object-cover object-top" 
+                                                    />
+                                                    <span className={`absolute bottom-0 right-0 z-20 text-[9px] font-black px-1.5 py-0.5 leading-none rounded-tl ${
+                                                        player.rank === 1 ? 'bg-gold text-black' : 'bg-black/80 text-white'
+                                                    }`}>
+                                                        #{player.rank}
+                                                    </span>
+                                                </div>
+                                                <div className="absolute -bottom-2 -left-2 w-10 h-10 rounded-xl overflow-hidden border border-gold/60 bg-zinc-950 z-30 shadow-md">
+                                                    <img
+                                                        src={getAvatarFilename(player.name)}
+                                                        alt={`${player.name} 8-bit`}
+                                                        className="w-full h-full object-cover object-top"
+                                                        style={{ imageRendering: 'pixelated' }}
+                                                    />
+                                                </div>
                                             </div>
 
                                             <div>

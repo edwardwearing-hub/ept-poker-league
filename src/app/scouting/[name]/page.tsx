@@ -107,9 +107,9 @@ export default async function PlayerProfile({ params }: Props) {
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-4 sm:gap-8 items-center md:items-start relative z-10">
-                        {/* Dual Media Showcase: AI Video + 8-Bit Character */}
-                        <div className="flex items-center gap-3 shrink-0">
-                            <div className="relative h-28 w-28 sm:h-40 sm:w-40 rounded-2xl bg-charcoal-dark border-4 border-gold/60 overflow-hidden shadow-[0_0_30px_rgba(212,175,55,0.35)]">
+                        {/* Dual Media Showcase: Doubled AI Video + Corner 8-Bit Character */}
+                        <div className="relative flex items-center justify-center shrink-0">
+                            <div className="relative h-56 w-56 sm:h-80 sm:w-80 rounded-2xl bg-charcoal-dark border-4 border-gold/60 overflow-hidden shadow-[0_0_45px_rgba(212,175,55,0.45)]">
                                 <WantedVideo
                                     playerName={player.name}
                                     className="absolute inset-0 w-full h-full object-cover object-top z-10"
@@ -119,20 +119,20 @@ export default async function PlayerProfile({ params }: Props) {
                                     alt={player.name}
                                     className="w-full h-full object-cover object-top"
                                 />
-                                <span className="absolute top-2 left-2 z-20 px-2 py-0.5 rounded bg-black/80 border border-gold/40 text-[9px] font-mono font-black uppercase tracking-wider text-gold">
+                                <span className="absolute top-2.5 left-2.5 z-20 px-2.5 py-0.5 rounded bg-black/80 border border-gold/40 text-[10px] font-mono font-black uppercase tracking-wider text-gold">
                                     🎬 AI Video
                                 </span>
                             </div>
 
-                            <div className="relative h-24 w-24 sm:h-36 sm:w-32 rounded-2xl bg-zinc-950 border-2 border-amber-400/50 overflow-hidden shadow-lg">
+                            <div className="absolute -bottom-3 -right-3 z-30 h-20 w-16 sm:h-28 sm:w-24 rounded-2xl bg-zinc-950 border-2 border-amber-400/70 overflow-hidden shadow-2xl">
                                 <img
                                     src={getAvatarFilename(player.name)}
                                     alt={`${player.name} 8-Bit Character`}
                                     className="w-full h-full object-cover object-top"
                                     style={{ imageRendering: 'pixelated' }}
                                 />
-                                <span className="absolute bottom-1.5 inset-x-1.5 z-20 px-1.5 py-0.5 rounded bg-black/85 border border-amber-400/40 text-[8px] font-mono font-black uppercase tracking-wider text-amber-300 text-center">
-                                    👾 8-Bit Avatar
+                                <span className="absolute bottom-1 inset-x-1 z-20 px-1 py-0.5 rounded bg-black/85 border border-amber-400/40 text-[7px] font-mono font-black uppercase tracking-wider text-amber-300 text-center">
+                                    👾 8-Bit
                                 </span>
                             </div>
                         </div>

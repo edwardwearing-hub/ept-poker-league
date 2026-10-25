@@ -40,8 +40,8 @@ export default async function ScoutingPage() {
                     return (
                         <Link key={player.name} href={`/scouting/${encodeURIComponent(player.name)}`}>
                             <div className="glass-panel p-6 rounded-xl hover:bg-white/5 transition-all group flex items-start gap-4 border border-white/5 hover:border-gold/30">
-                                <div className="relative h-20 w-20 shrink-0">
-                                    <div className="relative h-20 w-20 rounded-2xl bg-charcoal-dark border-2 border-white/15 group-hover:border-gold overflow-hidden transition-colors shadow-lg">
+                                <div className="relative h-36 w-36 shrink-0">
+                                    <div className="relative h-36 w-36 rounded-2xl bg-charcoal-dark border-2 border-white/15 group-hover:border-gold overflow-hidden transition-colors shadow-lg">
                                         <WantedVideo
                                             playerName={player.name}
                                             className="absolute inset-0 w-full h-full object-cover object-top z-10"
@@ -52,7 +52,7 @@ export default async function ScoutingPage() {
                                             className="w-full h-full object-cover object-top"
                                         />
                                     </div>
-                                    <div className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-lg bg-zinc-950 border border-gold/60 overflow-hidden z-20 shadow-md">
+                                    <div className="absolute -bottom-2 -right-2 w-11 h-11 rounded-xl bg-zinc-950 border border-gold/60 overflow-hidden z-20 shadow-md">
                                         <img
                                             src={getAvatarFilename(player.name)}
                                             alt={`${player.name} 8-bit`}

@@ -1934,25 +1934,25 @@ export default function TVPresentationClient({
                 <div className="flex-1 min-h-0 grid grid-cols-12 gap-5 items-center pt-3 overflow-hidden">
                     {/* Fighter A */}
                     <div className="col-span-4 h-full flex flex-col items-center justify-center text-center p-4 rounded-3xl bg-gradient-to-b from-gold/15 to-black border-2 border-gold/50 shadow-xl">
-                        <div className="flex items-center justify-center gap-3 mb-3">
-                            <div className="relative w-28 h-28 xl:w-36 xl:h-36 rounded-2xl border-4 border-gold overflow-hidden shadow-[0_0_35px_rgba(212,175,55,0.5)] bg-zinc-900">
+                        <div className="relative flex items-center justify-center mb-3">
+                            <div className="relative w-56 h-56 xl:w-72 xl:h-72 rounded-2xl border-4 border-gold overflow-hidden shadow-[0_0_45px_rgba(212,175,55,0.55)] bg-zinc-900">
                                 <WantedVideo
                                     playerName={fighterA.player.name}
                                     className="absolute inset-0 w-full h-full object-cover object-top z-10"
                                 />
                                 <img src={getAvatarFilename(fighterA.player.name)} alt={fighterA.player.name} className="w-full h-full object-cover object-top" />
-                                <span className="absolute top-1.5 left-1.5 z-20 px-1.5 py-0.5 rounded bg-black/80 text-gold text-[8px] font-mono font-black uppercase border border-gold/40">
+                                <span className="absolute top-2 left-2 z-20 px-2 py-0.5 rounded bg-black/80 text-gold text-[9px] font-mono font-black uppercase border border-gold/40">
                                     🎬 AI Video
                                 </span>
                             </div>
-                            <div className="relative w-20 h-24 xl:w-24 xl:h-28 rounded-2xl border-2 border-amber-400/70 overflow-hidden shadow-lg bg-zinc-950">
+                            <div className="absolute -bottom-2 -right-3 w-16 h-20 xl:w-20 xl:h-24 rounded-xl border-2 border-amber-400/80 overflow-hidden shadow-2xl bg-zinc-950 z-30">
                                 <img
                                     src={getAvatarFilename(fighterA.player.name)}
                                     alt={`${fighterA.player.name} 8-bit`}
                                     className="w-full h-full object-cover object-top"
                                     style={{ imageRendering: 'pixelated' }}
                                 />
-                                <span className="absolute bottom-1 inset-x-1 z-20 px-1 py-0.5 rounded bg-black/85 text-amber-300 text-[7px] font-mono font-black uppercase text-center border border-amber-400/30">
+                                <span className="absolute bottom-0.5 inset-x-0.5 z-20 px-1 py-0.5 rounded bg-black/85 text-amber-300 text-[6.5px] font-mono font-black uppercase text-center border border-amber-400/30">
                                     👾 8-Bit
                                 </span>
                             </div>
@@ -1998,25 +1998,25 @@ export default function TVPresentationClient({
 
                     {/* Fighter B */}
                     <div className="col-span-4 h-full flex flex-col items-center justify-center text-center p-4 rounded-3xl bg-gradient-to-b from-sky-500/15 to-black border-2 border-sky-400/50 shadow-xl">
-                        <div className="flex items-center justify-center gap-3 mb-3">
-                            <div className="relative w-28 h-28 xl:w-36 xl:h-36 rounded-2xl border-4 border-sky-400 overflow-hidden shadow-[0_0_35px_rgba(56,189,248,0.4)] bg-zinc-900">
+                        <div className="relative flex items-center justify-center mb-3">
+                            <div className="relative w-56 h-56 xl:w-72 xl:h-72 rounded-2xl border-4 border-sky-400 overflow-hidden shadow-[0_0_45px_rgba(56,189,248,0.45)] bg-zinc-900">
                                 <WantedVideo
                                     playerName={fighterB.player.name}
                                     className="absolute inset-0 w-full h-full object-cover object-top z-10"
                                 />
                                 <img src={getAvatarFilename(fighterB.player.name)} alt={fighterB.player.name} className="w-full h-full object-cover object-top" />
-                                <span className="absolute top-1.5 left-1.5 z-20 px-1.5 py-0.5 rounded bg-black/80 text-sky-300 text-[8px] font-mono font-black uppercase border border-sky-400/40">
+                                <span className="absolute top-2 left-2 z-20 px-2 py-0.5 rounded bg-black/80 text-sky-300 text-[9px] font-mono font-black uppercase border border-sky-400/40">
                                     🎬 AI Video
                                 </span>
                             </div>
-                            <div className="relative w-20 h-24 xl:w-24 xl:h-28 rounded-2xl border-2 border-sky-400/70 overflow-hidden shadow-lg bg-zinc-950">
+                            <div className="absolute -bottom-2 -right-3 w-16 h-20 xl:w-20 xl:h-24 rounded-xl border-2 border-sky-400/80 overflow-hidden shadow-2xl bg-zinc-950 z-30">
                                 <img
                                     src={getAvatarFilename(fighterB.player.name)}
                                     alt={`${fighterB.player.name} 8-bit`}
                                     className="w-full h-full object-cover object-top"
                                     style={{ imageRendering: 'pixelated' }}
                                 />
-                                <span className="absolute bottom-1 inset-x-1 z-20 px-1 py-0.5 rounded bg-black/85 text-sky-300 text-[7px] font-mono font-black uppercase text-center border border-sky-400/30">
+                                <span className="absolute bottom-0.5 inset-x-0.5 z-20 px-1 py-0.5 rounded bg-black/85 text-sky-300 text-[6.5px] font-mono font-black uppercase text-center border border-sky-400/30">
                                     👾 8-Bit
                                 </span>
                             </div>
@@ -2090,10 +2090,10 @@ export default function TVPresentationClient({
             },
             {
                 title: '🫧 MOST BUBBLE FINISHES',
-                subtitle: 'Most 4th-Place Finishes Recorded',
+                subtitle: 'Finished 1 Spot Outside the Money',
                 winner: bubbleLeader.player.name,
                 stat: `${bubbleLeader.bubbleCount} Bubble Finishes`,
-                detail: `Finished 4th (one spot outside top-3 payouts) ${bubbleLeader.bubbleCount} times this season.`,
+                detail: `Finished 1 position outside the cash payouts ${bubbleLeader.bubbleCount} times this season.`,
                 color: 'border-purple-500/50 bg-gradient-to-b from-purple-950/40 to-black text-purple-300'
             },
             {
@@ -2143,14 +2143,14 @@ export default function TVPresentationClient({
                                     <div className="text-[10px] font-mono text-zinc-400">{aw.subtitle}</div>
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
-                                    <div className="relative w-12 h-12 rounded-2xl overflow-hidden border-2 border-white/30 bg-zinc-900">
+                                    <div className="relative w-20 h-20 xl:w-24 xl:h-24 rounded-2xl overflow-hidden border-2 border-white/30 bg-zinc-900 shadow-lg">
                                         <WantedVideo
                                             playerName={aw.winner}
                                             className="absolute inset-0 w-full h-full object-cover object-top z-10"
                                         />
                                         <img src={getAvatarFilename(aw.winner)} alt={aw.winner} className="w-full h-full object-cover" />
                                     </div>
-                                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-gold/40 bg-zinc-950">
+                                    <div className="w-11 h-11 rounded-xl overflow-hidden border border-gold/40 bg-zinc-950">
                                         <img
                                             src={getAvatarFilename(aw.winner)}
                                             alt={`${aw.winner} 8-bit`}
@@ -2319,13 +2319,13 @@ export default function TVPresentationClient({
                 </div>
 
                 {/* LEFT 4 COLUMNS: ANCHORED PLAYER BROADCAST IDENTITY & MEDIA SHOWCASE */}
-                <div className="col-span-4 h-full min-h-0 flex flex-col justify-between bg-zinc-900/50 border border-gold/25 rounded-2xl p-4 relative z-10 overflow-hidden">
-                    {/* Top: Dual Media Showcase (Live AI Video + 8-Bit Arcade Character) */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-center gap-3">
-                            {/* Card 1: AI Video Feed */}
+                <div className="col-span-4 h-full min-h-0 flex flex-col justify-between bg-zinc-900/50 border border-gold/25 rounded-2xl p-3.5 relative z-10 overflow-hidden">
+                    {/* Top: Prominent Doubled AI Video Showcase + Corner 8-Bit Arcade Badge */}
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-center">
                             <div className="relative">
-                                <div className={`relative w-32 h-32 xl:w-40 xl:h-40 rounded-2xl border-4 overflow-hidden shadow-[0_0_35px_rgba(212,175,55,0.45)] bg-zinc-900 ${
+                                {/* Doubled AI Video Feed (w-60 h-60 xl:w-72 xl:h-72) */}
+                                <div className={`relative w-60 h-60 xl:w-72 xl:h-72 rounded-2xl border-4 overflow-hidden shadow-[0_0_45px_rgba(212,175,55,0.5)] bg-zinc-900 ${
                                     isOut ? 'border-red-600 grayscale' : 'border-gold'
                                 }`}>
                                     <WantedVideo
@@ -2337,27 +2337,27 @@ export default function TVPresentationClient({
                                         alt={p.name}
                                         className="w-full h-full object-cover object-top scale-105"
                                     />
-                                    <span className="absolute top-2 left-2 z-20 px-2 py-0.5 rounded bg-black/85 border border-gold/50 text-[8px] font-mono font-black uppercase tracking-wider text-gold">
+                                    <span className="absolute top-2.5 left-2.5 z-20 px-2.5 py-0.5 rounded bg-black/85 border border-gold/50 text-[9px] font-mono font-black uppercase tracking-wider text-gold">
                                         🎬 AI Video
                                     </span>
                                     {isOut && (
                                         <div className="absolute inset-0 z-30 bg-red-950/75 flex flex-col items-center justify-center">
-                                            <Skull className="w-9 h-9 text-red-500 animate-pulse" />
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-white bg-red-600 px-2 py-0.5 rounded mt-1">
+                                            <Skull className="w-12 h-12 text-red-500 animate-pulse" />
+                                            <span className="text-xs font-black uppercase tracking-widest text-white bg-red-600 px-2.5 py-0.5 rounded mt-1">
                                                 BUSTED
                                             </span>
                                         </div>
                                     )}
                                 </div>
-                                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-30 px-3 py-0.5 rounded-full bg-gradient-to-r from-gold via-yellow-400 to-amber-500 text-black font-black text-[10px] uppercase tracking-widest shadow-xl whitespace-nowrap border border-white">
+
+                                {/* Seed Pill */}
+                                <div className="absolute -bottom-2.5 left-4 z-30 px-3.5 py-0.5 rounded-full bg-gradient-to-r from-gold via-yellow-400 to-amber-500 text-black font-black text-[10px] uppercase tracking-widest shadow-xl whitespace-nowrap border border-white">
                                     SEED #{p.rank}
                                 </div>
-                            </div>
 
-                            {/* Card 2: 8-Bit Arcade Character */}
-                            <div className="relative">
-                                <div className={`relative w-28 h-32 xl:w-32 xl:h-40 rounded-2xl border-2 overflow-hidden shadow-[0_0_25px_rgba(245,158,11,0.3)] bg-zinc-950 ${
-                                    isOut ? 'border-red-600/60 grayscale' : 'border-amber-400/70'
+                                {/* Corner 8-Bit Arcade Character PiP Badge */}
+                                <div className={`absolute -bottom-3 -right-3 z-30 w-16 h-20 xl:w-20 xl:h-24 rounded-xl border-2 overflow-hidden shadow-[0_0_25px_rgba(0,0,0,0.9)] bg-zinc-950 ${
+                                    isOut ? 'border-red-600/60 grayscale' : 'border-amber-400'
                                 }`}>
                                     <img
                                         src={getAvatarFilename(p.name)}
@@ -2365,68 +2365,68 @@ export default function TVPresentationClient({
                                         className="w-full h-full object-cover object-top"
                                         style={{ imageRendering: 'pixelated' }}
                                     />
-                                    <span className="absolute bottom-1.5 inset-x-1.5 z-20 px-1.5 py-0.5 rounded bg-black/85 border border-amber-400/40 text-[8px] font-mono font-black uppercase tracking-wider text-amber-300 text-center">
-                                        👾 8-Bit Avatar
+                                    <span className="absolute bottom-0.5 inset-x-0.5 z-20 px-1 py-0.2 rounded bg-black/90 border border-amber-400/40 text-[6.5px] font-mono font-black uppercase tracking-wider text-amber-300 text-center">
+                                        👾 8-Bit
                                     </span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Player Identity Details */}
-                        <div className="text-center pt-1 space-y-1.5">
+                        <div className="text-center pt-1.5 space-y-1">
                             <div className="flex flex-wrap items-center justify-center gap-1.5">
-                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${currentProfile.archetypeColor}`}>
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${currentProfile.archetypeColor}`}>
                                     {currentProfile.archetypeBadge}
                                 </span>
-                                <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300 text-[10px] font-mono font-bold">
+                                <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-zinc-300 text-[9px] font-mono font-bold">
                                     {p.gamesPlayed} {p.gamesPlayed === 1 ? 'Game' : 'Games'} Played
                                 </span>
                             </div>
 
-                            <h2 className="text-2xl xl:text-4xl font-black uppercase tracking-tight text-white drop-shadow-[0_2px_20px_rgba(255,215,0,0.3)] leading-tight">
+                            <h2 className="text-xl xl:text-3xl font-black uppercase tracking-tight text-white drop-shadow-[0_2px_20px_rgba(255,215,0,0.3)] leading-tight">
                                 {p.name}
                             </h2>
 
-                            <p className="text-[11px] xl:text-xs font-mono text-gold/90 line-clamp-2 px-1">
+                            <p className="text-[10px] xl:text-[11px] font-mono text-gold/90 line-clamp-1 px-1">
                                 {currentProfile.quote}
                             </p>
                         </div>
 
                         {/* Quick Summary Strip */}
-                        <div className="grid grid-cols-4 gap-1.5 pt-1">
-                            <div className="bg-black/60 border border-gold/30 rounded-xl p-2 text-center">
-                                <div className="text-[8px] font-mono uppercase text-zinc-400">Points</div>
-                                <div className="text-sm xl:text-base font-black font-mono text-gold">{p.points}</div>
+                        <div className="grid grid-cols-4 gap-1.5 pt-0.5">
+                            <div className="bg-black/60 border border-gold/30 rounded-xl p-1.5 text-center">
+                                <div className="text-[7.5px] font-mono uppercase text-zinc-400">Points</div>
+                                <div className="text-xs xl:text-sm font-black font-mono text-gold">{p.points}</div>
                             </div>
-                            <div className="bg-black/60 border border-white/10 rounded-xl p-2 text-center">
-                                <div className="text-[8px] font-mono uppercase text-zinc-400">Net Profit</div>
-                                <div className={`text-sm xl:text-base font-black font-mono ${p.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <div className="bg-black/60 border border-white/10 rounded-xl p-1.5 text-center">
+                                <div className="text-[7.5px] font-mono uppercase text-zinc-400">Net Profit</div>
+                                <div className={`text-xs xl:text-sm font-black font-mono ${p.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                                     {p.profit >= 0 ? `+£${p.profit}` : `-£${Math.abs(p.profit)}`}
                                 </div>
                             </div>
-                            <div className="bg-black/60 border border-white/10 rounded-xl p-2 text-center">
-                                <div className="text-[8px] font-mono uppercase text-zinc-400">High Win</div>
-                                <div className="text-sm xl:text-base font-black font-mono text-emerald-300">£{currentProfile.highestWinAmount}</div>
+                            <div className="bg-black/60 border border-white/10 rounded-xl p-1.5 text-center">
+                                <div className="text-[7.5px] font-mono uppercase text-zinc-400">High Win</div>
+                                <div className="text-xs xl:text-sm font-black font-mono text-emerald-300">£{currentProfile.highestWinAmount}</div>
                             </div>
-                            <div className="bg-black/60 border border-white/10 rounded-xl p-2 text-center">
-                                <div className="text-[8px] font-mono uppercase text-zinc-400">Total KOs</div>
-                                <div className="text-sm xl:text-base font-black font-mono text-ept-red">{p.knockOuts}☠️</div>
+                            <div className="bg-black/60 border border-white/10 rounded-xl p-1.5 text-center">
+                                <div className="text-[7.5px] font-mono uppercase text-zinc-400">Total KOs</div>
+                                <div className="text-xs xl:text-sm font-black font-mono text-ept-red">{p.knockOuts}☠️</div>
                             </div>
                         </div>
 
                         {/* 100% Real Google Sheet Telemetry Badges */}
-                        <div className="flex flex-wrap items-center justify-center gap-1.5">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 border border-white/10 text-zinc-300">
+                        <div className="flex flex-wrap items-center justify-center gap-1">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-black/70 border border-white/10 text-zinc-300">
                                 Avg Pos: <strong className="text-gold">{currentProfile.avgFinish > 0 ? currentProfile.avgFinish.toFixed(1) : 'N/A'}</strong>
                             </span>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 border border-white/10 text-zinc-300">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-black/70 border border-white/10 text-zinc-300">
                                 Bonus: <strong className="text-gold">+{(p.bonusChips || 0).toLocaleString()}</strong>
                             </span>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 border border-white/10 text-zinc-300">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-black/70 border border-white/10 text-zinc-300">
                                 Rebuys: <strong className="text-blue-300">{p.rebuys || 0}</strong>
                             </span>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 border border-white/10 text-zinc-300">
-                                Attendance: <strong className="text-white">{currentProfile.attendancePct}%</strong>
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-black/70 border border-white/10 text-zinc-300">
+                                Att: <strong className="text-white">{currentProfile.attendancePct}%</strong>
                             </span>
                         </div>
                     </div>
