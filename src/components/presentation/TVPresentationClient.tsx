@@ -66,11 +66,11 @@ const BLIND_LEVELS = [
 ];
 
 const LOOP_INTERVAL_OPTIONS = [
-    { label: '10s', seconds: 10 },
-    { label: '15s', seconds: 15 },
-    { label: '20s', seconds: 20 },
     { label: '30s', seconds: 30 },
     { label: '45s', seconds: 45 },
+    { label: '90s', seconds: 90 },
+    { label: '3m', seconds: 180 },
+    { label: '5m', seconds: 300 },
 ];
 
 function formatOrdinal(n: number | null | undefined): string {
@@ -461,7 +461,7 @@ export default function TVPresentationClient({
     // Auto-Loop Presentation State
     const [activeSlideIdx, setActiveSlideIdx] = useState(0);
     const [isLooping, setIsLooping] = useState(true);
-    const [loopDurationSec, setLoopDurationSec] = useState(15);
+    const [loopDurationSec, setLoopDurationSec] = useState(30);
     const [loopProgress, setLoopProgress] = useState(0);
     const [onlyActiveFinalists, setOnlyActiveFinalists] = useState(false);
     const [includeSpecialSlides, setIncludeSpecialSlides] = useState(true);
