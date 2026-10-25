@@ -467,9 +467,11 @@ export default function TVPresentationClient({
     const [includeSpecialSlides, setIncludeSpecialSlides] = useState(true);
     const [playFanfareOnSlide, setPlayFanfareOnSlide] = useState(false);
 
-    // Tale of the Tape Rivalry Pair Selection
+    // Tale of the Tape Rivalry Pair Selection & Hands-Free Auto-Rotation Counter
     const [rivalryIdxA, setRivalryIdxA] = useState(0);
     const [rivalryIdxB, setRivalryIdxB] = useState(1);
+    const [rivalryCycleIdx, setRivalryCycleIdx] = useState(-1);
+    const [isManualRivalryOverride, setIsManualRivalryOverride] = useState(false);
 
     // Blind Timer State
     const [currentLevelIdx, setCurrentLevelIdx] = useState(0);
@@ -1226,11 +1228,116 @@ export default function TVPresentationClient({
         return filteredPlayers.length > 0 ? filteredPlayers : computedProfiles;
     }, [computedProfiles, onlyActiveFinalists, eliminatedPlayers]);
 
+    // Build complete rotating pool of unique Head-to-Head Rivalry Matchups so every Tale of the Tape slide is different
+    const rivalryMatchups = useMemo(() => {
+        const pool = activePlayerProfiles.length >= 2 ? activePlayerProfiles : computedProfiles;
+        if (pool.length < 2) return [];
+
+        const getDirectKOs = (attacker: ComputedPlayerProfile, target: ComputedPlayerProfile): number => {
+            const map = attacker.player.playersKnockedOut || {};
+            const targetLower = target.player.name.toLowerCase().trim();
+            const targetFirst = targetLower.split(/\s+/)[0];
+            for (const [k, v] of Object.entries(map)) {
+                const kLower = k.toLowerCase().trim();
+                if (kLower === targetLower || kLower.split(/\s+/)[0] === targetFirst) {
+                    return Number(v) || 0;
+                }
+            }
+            return 0;
+        };
+
+        interface RivalryPair {
+            idxA: number;
+            idxB: number;
+            title: string;
+            subtitle: string;
+            priority: number;
+            directKOsA: number;
+            directKOsB: number;
+        }
+
+        const allPairs: RivalryPair[] = [];
+
+        for (let i = 0; i < pool.length; i++) {
+            for (let j = i + 1; j < pool.length; j++) {
+                const a = pool[i];
+                const b = pool[j];
+                const globalIdxA = computedProfiles.findIndex(cp => cp.player.name === a.player.name);
+                const globalIdxB = computedProfiles.findIndex(cp => cp.player.name === b.player.name);
+                if (globalIdxA === -1 || globalIdxB === -1) continue;
+
+                const kosAB = getDirectKOs(a, b);
+                const kosBA = getDirectKOs(b, a);
+                const totalDirectKOs = kosAB + kosBA;
+                const ptsDiff = Math.abs((a.player.points || 0) - (b.player.points || 0));
+                const lastA = a.player.name.split(/\s+/).slice(-1)[0]?.toLowerCase();
+                const lastB = b.player.name.split(/\s+/).slice(-1)[0]?.toLowerCase();
+                const firstA = a.player.name.split(/\s+/)[0]?.toLowerCase();
+                const firstB = b.player.name.split(/\s+/)[0]?.toLowerCase();
+
+                let title = `⚔️ SEED #${a.player.rank} VS SEED #${b.player.rank} SHOWDOWN`;
+                let subtitle = `${a.player.points} Pts vs ${b.player.points} Pts • Separated by ${ptsDiff} Championship Points`;
+                let priority = 10;
+
+                if (a.player.rank === 1 && b.player.rank === 2) {
+                    title = '🏆 CHAMPIONSHIP TITLE FIGHT (#1 VS #2)';
+                    subtitle = `Separated by just ${ptsDiff} pts at the summit • +${(a.player.bonusChips || 0).toLocaleString()} vs +${(b.player.bonusChips || 0).toLocaleString()} Bonus Chips`;
+                    priority = 100;
+                } else if (lastA === 'wearing' && lastB === 'wearing') {
+                    title = '🔥 THE WEARING HOUSEHOLD DERBY';
+                    subtitle = `#${a.player.rank} ${a.player.name} vs #${b.player.rank} ${b.player.name} • Family Bragging Rights on the Felt`;
+                    priority = 95;
+                } else if (lastA === 'daly' && lastB === 'daly') {
+                    title = '⚡ THE DALY FAMILY FEUD';
+                    subtitle = `${a.player.name} (${a.player.points} pts) vs ${b.player.name} (${b.player.points} pts) • Dynasty Showdown`;
+                    priority = 92;
+                } else if (firstA.startsWith('dave') && firstB.startsWith('dave')) {
+                    title = '🛡️ THE BATTLE OF THE DAVES';
+                    subtitle = `${a.player.name} (${a.player.knockOuts} KOs) vs ${b.player.name} (${b.roiPct >= 0 ? `+${b.roiPct}%` : `${b.roiPct}%`} ROI)`;
+                    priority = 90;
+                } else if ((a.player.knockOuts || 0) >= 10 && (b.player.knockOuts || 0) >= 10) {
+                    title = '☠️ KNOCKOUT KINGS COLLISION';
+                    subtitle = `${a.player.knockOuts} Season KOs vs ${b.player.knockOuts} Season KOs • Heavyweight Executioners`;
+                    priority = 88;
+                } else if (totalDirectKOs >= 4) {
+                    title = `🩸 SHEET GRUDGE MATCH (${totalDirectKOs} DIRECT KOs)`;
+                    subtitle = `${a.player.name.split(' ')[0]} KO'd ${b.player.name.split(' ')[0]} ${kosAB}x • ${b.player.name.split(' ')[0]} KO'd ${a.player.name.split(' ')[0]} ${kosBA}x`;
+                    priority = 84 + totalDirectKOs;
+                } else if (a.player.profit > 0 && b.player.profit > 0) {
+                    title = '💰 HIGH ROLLER PROFIT CLASH';
+                    subtitle = `+£${a.player.profit} Net (${a.roiPct}% ROI) vs +£${b.player.profit} Net (${b.roiPct}% ROI)`;
+                    priority = 80;
+                } else if (a.bubbleCount >= 2 && b.bubbleCount >= 2) {
+                    title = '🫧 BUBBLE REDEMPTION SHOWDOWN';
+                    subtitle = `${a.bubbleCount} Bubble Finishes vs ${b.bubbleCount} Bubble Finishes • Hungry for Final Table Cash`;
+                    priority = 76;
+                } else if (Math.abs(a.player.rank - b.player.rank) === 1) {
+                    title = `🎯 TABLE NEIGHBOUR WAR (#${a.player.rank} VS #${b.player.rank})`;
+                    subtitle = `Separated by only ${ptsDiff} pts on the Season Leaderboard (${totalDirectKOs} direct KOs)`;
+                    priority = 70 - a.player.rank;
+                }
+
+                allPairs.push({
+                    idxA: globalIdxA,
+                    idxB: globalIdxB,
+                    title,
+                    subtitle,
+                    priority,
+                    directKOsA: kosAB,
+                    directKOsB: kosBA
+                });
+            }
+        }
+
+        return allPairs.sort((x, y) => y.priority - x.priority);
+    }, [activePlayerProfiles, computedProfiles]);
+
     const broadcastSlides: BroadcastSlide[] = useMemo(() => {
         const slides: BroadcastSlide[] = [];
+        let tapeCount = 0;
 
-        // 1. All Players' 3-Page Stat Dossiers (Run first and loop with Generic League Stats)
-        activePlayerProfiles.forEach(cp => {
+        // 1. All Players' 3-Page Stat Dossiers — with interleaved Tale of the Tape slides after every 3 players
+        activePlayerProfiles.forEach((cp, index) => {
             const firstName = cp.player.name.split(' ')[0];
             slides.push(
                 {
@@ -1258,6 +1365,18 @@ export default function TVPresentationClient({
                     badge: `#${cp.player.rank} • P3`
                 }
             );
+
+            const isEveryThirdPlayer = (index + 1) % 3 === 0;
+            const isLastPlayer = index === activePlayerProfiles.length - 1;
+            if (includeSpecialSlides && computedProfiles.length >= 2 && (isEveryThirdPlayer || isLastPlayer)) {
+                tapeCount += 1;
+                slides.push({
+                    type: 'tale_of_the_tape',
+                    id: `special_tale_of_the_tape_${tapeCount}`,
+                    label: `Tale of the Tape #${tapeCount}`,
+                    badge: `⚔️ H2H #${tapeCount}`
+                });
+            }
         });
 
         // 2. Generic Non-Player-Specific League Statistics (3 Pages running in the loop alongside player pages)
@@ -1285,15 +1404,9 @@ export default function TVPresentationClient({
             }
         );
 
-        // 3. Special Broadcast Slides
+        // 3. Special Broadcast Slides (Season Awards & Stacks/Payouts)
         if (includeSpecialSlides && computedProfiles.length > 0) {
             slides.push(
-                {
-                    type: 'tale_of_the_tape',
-                    id: 'special_tale_of_the_tape',
-                    label: 'Tale of the Tape',
-                    badge: '⚔️ H2H'
-                },
                 {
                     type: 'season_awards',
                     id: 'special_season_awards',
@@ -1330,6 +1443,10 @@ export default function TVPresentationClient({
         setLoopProgress(0);
 
         const nextSlide = broadcastSlides[nextIdx];
+        if (nextSlide && nextSlide.type === 'tale_of_the_tape') {
+            setIsManualRivalryOverride(false);
+            setRivalryCycleIdx(prev => prev + 1);
+        }
         if (playFanfareOnSlide && nextSlide && nextSlide.type === 'player' && nextSlide.page === 1) {
             const th = playerThemes[nextSlide.profile.player.name] || 'gladiator';
             playWalkUpTheme(th);
@@ -1343,17 +1460,25 @@ export default function TVPresentationClient({
         setLoopProgress(0);
 
         const prevSlide = broadcastSlides[prevIdx];
+        if (prevSlide && prevSlide.type === 'tale_of_the_tape') {
+            setIsManualRivalryOverride(false);
+            setRivalryCycleIdx(prev => (prev - 1 + Math.max(1, rivalryMatchups.length)) % Math.max(1, rivalryMatchups.length));
+        }
         if (playFanfareOnSlide && prevSlide && prevSlide.type === 'player' && prevSlide.page === 1) {
             const th = playerThemes[prevSlide.profile.player.name] || 'gladiator';
             playWalkUpTheme(th);
         }
-    }, [broadcastSlides, safeSlideIdx, playFanfareOnSlide, playerThemes, playWalkUpTheme]);
+    }, [broadcastSlides, safeSlideIdx, playFanfareOnSlide, playerThemes, playWalkUpTheme, rivalryMatchups.length]);
 
     const handleSelectSlide = (idx: number) => {
         setActiveSlideIdx(idx);
         setLoopProgress(0);
         const target = broadcastSlides[idx];
-        if (playFanfareOnSlide && target && target.type === 'player' && target.page === 1) {
+        if (target && target.type === 'tale_of_the_tape') {
+            setIsManualRivalryOverride(false);
+            setRivalryCycleIdx(prev => prev + 1);
+        }
+        if (playFanfareOnSlide && target && target.page === 1 && target.type === 'player') {
             const th = playerThemes[target.profile.player.name] || 'gladiator';
             playWalkUpTheme(th);
         }
@@ -1788,27 +1913,59 @@ export default function TVPresentationClient({
                         );
                     })}
 
-                    {includeSpecialSlides &&
-                        broadcastSlides
-                            .map((s, idx) => ({ s, idx }))
-                            .filter(item => item.s.type !== 'player' && item.s.type !== 'league_stats')
-                            .map(({ s, idx }) => {
-                                const isSelected = idx === safeSlideIdx;
-                                return (
-                                    <button
-                                        key={s.id}
-                                        onClick={() => handleSelectSlide(idx)}
-                                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border shrink-0 transition-all cursor-pointer ${
-                                            isSelected
-                                                ? 'bg-gradient-to-r from-purple-600/40 via-amber-500/30 to-black border-gold text-white shadow-[0_0_12px_rgba(212,175,55,0.4)]'
-                                                : 'bg-purple-950/30 border-purple-500/30 text-purple-200 hover:border-gold/50'
-                                        }`}
-                                    >
-                                        <span className="text-[9px] font-mono font-black text-gold uppercase">{s.badge}</span>
-                                        <span className="text-[11px] font-black uppercase whitespace-nowrap">{s.label}</span>
-                                    </button>
-                                );
-                            })}
+                    {includeSpecialSlides && (
+                        <>
+                            {broadcastSlides.some(s => s.type === 'tale_of_the_tape') && (
+                                <button
+                                    onClick={() => {
+                                        const tapeIndices = broadcastSlides
+                                            .map((s, idx) => ({ s, idx }))
+                                            .filter(item => item.s.type === 'tale_of_the_tape')
+                                            .map(item => item.idx);
+                                        if (tapeIndices.length > 0) {
+                                            const nextTapeIdx =
+                                                tapeIndices.find(idx => idx > safeSlideIdx) ?? tapeIndices[0];
+                                            handleSelectSlide(nextTapeIdx);
+                                        }
+                                    }}
+                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border shrink-0 transition-all cursor-pointer ${
+                                        currentSlide?.type === 'tale_of_the_tape'
+                                            ? 'bg-gradient-to-r from-purple-600/40 via-amber-500/30 to-black border-gold text-white shadow-[0_0_12px_rgba(212,175,55,0.4)]'
+                                            : 'bg-purple-950/30 border-purple-500/30 text-purple-200 hover:border-gold/50'
+                                    }`}
+                                >
+                                    <span className="text-[9px] font-mono font-black text-gold uppercase">⚔️ H2H</span>
+                                    <span className="text-[11px] font-black uppercase whitespace-nowrap">Tale of the Tape</span>
+                                </button>
+                            )}
+
+                            {broadcastSlides
+                                .map((s, idx) => ({ s, idx }))
+                                .filter(
+                                    item =>
+                                        item.s.type !== 'player' &&
+                                        item.s.type !== 'league_stats' &&
+                                        item.s.type !== 'tale_of_the_tape'
+                                )
+                                .map(({ s, idx }) => {
+                                    const isSelected = idx === safeSlideIdx;
+                                    return (
+                                        <button
+                                            key={s.id}
+                                            onClick={() => handleSelectSlide(idx)}
+                                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border shrink-0 transition-all cursor-pointer ${
+                                                isSelected
+                                                    ? 'bg-gradient-to-r from-purple-600/40 via-amber-500/30 to-black border-gold text-white shadow-[0_0_12px_rgba(212,175,55,0.4)]'
+                                                    : 'bg-purple-950/30 border-purple-500/30 text-purple-200 hover:border-gold/50'
+                                            }`}
+                                        >
+                                            <span className="text-[9px] font-mono font-black text-gold uppercase">{s.badge}</span>
+                                            <span className="text-[11px] font-black uppercase whitespace-nowrap">{s.label}</span>
+                                        </button>
+                                    );
+                                })}
+                        </>
+                    )}
                 </div>
             </div>
         );
@@ -1818,9 +1975,25 @@ export default function TVPresentationClient({
     // OPTION 1A: UFC-STYLE "TALE OF THE TAPE" RIVALRY SLIDE (ZERO-SCROLL TV FIT)
     // ========================================================================
     const renderTaleOfTheTapeSlide = () => {
-        const fighterA = computedProfiles[rivalryIdxA % computedProfiles.length] || computedProfiles[0];
-        const fighterB = computedProfiles[rivalryIdxB % computedProfiles.length] || computedProfiles[1] || computedProfiles[0];
+        const safeRivalryIdx = Math.max(0, rivalryCycleIdx);
+        const activeMatchup =
+            !isManualRivalryOverride && rivalryMatchups.length > 0
+                ? rivalryMatchups[safeRivalryIdx % rivalryMatchups.length]
+                : null;
+
+        const effectiveIdxA = activeMatchup ? activeMatchup.idxA : rivalryIdxA % computedProfiles.length;
+        const effectiveIdxB = activeMatchup ? activeMatchup.idxB : rivalryIdxB % computedProfiles.length;
+
+        const fighterA = computedProfiles[effectiveIdxA] || computedProfiles[0];
+        const fighterB = computedProfiles[effectiveIdxB] || computedProfiles[1] || computedProfiles[0];
         if (!fighterA || !fighterB) return null;
+
+        const directKOsA = activeMatchup
+            ? activeMatchup.directKOsA
+            : Number(fighterA.player.playersKnockedOut?.[fighterB.player.name] || 0);
+        const directKOsB = activeMatchup
+            ? activeMatchup.directKOsB
+            : Number(fighterB.player.playersKnockedOut?.[fighterA.player.name] || 0);
 
         const comparisons = [
             {
@@ -1829,6 +2002,14 @@ export default function TVPresentationClient({
                 valB: fighterB.player.points,
                 fmtA: `${fighterA.player.points} Pts`,
                 fmtB: `${fighterB.player.points} Pts`,
+                higherWins: true
+            },
+            {
+                label: 'Direct H2H Knockouts (Sheet)',
+                valA: directKOsA,
+                valB: directKOsB,
+                fmtA: `${directKOsA} KOs vs ${fighterB.player.name.split(' ')[0]}`,
+                fmtB: `${directKOsB} KOs vs ${fighterA.player.name.split(' ')[0]}`,
                 higherWins: true
             },
             {
@@ -1878,35 +2059,51 @@ export default function TVPresentationClient({
                 fmtA: fighterA.avgFinish > 0 ? `${fighterA.avgFinish.toFixed(1)}th` : 'N/A',
                 fmtB: fighterB.avgFinish > 0 ? `${fighterB.avgFinish.toFixed(1)}th` : 'N/A',
                 higherWins: false
-            },
-            {
-                label: 'Worst Finish Position',
-                valA: fighterA.worstPosition || 11,
-                valB: fighterB.worstPosition || 11,
-                fmtA: formatOrdinal(fighterA.worstPosition),
-                fmtB: formatOrdinal(fighterB.worstPosition),
-                higherWins: false
             }
         ];
+
+        const matchupNum = rivalryMatchups.length > 0 ? (safeRivalryIdx % rivalryMatchups.length) + 1 : 1;
 
         return (
             <div className="flex-1 min-h-0 bg-gradient-to-b from-zinc-950/95 via-[#12090d]/95 to-black border-2 border-gold/50 rounded-3xl p-4 sm:p-6 shadow-[0_0_80px_rgba(220,38,38,0.2)] animate-in fade-in duration-300 flex flex-col justify-between overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-3 shrink-0">
                     <div>
-                        <span className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-ept-red flex items-center gap-2">
+                        <span className="text-[11px] font-mono font-black uppercase tracking-[0.25em] text-ept-red flex items-center gap-2">
                             <Swords className="w-4 h-4" />
-                            <span>Main Event Rivalry Showcase • Head-to-Head</span>
+                            <span>
+                                {activeMatchup
+                                    ? `${activeMatchup.title} • Matchup ${matchupNum} of ${rivalryMatchups.length}`
+                                    : 'Main Event Rivalry Showcase • Custom Head-to-Head'}
+                            </span>
                         </span>
                         <h2 className="text-xl sm:text-3xl font-black uppercase italic text-white tracking-tight">
-                            Championship Tale of the Tape
+                            {fighterA.player.name} <span className="text-ept-red mx-1">VS</span> {fighterB.player.name}
                         </h2>
+                        {activeMatchup && (
+                            <p className="text-[11px] font-mono text-zinc-400 mt-0.5">
+                                {activeMatchup.subtitle}
+                            </p>
+                        )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 bg-black/70 p-1.5 rounded-2xl border border-white/10">
-                        <span className="text-[10px] font-mono uppercase text-zinc-400 px-1">Matchup:</span>
+                        <button
+                            onClick={() => {
+                                setIsManualRivalryOverride(false);
+                                setRivalryCycleIdx(prev => prev + 1);
+                            }}
+                            className="px-2.5 py-1 rounded-xl bg-ept-red/20 hover:bg-ept-red/30 border border-ept-red/50 text-red-300 text-[10px] font-mono font-black uppercase tracking-wider cursor-pointer transition"
+                            title="Cycle to Next Auto-Rotated Rivalry"
+                        >
+                            🔀 Next Rivalry ({matchupNum}/{Math.max(1, rivalryMatchups.length)})
+                        </button>
                         <select
-                            value={rivalryIdxA}
-                            onChange={e => setRivalryIdxA(Number(e.target.value))}
+                            value={effectiveIdxA}
+                            onChange={e => {
+                                setIsManualRivalryOverride(true);
+                                setRivalryIdxA(Number(e.target.value));
+                                setRivalryIdxB(effectiveIdxB);
+                            }}
                             className="bg-zinc-900 text-gold font-bold text-xs px-2.5 py-1 rounded-xl border border-gold/40"
                         >
                             {computedProfiles.map((cp, i) => (
@@ -1917,8 +2114,12 @@ export default function TVPresentationClient({
                         </select>
                         <span className="text-xs font-black text-ept-red px-1">VS</span>
                         <select
-                            value={rivalryIdxB}
-                            onChange={e => setRivalryIdxB(Number(e.target.value))}
+                            value={effectiveIdxB}
+                            onChange={e => {
+                                setIsManualRivalryOverride(true);
+                                setRivalryIdxA(effectiveIdxA);
+                                setRivalryIdxB(Number(e.target.value));
+                            }}
                             className="bg-zinc-900 text-sky-400 font-bold text-xs px-2.5 py-1 rounded-xl border border-sky-400/40"
                         >
                             {computedProfiles.map((cp, i) => (
