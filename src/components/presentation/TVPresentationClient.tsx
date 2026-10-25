@@ -1234,7 +1234,7 @@ export default function TVPresentationClient({
         if (pool.length < 2) return [];
 
         const getDirectKOs = (attacker: ComputedPlayerProfile, target: ComputedPlayerProfile): number => {
-            const map = attacker.player.playersKnockedOut || {};
+            const map = attacker.player.playerKnockouts || {};
             const targetLower = target.player.name.toLowerCase().trim();
             const targetFirst = targetLower.split(/\s+/)[0];
             for (const [k, v] of Object.entries(map)) {
@@ -1478,7 +1478,7 @@ export default function TVPresentationClient({
             setIsManualRivalryOverride(false);
             setRivalryCycleIdx(prev => prev + 1);
         }
-        if (playFanfareOnSlide && target && target.page === 1 && target.type === 'player') {
+        if (playFanfareOnSlide && target && target.type === 'player' && target.page === 1) {
             const th = playerThemes[target.profile.player.name] || 'gladiator';
             playWalkUpTheme(th);
         }
@@ -1990,10 +1990,10 @@ export default function TVPresentationClient({
 
         const directKOsA = activeMatchup
             ? activeMatchup.directKOsA
-            : Number(fighterA.player.playersKnockedOut?.[fighterB.player.name] || 0);
+            : Number(fighterA.player.playerKnockouts?.[fighterB.player.name] || 0);
         const directKOsB = activeMatchup
             ? activeMatchup.directKOsB
-            : Number(fighterB.player.playersKnockedOut?.[fighterA.player.name] || 0);
+            : Number(fighterB.player.playerKnockouts?.[fighterA.player.name] || 0);
 
         const comparisons = [
             {
