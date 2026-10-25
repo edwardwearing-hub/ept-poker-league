@@ -43,6 +43,7 @@ import {
 import { getAvatarFilename } from '@/lib/avatars';
 import WantedVideo from '@/components/WantedVideo';
 import type { PlayerStats, GameHistorySession, GazetteReport } from '@/lib/data';
+import { FALLBACK_PLAYERS, FALLBACK_GAME_HISTORY, FALLBACK_TOTAL_POT } from '@/lib/sheetFallbackData';
 
 interface Props {
     players: PlayerStats[];
@@ -445,11 +446,15 @@ function ProfitSparklineChart({ points }: { points: { label: string; value: numb
 }
 
 export default function TVPresentationClient({
-    players,
-    totalPot,
-    history = [],
+    players: playersProp,
+    totalPot: totalPotProp,
+    history: historyProp = [],
     reports = []
 }: Props) {
+    const players = playersProp && playersProp.length > 0 ? playersProp : FALLBACK_PLAYERS;
+    const history = historyProp && historyProp.length > 0 ? historyProp : FALLBACK_GAME_HISTORY;
+    const totalPot = totalPotProp && totalPotProp > 0 ? totalPotProp : FALLBACK_TOTAL_POT;
+
     // Broadcast View Mode: 'showcase' (Auto-Loop Full Broadcast), 'split' (Timer + Loop), 'clock' (Timer + Roster)
     const [viewMode, setViewMode] = useState<'showcase' | 'split' | 'clock'>('showcase');
 
@@ -1194,31 +1199,7 @@ export default function TVPresentationClient({
     const broadcastSlides: BroadcastSlide[] = useMemo(() => {
         const slides: BroadcastSlide[] = [];
 
-        // Generic Non-Player-Specific League Statistics (3 Pages)
-        slides.push(
-            {
-                type: 'league_stats',
-                page: 1,
-                id: 'league_stats_p1',
-                label: 'League Stats (1/3)',
-                badge: '📊 LEAGUE • P1'
-            },
-            {
-                type: 'league_stats',
-                page: 2,
-                id: 'league_stats_p2',
-                label: 'Season Log (2/3)',
-                badge: '📅 LEAGUE • P2'
-            },
-            {
-                type: 'league_stats',
-                page: 3,
-                id: 'league_stats_p3',
-                label: 'Parity & Rules (3/3)',
-                badge: '📈 LEAGUE • P3'
-            }
-        );
-
+        // 1. All Players' 3-Page Stat Dossiers (Run first and loop with Generic League Stats)
         activePlayerProfiles.forEach(cp => {
             const firstName = cp.player.name.split(' ')[0];
             slides.push(
@@ -1249,6 +1230,32 @@ export default function TVPresentationClient({
             );
         });
 
+        // 2. Generic Non-Player-Specific League Statistics (3 Pages running in the loop alongside player pages)
+        slides.push(
+            {
+                type: 'league_stats',
+                page: 1,
+                id: 'league_stats_p1',
+                label: 'League Stats (1/3)',
+                badge: '📊 LEAGUE • P1'
+            },
+            {
+                type: 'league_stats',
+                page: 2,
+                id: 'league_stats_p2',
+                label: 'Season Log (2/3)',
+                badge: '📅 LEAGUE • P2'
+            },
+            {
+                type: 'league_stats',
+                page: 3,
+                id: 'league_stats_p3',
+                label: 'Parity & Rules (3/3)',
+                badge: '📈 LEAGUE • P3'
+            }
+        );
+
+        // 3. Special Broadcast Slides
         if (includeSpecialSlides && computedProfiles.length > 0) {
             slides.push(
                 {

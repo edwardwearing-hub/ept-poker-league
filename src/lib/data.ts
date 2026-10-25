@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { google } from 'googleapis';
 import { CANONICAL_PLAYER_NAMES, normalizePlayerName } from '@/lib/roster';
+import { FALLBACK_PLAYERS, FALLBACK_GAME_HISTORY, FALLBACK_TOTAL_POT } from '@/lib/sheetFallbackData';
 
 export async function getSheetsClient() {
     let auth;
@@ -102,6 +103,7 @@ export interface ArchNemesisInfo {
 }
 
 let leaderboardCache: { data: PlayerStats[]; expiresAt: number } | null = null;
+let perPlayerGameKOsCache: Record<string, number[]> = {};
 let globalStatsCache: {
     data: { totalPot: number; totalSidePot: number; nextGameDate: string; futureDates: { raw: string; iso: string }[] };
     expiresAt: number;
@@ -116,8 +118,8 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
 
     const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
     if (!spreadsheetId) {
-        console.warn("No GOOGLE_SHEET_ID provided in .env.local");
-        return [];
+        console.warn("No GOOGLE_SHEET_ID provided in .env.local — using verified 2026 Sheet fallback");
+        return FALLBACK_PLAYERS;
     }
 
     try {
@@ -127,14 +129,14 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
         const meta = await sheets.spreadsheets.get({ spreadsheetId });
         const sheetNames = meta.data.sheets?.map(s => s.properties?.title || "") || [];
 
-        // 2. We want to pull Sheet1, and every individual player sheet if they exist
-        const ranges = ['Sheet1!A1:Z30', 'PVP_SYSTEM!B1:F30'];
+        // 2. Pull Sheet1 (up to AZ55) and every individual player sheet (up to Z55 to include rows 31-48)
+        const ranges = ['Sheet1!A1:AZ55', 'PVP_SYSTEM!B1:F30'];
         const allowedPlayers = CANONICAL_PLAYER_NAMES;
 
         allowedPlayers.forEach(name => {
             const exactSheetMatch = sheetNames.find(n => n.trim().toLowerCase() === name.toLowerCase());
             if (exactSheetMatch) {
-                ranges.push(`'${exactSheetMatch}'!A1:Z30`);
+                ranges.push(`'${exactSheetMatch}'!A1:Z55`);
             }
         });
 
@@ -220,12 +222,16 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
 
             const cashFlow: { date: string; profit: number }[] = [];
             const enemyQueue: string[] = [];
+            const gameKOs: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
 
             // Check the batched responses for this player's specific sheet
             const pRange = valueRanges.find(r => r.range?.toLowerCase().includes(matchedName.toLowerCase()));
             if (pRange && pRange.values) {
                 const pData = pRange.values;
-                if (pData[6]) winPct = parseMoney(pData[6][1]); // Win %
+                if (pData[6]) {
+                    const rawWinPct = parseMoney(pData[6][1]); // Win % (stored as decimal 0.2222 in sheet)
+                    winPct = rawWinPct > 0 && rawWinPct <= 1 ? Number((rawWinPct * 100).toFixed(1)) : Math.round(rawWinPct);
+                }
                 if (pData[9]) {
                     avgFinish = parseMoney(pData[9][0]);
                     avgWin = parseMoney(pData[9][1]);
@@ -235,12 +241,17 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
                     avgKo = parseMoney(pData[12][1]);
                 }
                 if (pData[15]) {
-                    mostRebuysSingle = parseMoney(pData[15][0]);
+                    const rawRebuyCell = (pData[15][0] ?? '').toString();
+                    const parsedRebuyVal = parseMoney(rawRebuyCell);
+                    mostRebuysSingle =
+                        rawRebuyCell.includes('£') || parsedRebuyVal >= 10
+                            ? Math.round(parsedRebuyVal / 10)
+                            : Math.round(parsedRebuyVal);
                     bubbleFinishes = parseInt(pData[15][1]) || 0;
                 }
                 if (pData[18]) {
-                    rival = pData[18][0] as string || "None";
-                    bullied = pData[18][1] as string || "None";
+                    rival = (pData[18][0] as string || "None").toString().trim();
+                    bullied = (pData[18][1] as string || "None").toString().trim();
                 }
 
                 if (pData[20] && pData[24]) {
@@ -249,7 +260,7 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
                         const profitRaw = pData[24][c];
 
                         if (!dateRaw && !profitRaw) continue;
-                        if (dateRaw === "Total") continue;
+                        if (dateRaw === "Total" || dateRaw === "???" || dateRaw === "Final") continue;
 
                         const dateStr = dateRaw ? String(dateRaw) : `G${c}`;
                         if (profitRaw !== undefined && profitRaw !== null && profitRaw !== "") {
@@ -261,13 +272,35 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
                     }
                 }
 
-                // Phase 6: Locate "Knocked Out By" table (approx row 29/30) and build the enemyQueue from the most recent game column.
-                // We search dynamically to account for varying height charts above it.
+                // Locate "Player Knockouts" (row 26) and "Knocked Out By" (row 38) tables
+                let playerKosRowIdx = -1;
                 let knockoutRowIdx = -1;
                 for (let r = 20; r < pData.length; r++) {
-                    if (pData[r] && pData[r][0] && pData[r][0].toString().trim() === "Knocked Out By") {
+                    const label = pData[r]?.[0]?.toString().trim();
+                    if (label === "Player Knockouts") playerKosRowIdx = r;
+                    if (label === "Knocked Out By") {
                         knockoutRowIdx = r;
                         break;
+                    }
+                }
+
+                if (playerKosRowIdx !== -1) {
+                    const endIdx = knockoutRowIdx !== -1 ? knockoutRowIdx : pData.length;
+                    const totalRow = pData.find(
+                        (rRow, idx) =>
+                            idx > playerKosRowIdx &&
+                            idx < endIdx &&
+                            rRow?.[0]?.toString().trim() === "Total"
+                    );
+                    for (let c = 1; c <= 9; c++) {
+                        let colSum = 0;
+                        for (let r = playerKosRowIdx + 1; r < endIdx; r++) {
+                            const rLabel = pData[r]?.[0]?.toString().trim();
+                            if (!rLabel || rLabel === "Total") continue;
+                            colSum += parseInt(pData[r]?.[c]) || 0;
+                        }
+                        const totalRowVal = totalRow ? parseInt(totalRow[c]) || 0 : colSum;
+                        gameKOs[c - 1] = Math.max(colSum, totalRowVal);
                     }
                 }
 
@@ -287,9 +320,10 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
                     }
 
                     // Phase 8: Iterate through ALL opponents and ALL columns to build Bounty Board stats
-                    for (let r = knockoutRowIdx + 1; r <= knockoutRowIdx + 11; r++) {
+                    for (let r = knockoutRowIdx + 1; r <= knockoutRowIdx + 11 && r < pData.length; r++) {
                         if (pData[r] && pData[r][0]) {
                             const opponentName = pData[r][0].toString().trim();
+                            if (!opponentName || opponentName === "Total") continue;
 
                             // 1. Process Most Recent Game for Gauntlet
                             if (mostRecentColIdx !== -1) {
@@ -302,19 +336,17 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
 
                             // 2. Process ALL historical games for Bounty metrics (The Bullet Sponge)
                             // We are looking at THIS player's sheet, so "Knocked Out By" means times THEY died.
-                            for (let c = 1; c < dateRow.length; c++) {
-                                if (dateRow[c] && dateRow[c].toString().trim() !== "Total") {
-                                    const koCountRaw = pData[r][c];
-                                    const koCount = parseInt(koCountRaw) || 0;
-                                    totalTimesKnockedOut += koCount;
+                            for (let c = 1; c <= 9; c++) {
+                                const koCountRaw = pData[r][c];
+                                const koCount = parseInt(koCountRaw) || 0;
+                                totalTimesKnockedOut += koCount;
 
-                                    // Phase 8: Log this killer's victim for the Hijack King calculation
-                                    if (koCount > 0) {
-                                        if (!killerToVictimsMap[opponentName]) {
-                                            killerToVictimsMap[opponentName] = new Set<string>();
-                                        }
-                                        killerToVictimsMap[opponentName].add(matchedName); // The killer hijacked this player
+                                // Phase 8: Log this killer's victim for the Hijack King calculation
+                                if (koCount > 0) {
+                                    if (!killerToVictimsMap[opponentName]) {
+                                        killerToVictimsMap[opponentName] = new Set<string>();
                                     }
+                                    killerToVictimsMap[opponentName].add(matchedName); // The killer hijacked this player
                                 }
                             }
                         }
@@ -322,11 +354,10 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
                 }
 
                 // Phase 8: Calculate "The Executioner" and "Hijack King"
-                // To find who *they* knocked out, we actually need to look at the main sheet's total KO stat, 
-                // but to find UNIQUE hijack targets we check IF their name appears in other sheets.
-                // We will handle the inverse cross-referencing globally later, but for now we set totalHistoricalKOs from row 19
                 totalHistoricalKOs = parseInt(row[19]) || 0;
             }
+
+            perPlayerGameKOsCache[matchedName] = gameKOs;
 
             players.push({
                 rank: 0, // Calculated later
@@ -476,12 +507,12 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
         });
 
         leaderboardCache = { data: players, expiresAt: Date.now() + CACHE_TTL_MS };
-        return players;
+        return players.length > 0 ? players : FALLBACK_PLAYERS;
 
     } catch (error) {
         console.error("Critical: Error fetching Leaderboard Data from Google Sheets!");
         console.error("Full Error Details:", JSON.stringify(error, null, 2));
-        return leaderboardCache?.data || []; // Return cached or empty array to prevent 500 errors
+        return leaderboardCache?.data || FALLBACK_PLAYERS;
     }
 }
 
@@ -563,7 +594,7 @@ export async function getGlobalStats(forceRefresh = false) {
     let futureDates: { raw: string; iso: string }[] = [];
 
     const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
-    if (!spreadsheetId) return { totalPot: 0, totalSidePot: 0, nextGameDate: 'TBD', futureDates: [] };
+    if (!spreadsheetId) return { totalPot: FALLBACK_TOTAL_POT, totalSidePot: 0, nextGameDate: 'TBD', futureDates: [] };
 
     try {
         const sheets = await getSheetsClient();
@@ -621,10 +652,11 @@ export async function getGlobalStats(forceRefresh = false) {
         console.error('Critical: Error fetching Global Stats from Google Sheets!');
         console.error('Full Error Details:', JSON.stringify(e, null, 2));
         if (globalStatsCache) return globalStatsCache.data;
+        return { totalPot: FALLBACK_TOTAL_POT, totalSidePot: 0, nextGameDate: 'TBD', futureDates: [] };
     }
 
     const result = {
-        totalPot,
+        totalPot: totalPot > 0 ? totalPot : FALLBACK_TOTAL_POT,
         totalSidePot: 0,
         nextGameDate,
         futureDates
@@ -658,10 +690,15 @@ export async function getGameHistory(forceRefresh = false): Promise<GameHistoryS
 
     const spreadsheetId = process.env.GOOGLE_SHEET_ID?.trim();
     if (!spreadsheetId) {
-        return [];
+        return FALLBACK_GAME_HISTORY;
     }
 
     try {
+        // Ensure perPlayerGameKOsCache is populated so per-game KOs match player tabs
+        if (Object.keys(perPlayerGameKOsCache).length === 0) {
+            await getLeaderboardData().catch(() => {});
+        }
+
         const sheets = await getSheetsClient();
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
@@ -669,7 +706,7 @@ export async function getGameHistory(forceRefresh = false): Promise<GameHistoryS
         });
 
         const rows = response.data.values;
-        if (!rows || rows.length < 5) return []; // Make sure we have at least a few rows
+        if (!rows || rows.length < 5) return FALLBACK_GAME_HISTORY; // Make sure we have at least a few rows
 
         const parseMoney = (val: string | number | undefined | null) => {
             if (!val) return 0;
@@ -688,15 +725,16 @@ export async function getGameHistory(forceRefresh = false): Promise<GameHistoryS
 
         if (dateRowIndex === -1) {
             console.error("Critical: Could not find 'Date' row in Game History extraction. Grid might have changed.");
-            return [];
+            return FALLBACK_GAME_HISTORY;
         }
 
         const sessions: GameHistorySession[] = [];
+        let gameIdx = 0;
 
         // The data starts at column B (index 1). Each game takes up 3 columns.
         for (let colStart = 1; colStart < rows[dateRowIndex].length; colStart += 3) {
             const dateVal = rows[dateRowIndex]?.[colStart];
-            if (!dateVal || dateVal.toString().trim() === "") continue;
+            if (!dateVal || dateVal.toString().trim() === "" || dateVal.toString().trim() === "???") continue;
 
             const parsedPot = parseMoney(rows[dateRowIndex + 1]?.[colStart]);
 
@@ -716,53 +754,55 @@ export async function getGameHistory(forceRefresh = false): Promise<GameHistoryS
                 const rowData = rows[r];
                 if (!rowData) continue;
 
-                const playerName = rows[r][0]; // Column A (index 0) has the names
+                const playerName = rows[r][0]?.toString().trim(); // Column A (index 0) has the names
                 if (!playerName) continue;
 
                 const placeRaw = rowData[colStart]?.toString().trim() || "";
                 const pointsObj = rowData[colStart + 2];
-                const pts = parseFloat(pointsObj?.toString() || "0") || 0;
+                const sheetPts = parseFloat(pointsObj?.toString() || "0") || 0;
 
                 // if points is empty and place is empty, they likely didn't play this game.
-                if (!placeRaw && pts === 0) {
+                if (!placeRaw && sheetPts === 0) {
                     continue;
                 }
 
-                // Derive KOs based on the Points Key
-                const placeNum = parseInt(placeRaw);
-                let basePoints = 0;
-                if (placeNum === 1) basePoints = 10;
-                else if (placeNum === 2) basePoints = 6;
-                else if (placeNum === 3) basePoints = 4;
-                else if (placeNum === 4) basePoints = 3;
-                else if (placeNum === 5) basePoints = 2;
+                // Get actual KOs from the player's individual sheet "Player Knockouts" table
+                const fallbackMatch = FALLBACK_GAME_HISTORY[gameIdx]?.results?.find(
+                    fr => fr.name.toLowerCase() === playerName.toLowerCase()
+                );
+                const actualKOs =
+                    perPlayerGameKOsCache[playerName]?.[gameIdx] ??
+                    fallbackMatch?.kos ??
+                    0;
 
-                const derivedKOs = Math.max(0, pts - basePoints);
+                // In Sheet1, F7 = B7 (1 attendance pt/game) + T7 (KOs) + sum of D27..AB27 (sheetPts)
+                const totalGamePts = sheetPts + actualKOs + 1;
 
-                totalPointsScoredThisGame += pts;
+                totalPointsScoredThisGame += totalGamePts;
 
                 session.results.push({
-                    name: playerName.toString().trim(),
+                    name: playerName,
                     place: placeRaw,
                     winnings: parseMoney(rowData[colStart + 1]),
-                    points: pts,
-                    kos: derivedKOs
+                    points: totalGamePts,
+                    kos: actualKOs
                 });
             }
 
             // Only push the session if there's actually a pot OR someone scored points
             if (session.prizePot > 0 || totalPointsScoredThisGame > 0) {
                 sessions.push(session);
+                gameIdx++;
             }
         } // End of colStart loop
 
         gameHistoryCache = { data: sessions, expiresAt: Date.now() + CACHE_TTL_MS };
-        return sessions;
+        return sessions.length > 0 ? sessions : FALLBACK_GAME_HISTORY;
 
     } catch (e) {
         console.error("Critical: Error fetching Game History from Google Sheets!");
         console.error(e);
-        return gameHistoryCache?.data || [];
+        return gameHistoryCache?.data || FALLBACK_GAME_HISTORY;
     }
 }
 
