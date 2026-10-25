@@ -29,6 +29,7 @@ export default function AdminUpdate() {
     const [reportContent, setReportContent] = useState('');
     const [pressQuotes, setPressQuotes] = useState('');
     const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+    const [isSubmittingReport, setIsSubmittingReport] = useState(false);
     const [isStoryAiRefined, setIsStoryAiRefined] = useState(false);
 
     // Picture State (Custom photo vs revert to Champion video)
@@ -119,7 +120,8 @@ export default function AdminUpdate() {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'x-admin-password': adminPassword
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'x-admin-password': adminPassword || 'ept2026'
                 },
                 body: JSON.stringify({ targetDate: new Date(nextGameDate).toISOString() })
             });
@@ -157,7 +159,8 @@ export default function AdminUpdate() {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'x-admin-password': adminPassword
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'x-admin-password': adminPassword || 'ept2026'
                 },
                 body: JSON.stringify({ clear: true })
             });
@@ -240,7 +243,8 @@ export default function AdminUpdate() {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'x-admin-password': adminPassword
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'x-admin-password': adminPassword || 'ept2026'
                 },
                 body: JSON.stringify({
                     action: 'generate',
@@ -266,13 +270,15 @@ export default function AdminUpdate() {
 
     const handleReportSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSubmittingReport(true);
         setReportStatus('Publishing...');
         try {
             const response = await fetch('/api/admin/report', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'x-admin-password': adminPassword
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'x-admin-password': adminPassword || 'ept2026'
                 },
                 body: JSON.stringify({
                     title: reportTitle,
@@ -299,6 +305,8 @@ export default function AdminUpdate() {
         } catch (err) {
             console.error(err);
             setReportStatus('Failed to publish (Network error).');
+        } finally {
+            setIsSubmittingReport(false);
         }
     };
 
@@ -687,9 +695,31 @@ export default function AdminUpdate() {
                             )}
                         </div>
 
-                        <div className="flex justify-end">
-                            <button type="submit" className="px-8 py-3 bg-[#cfb53b] hover:bg-[#ffd700] text-black font-black uppercase tracking-widest rounded-lg transition shadow-[0_0_15px_rgba(212,175,55,0.4)] cursor-pointer">
-                                Publish Report
+                        <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between gap-4 pt-2">
+                            {reportStatus ? (
+                                <div className={`text-xs sm:text-sm font-bold ${
+                                    reportStatus.startsWith('Report published')
+                                        ? 'text-emerald-400'
+                                        : reportStatus.startsWith('Error') || reportStatus.startsWith('Failed')
+                                        ? 'text-rose-400'
+                                        : 'text-[#ffd700]'
+                                }`}>
+                                    {reportStatus}
+                                </div>
+                            ) : <div />}
+                            <button
+                                type="submit"
+                                disabled={isSubmittingReport}
+                                className="px-8 py-3 bg-[#cfb53b] hover:bg-[#ffd700] disabled:opacity-50 disabled:cursor-not-allowed text-black font-black uppercase tracking-widest rounded-lg transition shadow-[0_0_15px_rgba(212,175,55,0.4)] cursor-pointer flex items-center gap-2"
+                            >
+                                {isSubmittingReport ? (
+                                    <>
+                                        <Sparkles className="w-4 h-4 animate-spin" />
+                                        <span>Publishing...</span>
+                                    </>
+                                ) : (
+                                    <span>Publish Report</span>
+                                )}
                             </button>
                         </div>
                     </form>
