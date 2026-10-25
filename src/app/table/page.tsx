@@ -14,6 +14,7 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Official League Standings & Full Sheet | E.P.T. 2026',
         description: 'Complete statistical ledger, points, profit, and KOs for all players in the E.P.T. 2026 Poker League.',
+        url: '/table',
         images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'EPT League Table Standings' }],
     },
     twitter: {
