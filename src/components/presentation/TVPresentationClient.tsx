@@ -139,7 +139,13 @@ interface ComputedPlayerProfile {
     cashPaid: number;
     roiPct: number;
     nemesisName: string;
+    nemesisCleanName: string;
+    nemesisKoCount: number;
+    nemesisReverseKoCount: number;
     pigeonName: string;
+    pigeonCleanName: string;
+    pigeonKoCount: number;
+    pigeonReverseKoCount: number;
     sessionLog: PlayerSessionEntry[];
     cumulativeProfitPoints: { label: string; value: number }[];
     radarAttributes: RadarAttribute[];
@@ -164,7 +170,7 @@ type BroadcastSlide =
           badge: string;
       }
     | { type: 'tale_of_the_tape'; id: string; label: string; badge: string }
-    | { type: 'season_awards'; id: string; label: string; badge: string }
+    | { type: 'season_awards'; page: 1 | 2 | 3; id: string; label: string; badge: string }
     | { type: 'stacks_and_payouts'; id: string; label: string; badge: string };
 
 const PLAYER_SEARCH_TERMS: Record<string, string[]> = {
@@ -746,15 +752,46 @@ export default function TVPresentationClient({
                     ? `Rank #${p.rank} • ${p.points} Pts (${avgPts} Pts/Gm) • ${p.wins || 0} Wins • ${m.podiumCount} Podiums`
                     : `Rank #${p.rank} • 0 Games Logged in 2026 Season`;
 
+            const stripCount = (s: string) => s.replace(/\s*\([^)]*\)\s*/g, '').trim();
+
+            const rawRival = p.rivalPlayer && p.rivalPlayer !== 'None' && p.rivalPlayer !== 'N/A' ? p.rivalPlayer : 'None';
+            const nemesisCleanName = stripCount(rawRival);
+            const koByMap = p.knockedOutByMap || {};
+            const koDoneMap = p.playerKnockoutMap || {};
+
+            const nemesisKoCount =
+                p.rivalKoCount !== undefined
+                    ? p.rivalKoCount
+                    : nemesisCleanName !== 'None'
+                    ? koByMap[nemesisCleanName] || 0
+                    : 0;
+            const nemesisReverseKoCount =
+                nemesisCleanName !== 'None' ? koDoneMap[nemesisCleanName] || 0 : 0;
+
             const nemesisName =
-                p.rivalPlayer && p.rivalPlayer !== 'None' && p.rivalPlayer !== 'N/A'
-                    ? p.rivalPlayer
-                    : 'None Recorded';
+                nemesisCleanName !== 'None' && nemesisKoCount > 0
+                    ? `${nemesisCleanName} (${nemesisKoCount}x)`
+                    : nemesisCleanName !== 'None'
+                    ? `${nemesisCleanName} (0x)`
+                    : 'None (0x)';
+
+            const rawBullied = p.bulliedPlayer && p.bulliedPlayer !== 'None' && p.bulliedPlayer !== 'N/A' ? p.bulliedPlayer : 'None';
+            const pigeonCleanName = stripCount(rawBullied);
+            const pigeonKoCount =
+                p.bulliedKoCount !== undefined
+                    ? p.bulliedKoCount
+                    : pigeonCleanName !== 'None'
+                    ? koDoneMap[pigeonCleanName] || 0
+                    : 0;
+            const pigeonReverseKoCount =
+                pigeonCleanName !== 'None' ? koByMap[pigeonCleanName] || 0 : 0;
 
             const pigeonName =
-                p.bulliedPlayer && p.bulliedPlayer !== 'None' && p.bulliedPlayer !== 'N/A'
-                    ? p.bulliedPlayer
-                    : 'None Recorded';
+                pigeonCleanName !== 'None' && pigeonKoCount > 0
+                    ? `${pigeonCleanName} (${pigeonKoCount}x)`
+                    : pigeonCleanName !== 'None'
+                    ? `${pigeonCleanName} (0x)`
+                    : 'None (0x)';
 
             const rs = rawRadarScores[idx];
             const radarAttributes: RadarAttribute[] = [
@@ -972,7 +1009,10 @@ export default function TVPresentationClient({
                     id: 'nemesis',
                     label: '15. Sheet Rival (Nemesis)',
                     value: nemesisName,
-                    subtext: 'Most Knocked Out By (Player Sheet)',
+                    subtext:
+                        nemesisKoCount > 0
+                            ? `Knocked Out By ${nemesisKoCount}x Across League • You KO'd Them ${nemesisReverseKoCount}x`
+                            : '0 Times Knocked Out Across 2026 League',
                     category: 'rivalry',
                     highlightColor: 'text-red-400 border-red-500/30 bg-red-950/25'
                 },
@@ -980,7 +1020,10 @@ export default function TVPresentationClient({
                     id: 'pigeon',
                     label: '16. Sheet Target (Bullied)',
                     value: pigeonName,
-                    subtext: 'Most Knocked Out Opponent (Player Sheet)',
+                    subtext:
+                        pigeonKoCount > 0
+                            ? `Knocked Out ${pigeonKoCount}x Across League • They KO'd You ${pigeonReverseKoCount}x`
+                            : '0 Opponents Knocked Out Across 2026 League',
                     category: 'rivalry',
                     highlightColor: 'text-emerald-400 border-emerald-500/30 bg-emerald-950/25'
                 }
@@ -1017,7 +1060,13 @@ export default function TVPresentationClient({
                 cashPaid: m.cashPaid,
                 roiPct: m.roiPct,
                 nemesisName,
+                nemesisCleanName,
+                nemesisKoCount,
+                nemesisReverseKoCount,
                 pigeonName,
+                pigeonCleanName,
+                pigeonKoCount,
+                pigeonReverseKoCount,
                 sessionLog: m.sessionLog,
                 cumulativeProfitPoints: m.cumulativeProfitPoints,
                 radarAttributes,
@@ -1234,17 +1283,15 @@ export default function TVPresentationClient({
         if (pool.length < 2) return [];
 
         const getDirectKOs = (attacker: ComputedPlayerProfile, target: ComputedPlayerProfile): number => {
-            const targetFirst = target.player.name.toLowerCase().trim().split(/\s+/)[0];
-            const bullied = (attacker.player.bulliedPlayer || '').toLowerCase();
-            if (bullied.includes(targetFirst)) {
-                const m = bullied.match(/\((\d+)\)/);
-                if (m) return parseInt(m[1], 10);
+            const map = attacker.player.playerKnockoutMap || {};
+            if (map[target.player.name] !== undefined) {
+                return Number(map[target.player.name]) || 0;
             }
-            const rival = (target.player.rivalPlayer || '').toLowerCase();
-            const attackerFirst = attacker.player.name.toLowerCase().trim().split(/\s+/)[0];
-            if (rival.includes(attackerFirst)) {
-                const m = rival.match(/\((\d+)\)/);
-                if (m) return parseInt(m[1], 10);
+            const targetFirst = target.player.name.toLowerCase().trim().split(/\s+/)[0];
+            for (const [k, v] of Object.entries(map)) {
+                if (k.toLowerCase().split(/\s+/)[0] === targetFirst) {
+                    return Number(v) || 0;
+                }
             }
             return 0;
         };
@@ -1407,14 +1454,29 @@ export default function TVPresentationClient({
             }
         );
 
-        // 3. Special Broadcast Slides (Season Awards & Stacks/Payouts)
+        // 3. Special Broadcast Slides (3 Pages of Season Awards & Hall of Shame + Stacks/Payouts)
         if (includeSpecialSlides && computedProfiles.length > 0) {
             slides.push(
                 {
                     type: 'season_awards',
-                    id: 'special_season_awards',
-                    label: 'Awards & Shame',
-                    badge: '💀 AWARDS'
+                    page: 1,
+                    id: 'special_season_awards_p1',
+                    label: 'Shark Tank Awards (1/3)',
+                    badge: '🏆 AWARDS • P1'
+                },
+                {
+                    type: 'season_awards',
+                    page: 2,
+                    id: 'special_season_awards_p2',
+                    label: 'Bounty & Grinder Awards (2/3)',
+                    badge: '⚔️ AWARDS • P2'
+                },
+                {
+                    type: 'season_awards',
+                    page: 3,
+                    id: 'special_season_awards_p3',
+                    label: 'Hall of Shame & Whales (3/3)',
+                    badge: '💀 SHAME • P3'
                 },
                 {
                     type: 'stacks_and_payouts',
@@ -1499,6 +1561,15 @@ export default function TVPresentationClient({
     const handleSelectLeaguePage = (page: 1 | 2 | 3) => {
         const targetIdx = broadcastSlides.findIndex(
             s => s.type === 'league_stats' && s.page === page
+        );
+        if (targetIdx !== -1) {
+            handleSelectSlide(targetIdx);
+        }
+    };
+
+    const handleSelectAwardsPage = (page: 1 | 2 | 3) => {
+        const targetIdx = broadcastSlides.findIndex(
+            s => s.type === 'season_awards' && s.page === page
         );
         if (targetIdx !== -1) {
             handleSelectSlide(targetIdx);
@@ -1942,13 +2013,38 @@ export default function TVPresentationClient({
                                 </button>
                             )}
 
+                            {broadcastSlides.some(s => s.type === 'season_awards') && (
+                                <button
+                                    onClick={() => {
+                                        if (currentSlide?.type === 'season_awards') {
+                                            const nextPg = ((currentSlide.page % 3) + 1) as 1 | 2 | 3;
+                                            handleSelectAwardsPage(nextPg);
+                                        } else {
+                                            handleSelectAwardsPage(1);
+                                        }
+                                    }}
+                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border shrink-0 transition-all cursor-pointer ${
+                                        currentSlide?.type === 'season_awards'
+                                            ? 'bg-gradient-to-r from-purple-600/40 via-amber-500/30 to-black border-gold text-white shadow-[0_0_12px_rgba(212,175,55,0.4)]'
+                                            : 'bg-purple-950/30 border-purple-500/30 text-purple-200 hover:border-gold/50'
+                                    }`}
+                                >
+                                    <span className="text-[9px] font-mono font-black text-gold uppercase">💀 AWARDS</span>
+                                    <span className="text-[11px] font-black uppercase whitespace-nowrap">Awards &amp; Shame</span>
+                                    <span className="px-1 py-0.2 rounded bg-gold/20 text-gold text-[8px] font-mono font-black">
+                                        {currentSlide?.type === 'season_awards' ? `${currentSlide.page}/3` : '3 Pages'}
+                                    </span>
+                                </button>
+                            )}
+
                             {broadcastSlides
                                 .map((s, idx) => ({ s, idx }))
                                 .filter(
                                     item =>
                                         item.s.type !== 'player' &&
                                         item.s.type !== 'league_stats' &&
-                                        item.s.type !== 'tale_of_the_tape'
+                                        item.s.type !== 'tale_of_the_tape' &&
+                                        item.s.type !== 'season_awards'
                                 )
                                 .map(({ s, idx }) => {
                                     const isSelected = idx === safeSlideIdx;
@@ -1991,6 +2087,13 @@ export default function TVPresentationClient({
         const fighterB = computedProfiles[effectiveIdxB] || computedProfiles[1] || computedProfiles[0];
         if (!fighterA || !fighterB) return null;
 
+        const directKOsA = activeMatchup
+            ? activeMatchup.directKOsA
+            : Number(fighterA.player.playerKnockoutMap?.[fighterB.player.name] || 0);
+        const directKOsB = activeMatchup
+            ? activeMatchup.directKOsB
+            : Number(fighterB.player.playerKnockoutMap?.[fighterA.player.name] || 0);
+
         const comparisons = [
             {
                 label: 'Championship Points',
@@ -2001,11 +2104,11 @@ export default function TVPresentationClient({
                 higherWins: true
             },
             {
-                label: 'Final Table Bonus Stack',
-                valA: fighterA.player.bonusChips || 0,
-                valB: fighterB.player.bonusChips || 0,
-                fmtA: `+${(fighterA.player.bonusChips || 0).toLocaleString()}`,
-                fmtB: `+${(fighterB.player.bonusChips || 0).toLocaleString()}`,
+                label: 'Direct H2H Knockouts (Sheet)',
+                valA: directKOsA,
+                valB: directKOsB,
+                fmtA: `${directKOsA} KOs vs ${fighterB.player.name.split(' ')[0]}`,
+                fmtB: `${directKOsB} KOs vs ${fighterA.player.name.split(' ')[0]}`,
                 higherWins: true
             },
             {
@@ -2230,106 +2333,300 @@ export default function TVPresentationClient({
     };
 
     // ========================================================================
-    // OPTION 1B: SEASON AWARDS & "HALL OF SHAME" SUPERLATIVES SLIDE (ZERO-SCROLL)
+    // OPTION 1B: 3-PAGE SEASON AWARDS & "HALL OF SHAME" POKER SUPERLATIVES (24 RECORDS)
     // ========================================================================
-    const renderSeasonAwardsSlide = () => {
+    const renderSeasonAwardsSlide = (page: 1 | 2 | 3) => {
         if (computedProfiles.length === 0) return null;
 
-        const koLeader = [...computedProfiles].sort((a, b) => (b.player.knockOuts || 0) - (a.player.knockOuts || 0))[0];
+        const pointsLeader = [...computedProfiles].sort((a, b) => (b.player.points || 0) - (a.player.points || 0))[0];
         const singleWinLeader = [...computedProfiles].sort((a, b) => b.highestWinAmount - a.highestWinAmount)[0];
-        const singleKoLeader = [...computedProfiles].sort((a, b) => b.mostKOsInGame - a.mostKOsInGame)[0];
-        const rebuyLeader = [...computedProfiles].sort((a, b) => (b.player.rebuys || 0) - (a.player.rebuys || 0))[0];
+        const profitLeader = [...computedProfiles].sort((a, b) => (b.player.profit || 0) - (a.player.profit || 0))[0];
+        const roiLeader = [...computedProfiles].filter(c => c.player.gamesPlayed >= 3).sort((a, b) => b.roiPct - a.roiPct)[0] || profitLeader;
         const winRateLeader = [...computedProfiles].filter(c => c.player.gamesPlayed >= 2).sort((a, b) => b.winRate - a.winRate)[0] || computedProfiles[0];
+        const podiumLeader = [...computedProfiles].sort((a, b) => b.podiumCount - a.podiumCount || b.player.points - a.player.points)[0];
+        const avgPosLeader = [...computedProfiles].filter(c => c.player.gamesPlayed >= 3 && c.avgFinish > 0).sort((a, b) => a.avgFinish - b.avgFinish)[0] || pointsLeader;
+        const bonusStackLeader = [...computedProfiles].sort((a, b) => (b.player.bonusChips || 0) - (a.player.bonusChips || 0))[0];
+
+        const koLeader = [...computedProfiles].sort((a, b) => (b.player.knockOuts || 0) - (a.player.knockOuts || 0))[0];
+        const singleKoLeader = [...computedProfiles].sort((a, b) => b.mostKOsInGame - a.mostKOsInGame)[0];
+        const koRateLeader = [...computedProfiles]
+            .filter(c => c.player.gamesPlayed >= 3)
+            .sort((a, b) => (b.player.knockOuts || 0) / b.player.gamesPlayed - (a.player.knockOuts || 0) / a.player.gamesPlayed)[0] || koLeader;
+        const uniqueHeadhunter = [...computedProfiles]
+            .sort((a, b) => (b.player.uniquePlayersHijacked?.length || 0) - (a.player.uniquePlayersHijacked?.length || 0))[0] || koLeader;
+        const archBully = [...computedProfiles].sort((a, b) => b.pigeonKoCount - a.pigeonKoCount)[0] || koLeader;
+        const bunkerNit = [...computedProfiles]
+            .filter(c => c.player.gamesPlayed >= 3)
+            .sort((a, b) => a.timesEliminated / a.player.gamesPlayed - b.timesEliminated / b.player.gamesPlayed)[0] || computedProfiles[0];
+        const ironMan = [...computedProfiles].sort((a, b) => b.player.gamesPlayed - a.player.gamesPlayed || b.player.points - a.player.points)[0];
+        const actionJunkie = [...computedProfiles].sort((a, b) => (b.player.vpip || 0) - (a.player.vpip || 0) || b.cashPaid - a.cashPaid)[0];
+
+        // Hall of Shame Superlatives (Whales, Donors, Calling Stations, Bubble Boys & Bullet Sponges)
+        const tableWhale = [...computedProfiles].sort((a, b) => b.cashPaid - a.cashPaid || (b.player.rebuys || 0) - (a.player.rebuys || 0))[0];
+        const biggestDonor = [...computedProfiles].sort((a, b) => (a.player.profit || 0) - (b.player.profit || 0))[0];
+        const rebuyLeader = [...computedProfiles].sort((a, b) => (b.player.rebuys || 0) - (a.player.rebuys || 0))[0];
+        const tiltMonster = [...computedProfiles].sort((a, b) => b.maxRebuysSingle - a.maxRebuysSingle || (b.player.rebuys || 0) - (a.player.rebuys || 0))[0];
         const bubbleLeader = [...computedProfiles].sort((a, b) => b.bubbleCount - a.bubbleCount)[0];
         const bulletSponge = [...computedProfiles].sort((a, b) => b.timesEliminated - a.timesEliminated)[0];
+        const callingStation = [...computedProfiles]
+            .filter(c => (c.player.winnings || 0) === 0)
+            .sort((a, b) => b.player.gamesPlayed - a.player.gamesPlayed || b.cashPaid - a.cashPaid)[0] || biggestDonor;
         const ghostAward = [...computedProfiles].sort((a, b) => a.player.gamesPlayed - b.player.gamesPlayed)[0];
 
-        const awards = [
-            {
-                title: '☠️ MOST TOTAL KNOCKOUTS',
-                subtitle: 'Season Knockout Leader (Sheet1)',
-                winner: koLeader.player.name,
-                stat: `${koLeader.player.knockOuts} Total KOs`,
-                detail: `Averaging ${(koLeader.player.knockOuts / Math.max(1, koLeader.player.gamesPlayed)).toFixed(2)} knockouts per game across ${koLeader.player.gamesPlayed} games.`,
-                color: 'border-red-500/50 bg-gradient-to-b from-red-950/40 to-black text-red-400'
+        const pagesMeta: Record<1 | 2 | 3, { badge: string; title: string; subtitle: string; cards: { title: string; subtitle: string; winner: string; stat: string; detail: string; color: string }[] }> = {
+            1: {
+                badge: 'PAGE 1 OF 3 • THE SHARK TANK: CHAMPIONSHIP & HIGH-ROLLER HONOURS',
+                title: 'Championship Sharks, High Rollers & GTO Crushers',
+                subtitle: '8 Official League Excellence Awards',
+                cards: [
+                    {
+                        title: '🦈 THE APEX SHARK',
+                        subtitle: '2026 Championship Points Leader',
+                        winner: pointsLeader.player.name,
+                        stat: `${pointsLeader.player.points} League Pts`,
+                        detail: `Top of the food chain across ${pointsLeader.player.gamesPlayed} games (${(pointsLeader.player.points / Math.max(1, pointsLeader.player.gamesPlayed)).toFixed(1)} pts/game).`,
+                        color: 'border-gold/60 bg-gradient-to-b from-amber-950/45 to-black text-gold'
+                    },
+                    {
+                        title: '💰 THE HIGH ROLLER',
+                        subtitle: 'Largest Single-Night Cash Score',
+                        winner: singleWinLeader.player.name,
+                        stat: `£${singleWinLeader.highestWinAmount} Payday`,
+                        detail: `Recorded in ${singleWinLeader.highestWinLabel} • £${singleWinLeader.player.winnings} total gross winnings.`,
+                        color: 'border-emerald-500/50 bg-gradient-to-b from-emerald-950/40 to-black text-emerald-400'
+                    },
+                    {
+                        title: '🏦 THE BANK VAULT',
+                        subtitle: 'Season Net Profit King',
+                        winner: profitLeader.player.name,
+                        stat: `+£${profitLeader.player.profit} Net Profit`,
+                        detail: `£${profitLeader.player.winnings} won vs £${profitLeader.cashPaid} paid in (+${profitLeader.roiPct}% season ROI).`,
+                        color: 'border-green-500/50 bg-gradient-to-b from-green-950/40 to-black text-green-400'
+                    },
+                    {
+                        title: '📈 THE GTO CRUSHER',
+                        subtitle: 'Highest Return on Investment (Min 3 Games)',
+                        winner: roiLeader.player.name,
+                        stat: `${roiLeader.roiPct >= 0 ? `+${roiLeader.roiPct}%` : `${roiLeader.roiPct}%`} ROI`,
+                        detail: `Turned £${roiLeader.cashPaid} of £10 bullets into £${roiLeader.player.winnings} gross winnings across ${roiLeader.player.gamesPlayed} games.`,
+                        color: 'border-cyan-500/50 bg-gradient-to-b from-cyan-950/40 to-black text-cyan-300'
+                    },
+                    {
+                        title: '👑 THE CLOSER',
+                        subtitle: 'Highest Tournament Win Rate %',
+                        winner: winRateLeader.player.name,
+                        stat: `${winRateLeader.winRate}% Win Rate`,
+                        detail: `Closed out ${winRateLeader.player.wins || 0} 1st-place trophies in ${winRateLeader.player.gamesPlayed} appearances.`,
+                        color: 'border-yellow-500/50 bg-gradient-to-b from-yellow-950/40 to-black text-yellow-300'
+                    },
+                    {
+                        title: '🏅 FINAL TABLE BOSS',
+                        subtitle: 'Most Top-3 Podium Finishes',
+                        winner: podiumLeader.player.name,
+                        stat: `${podiumLeader.podiumCount}x Podiums (${podiumLeader.podiumRate}%)`,
+                        detail: `Reached the top 3 in ${podiumLeader.podiumCount} of ${podiumLeader.player.gamesPlayed} sessions played.`,
+                        color: 'border-amber-500/50 bg-gradient-to-b from-amber-950/35 to-black text-amber-300'
+                    },
+                    {
+                        title: '🎯 THE FLOOR GENERAL',
+                        subtitle: 'Best Average Finishing Position',
+                        winner: avgPosLeader.player.name,
+                        stat: `${avgPosLeader.avgFinish.toFixed(1)} Avg Finish`,
+                        detail: `Highest consistency floor across ${avgPosLeader.player.gamesPlayed} league appearances.`,
+                        color: 'border-sky-500/50 bg-gradient-to-b from-sky-950/40 to-black text-sky-300'
+                    },
+                    {
+                        title: '🪙 DEEP-STACK BULLY',
+                        subtitle: 'Largest Earned Final Table Bonus Stack',
+                        winner: bonusStackLeader.player.name,
+                        stat: `+${(bonusStackLeader.player.bonusChips || 0).toLocaleString()} Bonus Chips`,
+                        detail: `Enters the Grand Final with ${(20000 + (bonusStackLeader.player.bonusChips || 0)).toLocaleString()} total chips (500 per point).`,
+                        color: 'border-purple-500/50 bg-gradient-to-b from-purple-950/40 to-black text-purple-300'
+                    }
+                ]
             },
-            {
-                title: '💰 HIGHEST SINGLE-GAME WIN',
-                subtitle: 'Largest Recorded Game Payout',
-                winner: singleWinLeader.player.name,
-                stat: `£${singleWinLeader.highestWinAmount} Cash`,
-                detail: `Recorded in ${singleWinLeader.highestWinLabel} • £${singleWinLeader.player.winnings} total gross winnings.`,
-                color: 'border-emerald-500/50 bg-gradient-to-b from-emerald-950/40 to-black text-emerald-400'
+            2: {
+                badge: 'PAGE 2 OF 3 • BOUNTY HUNTERS, ASSASSINS & TABLE GRINDERS',
+                title: 'Knockout Executioners, Headhunters & Iron-Man Grinders',
+                subtitle: '8 Official Combat & Endurance Records',
+                cards: [
+                    {
+                        title: '☠️ THE GRIM REAPER',
+                        subtitle: 'Season Knockout Leader (Sheet1)',
+                        winner: koLeader.player.name,
+                        stat: `${koLeader.player.knockOuts} Total KOs`,
+                        detail: `Sent ${koLeader.player.knockOuts} opponents to the rail (${(koLeader.player.knockOuts / Math.max(1, koLeader.player.gamesPlayed)).toFixed(2)} KOs/game).`,
+                        color: 'border-red-500/60 bg-gradient-to-b from-red-950/45 to-black text-red-400'
+                    },
+                    {
+                        title: '🩸 ONE-NIGHT CARNAGE',
+                        subtitle: 'Single-Game Knockout Record',
+                        winner: singleKoLeader.player.name,
+                        stat: `${singleKoLeader.mostKOsInGame} KOs in 1 Night`,
+                        detail: `Cleared the felt in ${singleKoLeader.mostKOsLabel}.`,
+                        color: 'border-rose-500/50 bg-gradient-to-b from-rose-950/40 to-black text-rose-300'
+                    },
+                    {
+                        title: '⚡ THE HITMAN',
+                        subtitle: 'Highest Knockouts-Per-Game Rate',
+                        winner: koRateLeader.player.name,
+                        stat: `${(koRateLeader.player.knockOuts / Math.max(1, koRateLeader.player.gamesPlayed)).toFixed(2)} KOs / Game`,
+                        detail: `${koRateLeader.player.knockOuts} eliminations in just ${koRateLeader.player.gamesPlayed} appearances.`,
+                        color: 'border-orange-500/50 bg-gradient-to-b from-orange-950/40 to-black text-orange-300'
+                    },
+                    {
+                        title: '🎯 THE HEADHUNTER',
+                        subtitle: 'Most Unique League Rivals Knocked Out',
+                        winner: uniqueHeadhunter.player.name,
+                        stat: `${uniqueHeadhunter.player.uniquePlayersHijacked?.length || 0} Unique Rivals KO'd`,
+                        detail: `Collected bounties on ${uniqueHeadhunter.player.uniquePlayersHijacked?.length || 0} different E.P.T. members this season.`,
+                        color: 'border-amber-500/50 bg-gradient-to-b from-amber-950/40 to-black text-gold'
+                    },
+                    {
+                        title: '🔨 THE ARCH-BULLY',
+                        subtitle: 'Most Knockouts Against a Single Opponent',
+                        winner: archBully.player.name,
+                        stat: `${archBully.pigeonKoCount}x KOs vs ${archBully.pigeonCleanName.split(' ')[0]}`,
+                        detail: `Eliminated ${archBully.pigeonCleanName} ${archBully.pigeonKoCount} times over the course of the 2026 league.`,
+                        color: 'border-emerald-500/50 bg-gradient-to-b from-emerald-950/40 to-black text-emerald-300'
+                    },
+                    {
+                        title: '🛡️ THE BUNKER NIT',
+                        subtitle: 'Lowest Eliminations-Per-Game (Min 3 Games)',
+                        winner: bunkerNit.player.name,
+                        stat: `Only ${bunkerNit.timesEliminated} Deaths (${bunkerNit.player.gamesPlayed}G)`,
+                        detail: `Averaged just ${(bunkerNit.timesEliminated / Math.max(1, bunkerNit.player.gamesPlayed)).toFixed(2)} eliminations per appearance.`,
+                        color: 'border-sky-500/50 bg-gradient-to-b from-sky-950/40 to-black text-sky-300'
+                    },
+                    {
+                        title: '🪨 THE IRON MAN GRINDER',
+                        subtitle: '100% Ever-Present Table Attendance',
+                        winner: ironMan.player.name,
+                        stat: `${ironMan.player.gamesPlayed} / ${totalSeasonGames} Games (${ironMan.attendancePct}%)`,
+                        detail: `Never missed a single tournament card-in-the-air all season.`,
+                        color: 'border-indigo-500/50 bg-gradient-to-b from-indigo-950/40 to-black text-indigo-300'
+                    },
+                    {
+                        title: '🔥 THE ACTION JUNKIE',
+                        subtitle: 'Highest Table VPIP & Loose-Aggressive Tempo',
+                        winner: actionJunkie.player.name,
+                        stat: `${actionJunkie.player.vpip || 30}% VPIP • ${actionJunkie.player.aggressionFactor || 2.5} AF`,
+                        detail: `Drives multi-way family pots with £${actionJunkie.cashPaid} total table action.`,
+                        color: 'border-pink-500/50 bg-gradient-to-b from-pink-950/40 to-black text-pink-300'
+                    }
+                ]
             },
-            {
-                title: '⚔️ MOST KOs IN A SINGLE GAME',
-                subtitle: 'Single-Night Knockout Record',
-                winner: singleKoLeader.player.name,
-                stat: `${singleKoLeader.mostKOsInGame} KOs in 1 Game`,
-                detail: `Recorded in ${singleKoLeader.mostKOsLabel}.`,
-                color: 'border-amber-500/50 bg-gradient-to-b from-amber-950/40 to-black text-gold'
-            },
-            {
-                title: '🏆 HIGHEST WIN PERCENTAGE',
-                subtitle: 'Best Tournament Win Rate (Min 2 Games)',
-                winner: winRateLeader.player.name,
-                stat: `${winRateLeader.winRate}% Win Rate`,
-                detail: `${winRateLeader.player.wins || 0} 1st-place wins in ${winRateLeader.player.gamesPlayed} appearances (${winRateLeader.player.profit >= 0 ? `+£${winRateLeader.player.profit}` : `-£${Math.abs(winRateLeader.player.profit)}`}).`,
-                color: 'border-cyan-500/50 bg-gradient-to-b from-cyan-950/40 to-black text-cyan-300'
-            },
-            {
-                title: '🏧 MOST SEASON REBUYS',
-                subtitle: 'Highest Rebuy & Cash Contribution',
-                winner: rebuyLeader.player.name,
-                stat: `${rebuyLeader.player.rebuys} Rebuys (£${rebuyLeader.cashPaid} Paid)`,
-                detail: `Max ${rebuyLeader.maxRebuysSingle} rebuys in a single game • ${rebuyLeader.player.addOns || 0} add-ons recorded.`,
-                color: 'border-blue-500/50 bg-gradient-to-b from-blue-950/40 to-black text-blue-300'
-            },
-            {
-                title: '🫧 MOST BUBBLE FINISHES',
-                subtitle: 'Finished 1 Spot Outside the Money',
-                winner: bubbleLeader.player.name,
-                stat: `${bubbleLeader.bubbleCount} Bubble Finishes`,
-                detail: `Finished 1 position outside the cash payouts ${bubbleLeader.bubbleCount} times this season.`,
-                color: 'border-purple-500/50 bg-gradient-to-b from-purple-950/40 to-black text-purple-300'
-            },
-            {
-                title: '⚰️ MOST TIMES KNOCKED OUT',
-                subtitle: 'From Player Sheet "Knocked Out By" Table',
-                winner: bulletSponge.player.name,
-                stat: `${bulletSponge.timesEliminated} Times KO'd`,
-                detail: `Recorded across ${bulletSponge.player.gamesPlayed} appearances in the player sheet knockout log.`,
-                color: 'border-orange-500/50 bg-gradient-to-b from-orange-950/40 to-black text-orange-300'
-            },
-            {
-                title: '📉 LOWEST TABLE ATTENDANCE',
-                subtitle: 'Fewest Season Games Played',
-                winner: ghostAward.player.name,
-                stat: `${ghostAward.player.gamesPlayed} Games (${ghostAward.attendancePct}%)`,
-                detail: `${ghostAward.player.gamesPlayed} of ${totalSeasonGames} season games attended.`,
-                color: 'border-rose-500/50 bg-gradient-to-b from-rose-950/40 to-black text-rose-300'
+            3: {
+                badge: 'PAGE 3 OF 3 • THE HALL OF SHAME: WHALES, DONORS & BUBBLE BOYS',
+                title: 'Table Whales, Prize Pool Sponsors, Tilt Monsters & Calling Stations',
+                subtitle: '8 Official League Infamy & Hall of Shame Records',
+                cards: [
+                    {
+                        title: '🐋 THE TABLE WHALE',
+                        subtitle: 'Constantly Feeding Money Into the Prize Pot',
+                        winner: tableWhale.player.name,
+                        stat: `£${tableWhale.cashPaid} Pumped Into Pot`,
+                        detail: `Fed ${tableWhale.player.gamesPlayed} Buy-Ins + ${tableWhale.player.rebuys} Re-Buys + ${tableWhale.player.addOns} Add-Ons (@ £10 ea) into the E.P.T. economy.`,
+                        color: 'border-blue-500/60 bg-gradient-to-b from-blue-950/45 to-black text-blue-300'
+                    },
+                    {
+                        title: '💸 PRIZE POOL SPONSOR',
+                        subtitle: 'Biggest Net Season Deficit (The Ultimate Donor)',
+                        winner: biggestDonor.player.name,
+                        stat: `-£${Math.abs(biggestDonor.player.profit)} Net Loss`,
+                        detail: `Paid £${biggestDonor.cashPaid} into the kitty and took £${biggestDonor.player.winnings} home (${biggestDonor.roiPct}% ROI).`,
+                        color: 'border-rose-500/60 bg-gradient-to-b from-rose-950/45 to-black text-rose-400'
+                    },
+                    {
+                        title: '🏧 THE HUMAN ATM',
+                        subtitle: 'Most Season Re-Buys ("Reload Merchant")',
+                        winner: rebuyLeader.player.name,
+                        stat: `${rebuyLeader.player.rebuys} Re-Buys (£${(rebuyLeader.player.rebuys || 0) * 10})`,
+                        detail: `Averaged ${(rebuyLeader.player.rebuys / Math.max(1, rebuyLeader.player.gamesPlayed)).toFixed(2)} re-buys per game across ${rebuyLeader.player.gamesPlayed} appearances.`,
+                        color: 'border-cyan-500/50 bg-gradient-to-b from-cyan-950/40 to-black text-cyan-300'
+                    },
+                    {
+                        title: '💥 THE TILT MONSTER',
+                        subtitle: 'Most Re-Buys Fired in a Single Night',
+                        winner: tiltMonster.player.name,
+                        stat: `${tiltMonster.maxRebuysSingle} Re-Buys in 1 Game`,
+                        detail: `Dumped £${tiltMonster.maxRebuysSingle * 10} in re-buys in a single session after early bad beats.`,
+                        color: 'border-orange-500/60 bg-gradient-to-b from-orange-950/45 to-black text-orange-300'
+                    },
+                    {
+                        title: '🫧 STONE-COLD BUBBLE BOY',
+                        subtitle: 'Most Finishes 1 Spot Outside the Money',
+                        winner: bubbleLeader.player.name,
+                        stat: `${bubbleLeader.bubbleCount}x Bubble Finishes`,
+                        detail: `Eliminated on the exact cash bubble ${bubbleLeader.bubbleCount} times this season with £0 to show for it.`,
+                        color: 'border-purple-500/60 bg-gradient-to-b from-purple-950/45 to-black text-purple-300'
+                    },
+                    {
+                        title: '🎯 THE BULLET SPONGE',
+                        subtitle: 'Most Times Knocked Out Across the League',
+                        winner: bulletSponge.player.name,
+                        stat: `${bulletSponge.timesEliminated}x Knocked Out`,
+                        detail: `Knocked out ${bulletSponge.timesEliminated} times across ${bulletSponge.player.gamesPlayed} games (Rival: ${bulletSponge.nemesisName}).`,
+                        color: 'border-red-500/60 bg-gradient-to-b from-red-950/45 to-black text-red-400'
+                    },
+                    {
+                        title: '🐟 THE CALLING STATION',
+                        subtitle: 'Most Games Played With £0 Cashed (0% ITM)',
+                        winner: callingStation.player.name,
+                        stat: `${callingStation.player.gamesPlayed} Games • £0 Won`,
+                        detail: `Paid £${callingStation.cashPaid} across ${callingStation.player.gamesPlayed} nights without a single cash payout.`,
+                        color: 'border-amber-500/50 bg-gradient-to-b from-amber-950/40 to-black text-amber-300'
+                    },
+                    {
+                        title: '👻 THE PHANTOM',
+                        subtitle: 'Lowest Table Attendance (Missing in Action)',
+                        winner: ghostAward.player.name,
+                        stat: `${ghostAward.player.gamesPlayed} Games (${ghostAward.attendancePct}%)`,
+                        detail: `Attended only ${ghostAward.player.gamesPlayed} of ${totalSeasonGames} season games — rarer than a Royal Flush.`,
+                        color: 'border-zinc-500/50 bg-gradient-to-b from-zinc-900/60 to-black text-zinc-300'
+                    }
+                ]
             }
-        ];
+        };
+
+        const currentMeta = pagesMeta[page] || pagesMeta[1];
 
         return (
             <div className="flex-1 min-h-0 bg-gradient-to-b from-zinc-950/95 via-[#0f0c16]/95 to-black border-2 border-gold/50 rounded-3xl p-4 sm:p-6 shadow-[0_0_80px_rgba(212,175,55,0.2)] animate-in fade-in duration-300 flex flex-col justify-between overflow-hidden">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3 shrink-0">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3 shrink-0">
                     <div>
-                        <span className="text-[11px] font-mono font-black uppercase tracking-[0.3em] text-gold flex items-center gap-2">
+                        <span className="text-[11px] font-mono font-black uppercase tracking-[0.25em] text-gold flex items-center gap-2">
                             <Award className="w-4 h-4" />
-                            <span>Official 2026 Season Records (Google Sheets)</span>
+                            <span>{currentMeta.badge}</span>
                         </span>
                         <h2 className="text-xl sm:text-3xl font-black uppercase italic text-white tracking-tight">
-                            Season Statistical Leaders &amp; Records
+                            {currentMeta.title}
                         </h2>
                     </div>
-                    <span className="hidden sm:inline-block px-4 py-1 rounded-full bg-gold/15 border border-gold/40 text-gold font-mono font-bold text-xs">
-                        8 Official Sheet Records
-                    </span>
+
+                    <div className="flex items-center gap-1.5 bg-black/60 p-1 rounded-2xl border border-white/10">
+                        {([
+                            { pg: 1 as const, label: '1/3 • 🏆 Shark Tank' },
+                            { pg: 2 as const, label: '2/3 • ⚔️ Bounties' },
+                            { pg: 3 as const, label: '3/3 • 💀 Hall of Shame & Whales' }
+                        ]).map(tab => (
+                            <button
+                                key={tab.pg}
+                                onClick={() => handleSelectAwardsPage(tab.pg)}
+                                className={`px-3 py-1 rounded-xl text-[10px] font-mono font-black uppercase tracking-wider border transition cursor-pointer ${
+                                    page === tab.pg
+                                        ? 'bg-gold text-black border-white shadow-[0_0_15px_rgba(212,175,55,0.45)]'
+                                        : 'bg-zinc-900/80 text-zinc-400 border-white/10 hover:text-white'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="flex-1 min-h-0 grid grid-cols-4 grid-rows-2 gap-3.5 pt-3 overflow-hidden">
-                    {awards.map(aw => (
+                    {currentMeta.cards.map(aw => (
                         <div
                             key={aw.title}
                             className={`p-3.5 rounded-2xl border-2 flex flex-col justify-between shadow-xl overflow-hidden ${aw.color}`}
@@ -2817,30 +3114,30 @@ export default function TVPresentationClient({
                                     <div className="grid grid-cols-2 gap-2.5 my-auto">
                                         <div className="p-2.5 rounded-xl bg-red-950/30 border border-red-500/40 flex items-center gap-2.5">
                                             <img
-                                                src={getAvatarFilename(currentProfile.nemesisName)}
-                                                alt={currentProfile.nemesisName}
+                                                src={getAvatarFilename(currentProfile.nemesisCleanName)}
+                                                alt={currentProfile.nemesisCleanName}
                                                 className="w-11 h-11 rounded-xl border border-red-500/50 object-cover bg-zinc-900 shrink-0"
                                             />
                                             <div className="min-w-0">
                                                 <span className="text-[9px] font-mono font-black uppercase text-red-400 block">⚔️ Sheet Rival</span>
                                                 <span className="text-xs font-black uppercase text-white truncate block">{currentProfile.nemesisName}</span>
-                                                <span className="text-[9px] font-mono text-zinc-400 truncate block">
-                                                    Most Knocked Out By
+                                                <span className="text-[9px] font-mono text-zinc-300 truncate block">
+                                                    KO&apos;d By <strong className="text-red-400">{currentProfile.nemesisKoCount}x</strong> • You KO&apos;d <strong className="text-emerald-400">{currentProfile.nemesisReverseKoCount}x</strong>
                                                 </span>
                                             </div>
                                         </div>
 
                                         <div className="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 flex items-center gap-2.5">
                                             <img
-                                                src={getAvatarFilename(currentProfile.pigeonName)}
-                                                alt={currentProfile.pigeonName}
+                                                src={getAvatarFilename(currentProfile.pigeonCleanName)}
+                                                alt={currentProfile.pigeonCleanName}
                                                 className="w-11 h-11 rounded-xl border border-emerald-500/50 object-cover bg-zinc-900 shrink-0"
                                             />
                                             <div className="min-w-0">
                                                 <span className="text-[9px] font-mono font-black uppercase text-emerald-400 block">🎯 Sheet Target</span>
                                                 <span className="text-xs font-black uppercase text-white truncate block">{currentProfile.pigeonName}</span>
-                                                <span className="text-[9px] font-mono text-zinc-400 truncate block">
-                                                    Most Knocked Out
+                                                <span className="text-[9px] font-mono text-zinc-300 truncate block">
+                                                    Knocked Out <strong className="text-emerald-400">{currentProfile.pigeonKoCount}x</strong> • KO&apos;d You <strong className="text-red-400">{currentProfile.pigeonReverseKoCount}x</strong>
                                                 </span>
                                             </div>
                                         </div>
@@ -3684,6 +3981,8 @@ export default function TVPresentationClient({
                 ? `presentation-page-${currentSlide.page}`
                 : currentSlide.type === 'league_stats'
                 ? `presentation-league-stats-${currentSlide.page}`
+                : currentSlide.type === 'season_awards'
+                ? `presentation-season-awards-${currentSlide.page}`
                 : `presentation-${currentSlide.type}`;
         const devPageLabel =
             currentSlide.type === 'player'
@@ -3700,7 +3999,7 @@ export default function TVPresentationClient({
                 {currentSlide.type === 'league_stats' && renderLeagueStatsSlide(currentSlide.page)}
                 {currentSlide.type === 'player' && renderPlayerDossierSlide(currentSlide.profile, currentSlide.page)}
                 {currentSlide.type === 'tale_of_the_tape' && renderTaleOfTheTapeSlide()}
-                {currentSlide.type === 'season_awards' && renderSeasonAwardsSlide()}
+                {currentSlide.type === 'season_awards' && renderSeasonAwardsSlide(currentSlide.page)}
                 {currentSlide.type === 'stacks_and_payouts' && renderStacksAndPayoutsSlide()}
             </div>
         );

@@ -58,7 +58,11 @@ export interface PlayerStats {
     knockOuts: number;
     // Advanced Stats from Player Sheet
     rivalPlayer?: string;
+    rivalKoCount?: number;
     bulliedPlayer?: string;
+    bulliedKoCount?: number;
+    playerKnockoutMap?: Record<string, number>;
+    knockedOutByMap?: Record<string, number>;
     winPercentage?: number;
     avgKnockouts?: number;
     avgFinishPosition?: number;
@@ -246,8 +250,10 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
             const gamesPlayed = parseInt(row[1]) || 0;
 
             // Bounty Board Stats
-            let rival = "N/A";
-            let bullied = "N/A";
+            let rival = "None (0x)";
+            let rivalKoCount = 0;
+            let bullied = "None (0x)";
+            let bulliedKoCount = 0;
             let winPct = 0;
             let avgKo = 0;
             let avgFinish = 0;
@@ -262,6 +268,14 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
             const cashFlow: { date: string; profit: number }[] = [];
             const enemyQueue: string[] = [];
             const gameKOs: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+            const playerKnockoutMap: Record<string, number> = {};
+            const knockedOutByMap: Record<string, number> = {};
+
+            const normalizeOpp = (raw: string): string => {
+                const s = (raw || "").toString().trim();
+                if (s.toLowerCase() === "diddy dave") return "Dave Blackburn";
+                return s;
+            };
 
             // Check the batched responses for this player's specific sheet
             const pRange = valueRanges.find(r => r.range?.toLowerCase().includes(matchedName.toLowerCase()));
@@ -299,10 +313,8 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
                 if (sheet1DateRowIdx === -1 && pData[15]) {
                     bubbleFinishes = parseInt(pData[15][1]) || 0;
                 }
-                if (pData[18]) {
-                    rival = (pData[18][0] as string || "None").toString().trim();
-                    bullied = (pData[18][1] as string || "None").toString().trim();
-                }
+                const sheetA19 = pData[18] ? normalizeOpp(pData[18][0] as string || "") : "";
+                const sheetB19 = pData[18] ? normalizeOpp(pData[18][1] as string || "") : "";
 
                 if (pData[20] && pData[24]) {
                     for (let c = 1; c < pData[20].length; c++) {
@@ -342,6 +354,16 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
                             idx < endIdx &&
                             rRow?.[0]?.toString().trim() === "Total"
                     );
+                    for (let r = playerKosRowIdx + 1; r < endIdx; r++) {
+                        const rLabel = pData[r]?.[0]?.toString().trim();
+                        if (!rLabel || rLabel === "Total") continue;
+                        const oppName = normalizeOpp(rLabel);
+                        let rowSum = 0;
+                        for (let c = 1; c <= 9; c++) {
+                            rowSum += parseInt(pData[r]?.[c]) || 0;
+                        }
+                        playerKnockoutMap[oppName] = rowSum;
+                    }
                     for (let c = 1; c <= 9; c++) {
                         let colSum = 0;
                         for (let r = playerKosRowIdx + 1; r < endIdx; r++) {
@@ -372,8 +394,9 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
                     // Phase 8: Iterate through ALL opponents and ALL columns to build Bounty Board stats
                     for (let r = knockoutRowIdx + 1; r <= knockoutRowIdx + 11 && r < pData.length; r++) {
                         if (pData[r] && pData[r][0]) {
-                            const opponentName = pData[r][0].toString().trim();
-                            if (!opponentName || opponentName === "Total") continue;
+                            const oppRaw = pData[r][0].toString().trim();
+                            if (!oppRaw || oppRaw === "Total") continue;
+                            const opponentName = normalizeOpp(oppRaw);
 
                             // 1. Process Most Recent Game for Gauntlet
                             if (mostRecentColIdx !== -1) {
@@ -386,10 +409,12 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
 
                             // 2. Process ALL historical games for Bounty metrics (The Bullet Sponge)
                             // We are looking at THIS player's sheet, so "Knocked Out By" means times THEY died.
+                            const colMVal = parseInt(pData[r][12]) || 0;
+                            let rowSum = 0;
                             for (let c = 1; c <= 9; c++) {
                                 const koCountRaw = pData[r][c];
                                 const koCount = parseInt(koCountRaw) || 0;
-                                totalTimesKnockedOut += koCount;
+                                rowSum += koCount;
 
                                 // Phase 8: Log this killer's victim for the Hijack King calculation
                                 if (koCount > 0) {
@@ -399,7 +424,34 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
                                     killerToVictimsMap[opponentName].add(matchedName); // The killer hijacked this player
                                 }
                             }
+                            const trueKoBy = Math.max(colMVal, rowSum);
+                            knockedOutByMap[opponentName] = trueKoBy;
+                            totalTimesKnockedOut += trueKoBy;
                         }
+                    }
+                }
+
+                // Determine Sheet Target (Bullied — Most Knocked Out by this player, Rows 27-36)
+                const maxDone = Math.max(0, ...Object.values(playerKnockoutMap));
+                if (maxDone > 0) {
+                    bulliedKoCount = maxDone;
+                    if (sheetA19 && playerKnockoutMap[sheetA19] === maxDone) {
+                        bullied = `${sheetA19} (${maxDone}x)`;
+                    } else {
+                        const topTarget = Object.entries(playerKnockoutMap).find(([, v]) => v === maxDone)?.[0] || "None";
+                        bullied = `${topTarget} (${maxDone}x)`;
+                    }
+                }
+
+                // Determine Sheet Rival (Nemesis — Most Knocked Out By, Rows 39-48)
+                const maxBy = Math.max(0, ...Object.values(knockedOutByMap));
+                if (maxBy > 0) {
+                    rivalKoCount = maxBy;
+                    if (sheetB19 && knockedOutByMap[sheetB19] === maxBy) {
+                        rival = `${sheetB19} (${maxBy}x)`;
+                    } else {
+                        const topRival = Object.entries(knockedOutByMap).find(([, v]) => v === maxBy)?.[0] || "None";
+                        rival = `${topRival} (${maxBy}x)`;
                     }
                 }
 
@@ -426,7 +478,11 @@ export async function getLeaderboardData(forceRefresh = false): Promise<PlayerSt
                 knockOuts: parseInt(row[19]) || 0,
                 // Advanced
                 rivalPlayer: rival,
+                rivalKoCount,
                 bulliedPlayer: bullied,
+                bulliedKoCount,
+                playerKnockoutMap,
+                knockedOutByMap,
                 winPercentage: winPct,
                 avgKnockouts: avgKo,
                 avgFinishPosition: avgFinish,

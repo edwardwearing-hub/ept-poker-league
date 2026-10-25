@@ -18,8 +18,34 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "profit": 80,
         "bonusChips": 35500,
         "knockOuts": 12,
-        "rivalPlayer": "Georgina Wearing",
-        "bulliedPlayer": "Liam Duxbury",
+        "rivalPlayer": "Liam Duxbury (4x)",
+        "rivalKoCount": 4,
+        "bulliedPlayer": "Georgina Wearing (2x)",
+        "bulliedKoCount": 2,
+        "playerKnockoutMap": {
+            "Edward Wearing": 1,
+            "Georgina Wearing": 2,
+            "Daniel Horne": 0,
+            "Darren Daly": 0,
+            "Chris Daly": 2,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 1,
+            "Liam Duxbury": 2,
+            "Nathen Benson": 2,
+            "Dave Taylor": 1
+        },
+        "knockedOutByMap": {
+            "Edward Wearing": 1,
+            "Georgina Wearing": 1,
+            "Daniel Horne": 0,
+            "Darren Daly": 0,
+            "Chris Daly": 2,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 1,
+            "Liam Duxbury": 4,
+            "Nathen Benson": 0,
+            "Dave Taylor": 2
+        },
         "winPercentage": 22.2,
         "avgKnockouts": 1,
         "avgFinishPosition": 3,
@@ -86,10 +112,10 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "aggressionFactor": 2.3,
         "badges": [],
         "archNemesis": {
-            "name": "Georgina Wearing",
+            "name": "Liam Duxbury (4x)",
             "knockouts": 4,
-            "chipDifferential": 150,
-            "headToHeadNotes": "+£150 net profit edge over Georgina Wearing"
+            "chipDifferential": 0,
+            "headToHeadNotes": "+£0 net profit edge over Liam Duxbury (4x)"
         }
     },
     {
@@ -107,8 +133,34 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "profit": 20,
         "bonusChips": 33000,
         "knockOuts": 18,
-        "rivalPlayer": "Edward Wearing",
-        "bulliedPlayer": "Edward Wearing",
+        "rivalPlayer": "Edward Wearing (2x)",
+        "rivalKoCount": 2,
+        "bulliedPlayer": "Luke Daly (4x)",
+        "bulliedKoCount": 4,
+        "playerKnockoutMap": {
+            "Edward Wearing": 1,
+            "Georgina Wearing": 2,
+            "Luke Daly": 4,
+            "Daniel Horne": 1,
+            "Darren Daly": 1,
+            "Chris Daly": 3,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 1,
+            "Nathen Benson": 1,
+            "Dave Taylor": 1
+        },
+        "knockedOutByMap": {
+            "Edward Wearing": 2,
+            "Georgina Wearing": 0,
+            "Luke Daly": 2,
+            "Daniel Horne": 1,
+            "Darren Daly": 0,
+            "Chris Daly": 1,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 2,
+            "Nathen Benson": 0,
+            "Dave Taylor": 0
+        },
         "winPercentage": 22.2,
         "avgKnockouts": 1,
         "avgFinishPosition": 4,
@@ -196,10 +248,10 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
             }
         ],
         "archNemesis": {
-            "name": "Edward Wearing",
-            "knockouts": 1,
-            "chipDifferential": 20,
-            "headToHeadNotes": "+£20 net profit edge over Edward Wearing"
+            "name": "Edward Wearing (2x)",
+            "knockouts": 4,
+            "chipDifferential": 0,
+            "headToHeadNotes": "+£0 net profit edge over Edward Wearing (2x)"
         }
     },
     {
@@ -217,8 +269,34 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "profit": 0,
         "bonusChips": 31500,
         "knockOuts": 9,
-        "rivalPlayer": "Georgina Wearing",
-        "bulliedPlayer": "Diddy Dave",
+        "rivalPlayer": "Dave Blackburn (2x)",
+        "rivalKoCount": 2,
+        "bulliedPlayer": "Georgina Wearing (2x)",
+        "bulliedKoCount": 2,
+        "playerKnockoutMap": {
+            "Georgina Wearing": 2,
+            "Luke Daly": 1,
+            "Daniel Horne": 1,
+            "Darren Daly": 0,
+            "Chris Daly": 1,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 0,
+            "Liam Duxbury": 2,
+            "Nathen Benson": 1,
+            "Dave Taylor": 1
+        },
+        "knockedOutByMap": {
+            "Georgina Wearing": 0,
+            "Luke Daly": 1,
+            "Daniel Horne": 1,
+            "Darren Daly": 0,
+            "Chris Daly": 1,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 2,
+            "Liam Duxbury": 1,
+            "Nathen Benson": 1,
+            "Dave Taylor": 1
+        },
         "winPercentage": 11.1,
         "avgKnockouts": 1,
         "avgFinishPosition": 3,
@@ -287,10 +365,10 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "aggressionFactor": 1.8,
         "badges": [],
         "archNemesis": {
-            "name": "Georgina Wearing",
+            "name": "Dave Blackburn (2x)",
             "knockouts": 4,
-            "chipDifferential": 70,
-            "headToHeadNotes": "+£70 net profit edge over Georgina Wearing"
+            "chipDifferential": 0,
+            "headToHeadNotes": "+£0 net profit edge over Dave Blackburn (2x)"
         }
     },
     {
@@ -308,8 +386,34 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "profit": -70,
         "bonusChips": 21000,
         "knockOuts": 3,
-        "rivalPlayer": "Chris Daly",
-        "bulliedPlayer": "Edward Wearing",
+        "rivalPlayer": "Edward Wearing (2x)",
+        "rivalKoCount": 2,
+        "bulliedPlayer": "Chris Daly (2x)",
+        "bulliedKoCount": 2,
+        "playerKnockoutMap": {
+            "Edward Wearing": 0,
+            "Luke Daly": 0,
+            "Daniel Horne": 0,
+            "Darren Daly": 0,
+            "Chris Daly": 2,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 0,
+            "Liam Duxbury": 1,
+            "Nathen Benson": 0,
+            "Dave Taylor": 0
+        },
+        "knockedOutByMap": {
+            "Edward Wearing": 2,
+            "Luke Daly": 2,
+            "Daniel Horne": 1,
+            "Darren Daly": 0,
+            "Chris Daly": 1,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 1,
+            "Liam Duxbury": 2,
+            "Nathen Benson": 0,
+            "Dave Taylor": 0
+        },
         "winPercentage": 0,
         "avgKnockouts": 1,
         "avgFinishPosition": 4,
@@ -374,10 +478,10 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "aggressionFactor": 0.9,
         "badges": [],
         "archNemesis": {
-            "name": "Chris Daly",
+            "name": "Edward Wearing (2x)",
             "knockouts": 4,
-            "chipDifferential": -60,
-            "headToHeadNotes": "-£60 net profit deficit against Chris Daly"
+            "chipDifferential": 0,
+            "headToHeadNotes": "+£0 net profit edge over Edward Wearing (2x)"
         }
     },
     {
@@ -395,8 +499,34 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "profit": -10,
         "bonusChips": 18500,
         "knockOuts": 5,
-        "rivalPlayer": "Liam Duxbury",
-        "bulliedPlayer": "Luke Daly",
+        "rivalPlayer": "Luke Daly (2x)",
+        "rivalKoCount": 2,
+        "bulliedPlayer": "Liam Duxbury (3x)",
+        "bulliedKoCount": 3,
+        "playerKnockoutMap": {
+            "Edward Wearing": 1,
+            "Georgina Wearing": 2,
+            "Luke Daly": 1,
+            "Daniel Horne": 0,
+            "Darren Daly": 0,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 0,
+            "Liam Duxbury": 3,
+            "Nathen Benson": 0,
+            "Dave Taylor": 0
+        },
+        "knockedOutByMap": {
+            "Edward Wearing": 1,
+            "Georgina Wearing": 1,
+            "Luke Daly": 2,
+            "Daniel Horne": 1,
+            "Darren Daly": 0,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 0,
+            "Liam Duxbury": 2,
+            "Nathen Benson": 0,
+            "Dave Taylor": 0
+        },
         "winPercentage": 16.7,
         "avgKnockouts": 1,
         "avgFinishPosition": 4,
@@ -460,10 +590,10 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "aggressionFactor": 1.4,
         "badges": [],
         "archNemesis": {
-            "name": "Liam Duxbury",
+            "name": "Luke Daly (2x)",
             "knockouts": 3,
-            "chipDifferential": -30,
-            "headToHeadNotes": "-£30 net profit deficit against Liam Duxbury"
+            "chipDifferential": 0,
+            "headToHeadNotes": "+£0 net profit edge over Luke Daly (2x)"
         }
     },
     {
@@ -481,8 +611,34 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "profit": 50,
         "bonusChips": 18500,
         "knockOuts": 10,
-        "rivalPlayer": "Liam Duxbury",
-        "bulliedPlayer": "Liam Duxbury",
+        "rivalPlayer": "Liam Duxbury (2x)",
+        "rivalKoCount": 2,
+        "bulliedPlayer": "Liam Duxbury (2x)",
+        "bulliedKoCount": 2,
+        "playerKnockoutMap": {
+            "Edward Wearing": 2,
+            "Georgina Wearing": 1,
+            "Luke Daly": 1,
+            "Daniel Horne": 0,
+            "Darren Daly": 0,
+            "Chris Daly": 1,
+            "Stephen Flood": 0,
+            "Liam Duxbury": 2,
+            "Nathen Benson": 1,
+            "Dave Taylor": 2
+        },
+        "knockedOutByMap": {
+            "Edward Wearing": 0,
+            "Georgina Wearing": 0,
+            "Luke Daly": 1,
+            "Daniel Horne": 0,
+            "Darren Daly": 0,
+            "Chris Daly": 0,
+            "Stephen Flood": 0,
+            "Liam Duxbury": 2,
+            "Nathen Benson": 2,
+            "Dave Taylor": 1
+        },
         "winPercentage": 40,
         "avgKnockouts": 1,
         "avgFinishPosition": 5,
@@ -534,6 +690,9 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "totalHistoricalKOs": 10,
         "totalTimesKnockedOut": 6,
         "uniquePlayersHijacked": [
+            "Edward Wearing",
+            "Georgina Wearing",
+            "Luke Daly",
             "Liam Duxbury",
             "Nathen Benson",
             "Dave Taylor"
@@ -555,10 +714,10 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
             }
         ],
         "archNemesis": {
-            "name": "Liam Duxbury",
+            "name": "Liam Duxbury (2x)",
             "knockouts": 2,
-            "chipDifferential": 30,
-            "headToHeadNotes": "+£30 net profit edge over Liam Duxbury"
+            "chipDifferential": 0,
+            "headToHeadNotes": "+£0 net profit edge over Liam Duxbury (2x)"
         }
     },
     {
@@ -576,8 +735,34 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "profit": -50,
         "bonusChips": 17000,
         "knockOuts": 5,
-        "rivalPlayer": "Dave Taylor",
-        "bulliedPlayer": "Edward Wearing",
+        "rivalPlayer": "Edward Wearing (1x)",
+        "rivalKoCount": 1,
+        "bulliedPlayer": "Dave Taylor (2x)",
+        "bulliedKoCount": 2,
+        "playerKnockoutMap": {
+            "Edward Wearing": 1,
+            "Georgina Wearing": 0,
+            "Luke Daly": 0,
+            "Daniel Horne": 0,
+            "Darren Daly": 0,
+            "Chris Daly": 0,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 0,
+            "Liam Duxbury": 0,
+            "Dave Taylor": 2
+        },
+        "knockedOutByMap": {
+            "Edward Wearing": 1,
+            "Georgina Wearing": 1,
+            "Luke Daly": 1,
+            "Daniel Horne": 1,
+            "Darren Daly": 0,
+            "Chris Daly": 0,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 1,
+            "Liam Duxbury": 1,
+            "Dave Taylor": 0
+        },
         "winPercentage": 0,
         "avgKnockouts": 1.5,
         "avgFinishPosition": 4,
@@ -642,10 +827,10 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "aggressionFactor": 1.2,
         "badges": [],
         "archNemesis": {
-            "name": "Dave Taylor",
+            "name": "Edward Wearing (1x)",
             "knockouts": 3,
-            "chipDifferential": 40,
-            "headToHeadNotes": "+£40 net profit edge over Dave Taylor"
+            "chipDifferential": 0,
+            "headToHeadNotes": "+£0 net profit edge over Edward Wearing (1x)"
         }
     },
     {
@@ -663,8 +848,34 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "profit": 40,
         "bonusChips": 11000,
         "knockOuts": 5,
-        "rivalPlayer": "Edward Wearing",
-        "bulliedPlayer": "Edward Wearing",
+        "rivalPlayer": "Edward Wearing (1x)",
+        "rivalKoCount": 1,
+        "bulliedPlayer": "Edward Wearing (1x)",
+        "bulliedKoCount": 1,
+        "playerKnockoutMap": {
+            "Edward Wearing": 1,
+            "Georgina Wearing": 1,
+            "Luke Daly": 0,
+            "Darren Daly": 0,
+            "Chris Daly": 1,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 0,
+            "Liam Duxbury": 1,
+            "Nathen Benson": 1,
+            "Dave Taylor": 0
+        },
+        "knockedOutByMap": {
+            "Edward Wearing": 1,
+            "Georgina Wearing": 0,
+            "Luke Daly": 0,
+            "Darren Daly": 0,
+            "Chris Daly": 0,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 0,
+            "Liam Duxbury": 1,
+            "Nathen Benson": 0,
+            "Dave Taylor": 0
+        },
         "winPercentage": 33.3,
         "avgKnockouts": 1,
         "avgFinishPosition": 5,
@@ -737,10 +948,10 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
             }
         ],
         "archNemesis": {
-            "name": "Edward Wearing",
+            "name": "Edward Wearing (1x)",
             "knockouts": 1,
-            "chipDifferential": 40,
-            "headToHeadNotes": "+£40 net profit edge over Edward Wearing"
+            "chipDifferential": 0,
+            "headToHeadNotes": "+£0 net profit edge over Edward Wearing (1x)"
         }
     },
     {
@@ -758,8 +969,34 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "profit": -90,
         "bonusChips": 11000,
         "knockOuts": 4,
-        "rivalPlayer": "Liam Duxbury",
-        "bulliedPlayer": "Dave Blackburn",
+        "rivalPlayer": "Dave Blackburn (3x)",
+        "rivalKoCount": 3,
+        "bulliedPlayer": "Liam Duxbury (2x)",
+        "bulliedKoCount": 2,
+        "playerKnockoutMap": {
+            "Edward Wearing": 1,
+            "Georgina Wearing": 0,
+            "Luke Daly": 0,
+            "Daniel Horne": 0,
+            "Darren Daly": 0,
+            "Chris Daly": 0,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 1,
+            "Liam Duxbury": 2,
+            "Nathen Benson": 0
+        },
+        "knockedOutByMap": {
+            "Edward Wearing": 1,
+            "Georgina Wearing": 0,
+            "Luke Daly": 1,
+            "Daniel Horne": 0,
+            "Darren Daly": 0,
+            "Chris Daly": 0,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 3,
+            "Liam Duxbury": 1,
+            "Nathen Benson": 1
+        },
         "winPercentage": 0,
         "avgKnockouts": 1.333333333,
         "avgFinishPosition": 6,
@@ -824,10 +1061,10 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "aggressionFactor": 0.9,
         "badges": [],
         "archNemesis": {
-            "name": "Liam Duxbury",
+            "name": "Dave Blackburn (3x)",
             "knockouts": 3,
-            "chipDifferential": -110,
-            "headToHeadNotes": "-£110 net profit deficit against Liam Duxbury"
+            "chipDifferential": 0,
+            "headToHeadNotes": "+£0 net profit edge over Dave Blackburn (3x)"
         }
     },
     {
@@ -845,8 +1082,34 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "profit": -20,
         "bonusChips": 2000,
         "knockOuts": 0,
-        "rivalPlayer": "Edward Wearing",
-        "bulliedPlayer": "Liam Duxbury",
+        "rivalPlayer": "Liam Duxbury (1x)",
+        "rivalKoCount": 1,
+        "bulliedPlayer": "None (0x)",
+        "bulliedKoCount": 0,
+        "playerKnockoutMap": {
+            "Edward Wearing": 0,
+            "Georgina Wearing": 0,
+            "Luke Daly": 0,
+            "Daniel Horne": 0,
+            "Chris Daly": 0,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 0,
+            "Liam Duxbury": 0,
+            "Nathen Benson": 0,
+            "Dave Taylor": 0
+        },
+        "knockedOutByMap": {
+            "Edward Wearing": 0,
+            "Georgina Wearing": 0,
+            "Luke Daly": 0,
+            "Daniel Horne": 0,
+            "Chris Daly": 0,
+            "Stephen Flood": 0,
+            "Dave Blackburn": 0,
+            "Liam Duxbury": 1,
+            "Nathen Benson": 0,
+            "Dave Taylor": 0
+        },
         "winPercentage": 0,
         "avgKnockouts": 0,
         "avgFinishPosition": 5,
@@ -905,10 +1168,10 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "aggressionFactor": 0.9,
         "badges": [],
         "archNemesis": {
-            "name": "Edward Wearing",
+            "name": "Liam Duxbury (1x)",
             "knockouts": 1,
-            "chipDifferential": -20,
-            "headToHeadNotes": "-£20 net profit deficit against Edward Wearing"
+            "chipDifferential": 0,
+            "headToHeadNotes": "+£0 net profit edge over Liam Duxbury (1x)"
         }
     },
     {
@@ -926,8 +1189,34 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "profit": 0,
         "bonusChips": 0,
         "knockOuts": 0,
-        "rivalPlayer": "Edward Wearing",
-        "bulliedPlayer": "Edward Wearing",
+        "rivalPlayer": "None (0x)",
+        "rivalKoCount": 0,
+        "bulliedPlayer": "None (0x)",
+        "bulliedKoCount": 0,
+        "playerKnockoutMap": {
+            "Edward Wearing": 0,
+            "Georgina Wearing": 0,
+            "Luke Daly": 0,
+            "Daniel Horne": 0,
+            "Darren Daly": 0,
+            "Chris Daly": 0,
+            "Dave Blackburn": 0,
+            "Liam Duxbury": 0,
+            "Nathen Benson": 0,
+            "Dave Taylor": 0
+        },
+        "knockedOutByMap": {
+            "Edward Wearing": 0,
+            "Georgina Wearing": 0,
+            "Luke Daly": 0,
+            "Daniel Horne": 0,
+            "Darren Daly": 0,
+            "Chris Daly": 0,
+            "Dave Blackburn": 0,
+            "Liam Duxbury": 0,
+            "Nathen Benson": 0,
+            "Dave Taylor": 0
+        },
         "winPercentage": 0,
         "avgKnockouts": 0,
         "avgFinishPosition": 0,
@@ -986,10 +1275,10 @@ export const FALLBACK_PLAYERS: PlayerStats[] = [
         "aggressionFactor": 0.9,
         "badges": [],
         "archNemesis": {
-            "name": "Edward Wearing",
+            "name": "None (0x)",
             "knockouts": 1,
             "chipDifferential": 0,
-            "headToHeadNotes": "+£0 net profit edge over Edward Wearing"
+            "headToHeadNotes": "+£0 net profit edge over None (0x)"
         }
     }
 ];
