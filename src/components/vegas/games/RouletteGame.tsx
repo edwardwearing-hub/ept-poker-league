@@ -429,7 +429,10 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   const row3 = [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]; // Row 3 (bot)
 
   return (
-    <div className="relative w-full rounded-[2rem] bg-gradient-to-b from-[#1b1b1e] via-[#0f0f12] to-[#08080a] p-2 sm:p-3 shadow-[0_20px_50px_rgba(0,0,0,0.9)] border-4 border-[#282830] select-none overflow-hidden font-sans">
+    <div
+      style={{ touchAction: 'manipulation' }}
+      className="h-full flex-1 min-h-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation relative rounded-2xl sm:rounded-[2rem] bg-gradient-to-b from-[#1b1b1e] via-[#0f0f12] to-[#08080a] p-1.5 sm:p-3 shadow-[0_20px_50px_rgba(0,0,0,0.9)] border-2 sm:border-4 border-[#282830] font-sans"
+    >
       {/* Big Win Splash Fireworks */}
       <VegasWinSplash
         winAmount={splashWin}
@@ -441,7 +444,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
       />
 
       {/* 1. TOP MOBILE-CASINO HUD STATUS BAR */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-2xl bg-black/70 border border-white/10 mb-2.5 text-white">
+      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-2 rounded-xl sm:rounded-2xl bg-black/70 border border-white/10 mb-1 sm:mb-2 text-white">
         {/* Left: Avatar & VIP Star Level */}
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-500 border border-white/40 flex items-center justify-center text-sm shadow-md">
@@ -519,14 +522,14 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
       </div>
 
       {/* 2. GLAMOROUS DEALER SARAH STANDING AT THE TABLE (TOP RAIL INTEGRATION) */}
-      <div className="relative mb-2.5 rounded-2xl bg-gradient-to-r from-[#20130b] via-[#120a06] to-[#1c0f08] border-2 border-gold/50 p-2.5 sm:p-3 shadow-[0_6px_20px_rgba(0,0,0,0.85)] flex flex-col sm:flex-row items-center justify-between gap-3 overflow-hidden">
+      <div className="shrink-0 relative mb-1 sm:mb-2 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#20130b] via-[#120a06] to-[#1c0f08] border border-gold/50 sm:border-2 p-1.5 sm:p-2.5 shadow-[0_6px_20px_rgba(0,0,0,0.85)] flex items-center justify-between gap-2 overflow-hidden">
         {/* Subtle Racetrack Wood Inlay */}
         <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-[#ffd700]/40 to-transparent pointer-events-none" />
 
-        <div className="flex items-center gap-3.5 w-full sm:w-auto">
+        <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
           {/* Sarah Looking Over The Table Rail */}
           <div className="relative shrink-0">
-            <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-t-full rounded-b-2xl border-2 border-gold/80 overflow-hidden shadow-[0_0_20px_rgba(212,175,55,0.7)] bg-black">
+            <div className="w-9 h-9 sm:w-14 sm:h-14 rounded-full sm:rounded-t-full sm:rounded-b-2xl border-2 border-gold/80 overflow-hidden shadow-[0_0_15px_rgba(212,175,55,0.7)] bg-black">
               <img
                 src="/vegas/dealer_sarah.jpg"
                 alt="Sarah Head Dealer"
@@ -534,30 +537,30 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
               />
             </div>
             {/* Live AI Croupier Status Badge */}
-            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[8px] font-black uppercase tracking-wider border border-white/60 shadow flex items-center gap-1 whitespace-nowrap">
+            <span className="hidden sm:flex absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full bg-emerald-600 text-white text-[8px] font-black uppercase tracking-wider border border-white/60 shadow items-center gap-1 whitespace-nowrap">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              <span>{isHighRoller ? '👑 VIP AI' : 'LIVE AI'}</span>
+              <span>{isHighRoller ? 'VIP' : 'LIVE'}</span>
             </span>
           </div>
 
           {/* Real-Time Live Speech Bubble */}
-          <div className="space-y-1 flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black uppercase tracking-widest text-gold flex items-center gap-1.5">
+          <div className="space-y-0.5 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] sm:text-xs font-black uppercase tracking-widest text-gold flex items-center gap-1">
                 <span>Sarah</span>
-                <span className="text-[10px] font-normal text-zinc-400">
-                  {isHighRoller ? '• 👑 24K Salon Privé Croupier' : '• Monte Carlo Croupier'}
+                <span className="text-[9px] sm:text-[10px] font-normal text-zinc-400 hidden sm:inline">
+                  {isHighRoller ? '• 👑 VIP Croupier' : '• Croupier'}
                 </span>
               </span>
               {isAiThinking && (
-                <span className="text-[10px] font-mono text-cyan-400 animate-pulse flex items-center gap-1">
-                  <Sparkles size={11} />
+                <span className="text-[9px] font-mono text-cyan-400 animate-pulse flex items-center gap-1">
+                  <Sparkles size={10} />
                   <span>Thinking...</span>
                 </span>
               )}
             </div>
 
-            <div className="relative bg-black/75 border border-gold/40 px-3 py-1.5 rounded-xl text-xs sm:text-sm text-yellow-100 font-sans italic leading-snug shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+            <div className="relative bg-black/75 border border-gold/40 px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs text-yellow-100 font-sans italic leading-snug shadow-inner truncate sm:whitespace-normal">
               &quot;{dealerDialogue}&quot;
             </div>
           </div>
@@ -568,17 +571,18 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
           type="button"
           disabled={isAiThinking}
           onClick={() => askSarahAi('custom', { wager: totalWager })}
-          className="self-end sm:self-center px-3 py-1.5 rounded-xl bg-white/5 hover:bg-gold/20 text-zinc-300 hover:text-gold border border-white/10 hover:border-gold/40 text-xs font-bold transition flex items-center gap-1.5 shrink-0 shadow"
+          className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-white/5 hover:bg-gold/20 text-zinc-300 hover:text-gold border border-white/10 hover:border-gold/40 text-[10px] sm:text-xs font-bold transition flex items-center gap-1 shrink-0 shadow"
           title="Ask Sarah for a live comment"
         >
-          <MessageSquare size={13} className="text-gold" />
-          <span>Dealer Chat</span>
+          <MessageSquare size={12} className="text-gold" />
+          <span className="hidden sm:inline">Dealer Chat</span>
+          <span className="sm:hidden">Chat</span>
         </button>
       </div>
 
       {/* 3. THE MAIN EMERALD GREEN (OR 24K GOLD KONAMI) TABLE FELT WITH EPT WATERMARK & FINE TEXTURE */}
       <div
-        className={`relative w-full rounded-2xl p-2.5 sm:p-4 shadow-[inset_0_0_80px_rgba(0,0,0,0.85)] border-2 overflow-x-auto ${
+        className={`flex-1 min-h-0 relative w-full rounded-xl sm:rounded-2xl p-1.5 sm:p-4 shadow-[inset_0_0_80px_rgba(0,0,0,0.85)] border-2 overflow-auto ${
           isHighRoller
             ? 'bg-gradient-to-b from-[#b8860b] via-[#855e06] to-[#422c02] border-[#ffd700] shadow-[inset_0_0_80px_rgba(0,0,0,0.85),0_0_35px_rgba(255,215,0,0.35)]'
             : 'bg-[#0b7a37] border-[#15803d]'
@@ -952,14 +956,14 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
       )}
 
       {/* 5. RECESSED MAHOGANY & LEATHER CONSOLE (BOTTOM CONTROLS BAR) */}
-      <div className="mt-3 rounded-2xl p-3 sm:p-4 bg-gradient-to-b from-[#2a170d] via-[#1a0e08] to-[#0c0704] border-t-2 border-[#f59e0b]/80 shadow-[0_-8px_20px_rgba(0,0,0,0.8),inset_0_2px_4px_rgba(255,215,0,0.4)] flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+      <div className="shrink-0 mt-auto rounded-xl sm:rounded-2xl p-1.5 sm:p-4 bg-gradient-to-b from-[#2a170d] via-[#1a0e08] to-[#0c0704] border-t-2 border-[#f59e0b]/80 shadow-[0_-8px_20px_rgba(0,0,0,0.8),inset_0_2px_4px_rgba(255,215,0,0.4)] flex flex-wrap items-center justify-between gap-1.5 sm:gap-4">
         {/* Left Side: Glossy Blue Action Buttons (X2, CLEAR) */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           <button
             type="button"
             disabled={spinning || totalWager === 0}
             onClick={handleDoubleBets}
-            className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[11px] sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             X2
           </button>
@@ -968,7 +972,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
             type="button"
             disabled={spinning || totalWager === 0}
             onClick={handleClearBets}
-            className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[11px] sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             CLEAR
           </button>
@@ -976,7 +980,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
 
         {/* Center: Recessed Dark Velvet Chip Tray (10, 25, 50, 100, 250 + 500, 1000, 5000 in Konami High Roller Mode) */}
         <div
-          className={`rounded-full bg-[#0a0a0d] border p-1.5 shadow-[inset_0_4px_10px_rgba(0,0,0,0.9)] flex items-center gap-1.5 sm:gap-3 max-w-full overflow-x-auto touch-pan-x ${
+          className={`rounded-full bg-[#0a0a0d] border p-1 sm:p-1.5 shadow-[inset_0_4px_10px_rgba(0,0,0,0.9)] flex items-center gap-1 sm:gap-3 max-w-full overflow-x-auto touch-pan-x ${
             isHighRoller ? 'border-[#ffd700] shadow-[0_0_20px_rgba(255,215,0,0.3)]' : 'border-amber-600/40'
           }`}
         >
@@ -984,7 +988,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
             <VegasChip
               key={val}
               value={val}
-              size="md"
+              size="sm"
               selected={selectedChip === val}
               disabled={spinning}
               onClick={() => setSelectedChip(val)}
@@ -993,12 +997,12 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
         </div>
 
         {/* Right Side: Glossy Blue Buttons (UNDO, REBET) + Big Green Glossy SPIN Button */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           <button
             type="button"
             disabled={spinning || betHistory.length === 0}
             onClick={handleUndo}
-            className="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[11px] sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             UNDO
           </button>
@@ -1007,7 +1011,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
             type="button"
             disabled={spinning || !lastRoundBets}
             onClick={handleRebet}
-            className="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[11px] sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             REBET
           </button>
@@ -1017,9 +1021,9 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
             type="button"
             disabled={spinning || totalWager === 0 || totalWager > bankroll}
             onClick={handleSpin}
-            className="px-6 py-2.5 sm:px-8 sm:py-3 rounded-xl bg-gradient-to-b from-[#00e676] via-[#00c853] to-[#00873a] border-2 border-[#b9f6ca] text-white font-black text-sm sm:text-base uppercase tracking-widest shadow-[0_6px_16px_rgba(0,200,83,0.5),inset_0_2px_4px_rgba(255,255,255,0.8)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+            className="px-4 py-1.5 sm:px-8 sm:py-3 rounded-xl bg-gradient-to-b from-[#00e676] via-[#00c853] to-[#00873a] border-2 border-[#b9f6ca] text-white font-black text-xs sm:text-base uppercase tracking-widest shadow-[0_6px_16px_rgba(0,200,83,0.5),inset_0_2px_4px_rgba(255,255,255,0.8)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 sm:gap-1.5"
           >
-            <Sparkles size={16} />
+            <Sparkles size={14} />
             <span>{spinning ? 'SPINNING...' : 'SPIN'}</span>
           </button>
         </div>

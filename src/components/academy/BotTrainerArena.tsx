@@ -2194,7 +2194,10 @@ export default function BotTrainerArena({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div
+      style={{ touchAction: 'manipulation' }}
+      className="h-full flex-1 min-h-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation gap-1 sm:gap-3"
+    >
       {/* =====================================================================
           LAYER C: GAME CONTROLS STRIP
           Poker variant pills, blind status, grouped Table Settings & Tools drawer,
@@ -2651,7 +2654,7 @@ export default function BotTrainerArena({
           />
 
           {/* Outer Table Arena Backdrop (Teal/Slate Casino Spotlight like Sky Poker Ref) */}
-          <div className="relative rounded-3xl bg-[radial-gradient(circle_at_center,_#133340_0%,_#091820_65%,_#050b0f_100%)] border border-white/10 p-3 sm:p-5 md:p-7 shadow-2xl overflow-hidden">
+          <div className="flex-1 min-h-0 relative rounded-2xl sm:rounded-3xl bg-[radial-gradient(circle_at_center,_#133340_0%,_#091820_65%,_#050b0f_100%)] border border-white/10 p-2 sm:p-5 md:p-7 shadow-2xl overflow-y-auto overflow-x-hidden flex flex-col justify-between">
             {/* Top-Left & Top-Right Subtle Corner Table Info */}
             <div className="flex items-center justify-between text-[11px] text-zinc-300/90 mb-2 px-1">
               <div className="flex items-center gap-2 font-mono flex-wrap">
@@ -2711,14 +2714,14 @@ export default function BotTrainerArena({
             {/* =====================================================
                 THE 3D OVAL / STADIUM POKER TABLE
                ===================================================== */}
-            <div className="relative mx-auto w-full max-w-4xl min-h-[520px] sm:min-h-[640px] md:min-h-[680px] rounded-[100px] sm:rounded-[190px] md:rounded-[230px] poker-table-rail p-3 sm:p-6 md:p-8 flex flex-col justify-between select-none">
+            <div className="relative mx-auto w-full max-w-4xl min-h-[280px] sm:min-h-[520px] md:min-h-[680px] rounded-[60px] sm:rounded-[190px] md:rounded-[230px] poker-table-rail p-2 sm:p-6 md:p-8 flex flex-col justify-between select-none flex-1">
               {/* Decorative Gold Diamond Rail Studs (Left, Right, Top-Left, Top-Right) */}
               <div className="hidden sm:block absolute left-2 top-1/2 -translate-y-1/2 w-2.5 h-4 rotate-45 bg-gradient-to-b from-[#ffe578] to-[#b48811] border border-black/60 shadow" />
               <div className="hidden sm:block absolute right-2 top-1/2 -translate-y-1/2 w-2.5 h-4 rotate-45 bg-gradient-to-b from-[#ffe578] to-[#b48811] border border-black/60 shadow" />
 
               {/* Inner Felt Surface inside the Leather Rail */}
               <div
-                className={`relative w-full h-full min-h-[460px] sm:min-h-[580px] md:min-h-[620px] rounded-[85px] sm:rounded-[170px] md:rounded-[205px] poker-table-rim ${feltGradientClass} flex items-center justify-center p-2 sm:p-4 select-none`}
+                className={`relative w-full h-full min-h-[250px] sm:min-h-[460px] md:min-h-[620px] rounded-[50px] sm:rounded-[170px] md:rounded-[205px] poker-table-rim ${feltGradientClass} flex items-center justify-center p-2 sm:p-4 select-none flex-1`}
               >
                 {/* Inner Betting Racetrack Line */}
                 <div className="absolute inset-4 sm:inset-7 rounded-[100px] sm:rounded-[145px] md:rounded-[180px] border-2 border-white/15 pointer-events-none" />

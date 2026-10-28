@@ -313,7 +313,10 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
   };
 
   return (
-    <div className="bg-gradient-to-b from-rose-950/80 via-black to-zinc-950 border border-rose-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden space-y-6">
+    <div
+      style={{ touchAction: 'manipulation' }}
+      className="h-full flex-1 min-h-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation relative bg-gradient-to-b from-rose-950/80 via-black to-zinc-950 border border-rose-500/40 rounded-2xl sm:rounded-3xl p-2 sm:p-5 shadow-2xl font-sans"
+    >
       {/* Big Win Splash Banner */}
       <VegasWinSplash
         winAmount={splashWin}
@@ -325,82 +328,84 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
       />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-black uppercase tracking-widest">
-              Game #9 • Vegas Carnival Classic
+      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
+              Vegas Carnival
             </span>
-            <span className="text-zinc-400 text-xs font-mono">2.2% House Edge on Ante</span>
+            <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">2.2% House Edge</span>
           </div>
-          <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 mt-1">
+          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
             <span>Ultimate Texas Hold&apos;em</span>
-            <span className="text-xs font-mono font-bold text-amber-300 px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40">
-              500:1 Royal Flush Blind Bonus
+            <span className="text-[9px] font-mono font-bold text-amber-300 px-1.5 py-0.2 rounded bg-amber-500/20 border border-amber-500/40">
+              500:1 Royal
             </span>
           </h3>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Link
             href="/vegas?tab=arcade#leaderboard"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-xs font-bold text-gold transition"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-[10px] font-bold text-gold transition"
           >
-            <Trophy size={14} />
-            <span>Leaderboard</span>
+            <Trophy size={12} />
+            <span className="hidden sm:inline">Leaderboard</span>
           </Link>
           <button
             onClick={onOpenTutorial}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition"
           >
-            <HelpCircle size={14} className="text-gold" />
-            <span>Rules & Tutorial</span>
+            <HelpCircle size={12} className="text-gold" />
+            <span className="hidden sm:inline">Rules & Tutorial</span>
+            <span className="sm:hidden">Rules</span>
           </button>
         </div>
       </div>
 
       {/* AI Glamorous Dealer Sarah Header */}
-      <VegasAiDealer
-        dialogue={dealerDialogue}
-        gameTitle="Ultimate Hold'em"
-        status={
-          street === 'betting'
-            ? 'Awaiting Wager'
-            : street === 'showdown'
-            ? 'Settling Hand'
-            : 'Player Decision'
-        }
-      />
+      <div className="shrink-0 mb-1">
+        <VegasAiDealer
+          dialogue={dealerDialogue}
+          gameTitle="Ultimate Hold'em"
+          status={
+            street === 'betting'
+              ? 'Awaiting Wager'
+              : street === 'showdown'
+              ? 'Settling Hand'
+              : 'Player Decision'
+          }
+        />
+      </div>
 
       {/* Live GTO Coach Advice HUD */}
       {street !== 'betting' && street !== 'showdown' && (
-        <div className="bg-gradient-to-r from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 p-3 sm:p-4 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-lg">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shrink-0">
-              <Brain size={16} />
+        <div className="shrink-0 bg-gradient-to-r from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 p-1.5 sm:p-2.5 rounded-xl flex items-center justify-between gap-2 text-xs shadow-lg mb-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shrink-0">
+              <Brain size={14} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase font-mono font-black text-indigo-300">
-                  Live Coach Insight
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] uppercase font-mono font-black text-indigo-300">
+                  Coach Insight
                 </span>
-                <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
+                <span className="text-[8px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold hidden sm:inline">
                   ⚡ GTO Optimal
                 </span>
               </div>
               {(() => {
                 const adv = getUltimateHoldemAdvice(street, playerCards, boardCards);
                 return (
-                  <>
-                    <div className="font-bold text-white text-xs mt-0.5">{adv.headline}</div>
-                    <p className="text-[11px] text-zinc-300 leading-snug">{adv.explanation}</p>
-                  </>
+                  <div className="truncate text-[10px] sm:text-[11px] text-zinc-300 font-bold">
+                    {adv.headline}
+                  </div>
                 );
               })()}
             </div>
           </div>
-          <div className="hidden sm:block text-right shrink-0">
-            <span className="px-3 py-1.5 rounded-xl bg-indigo-500/20 border border-indigo-400/50 text-indigo-200 font-black text-xs font-mono">
+          <div className="shrink-0">
+            <span className="px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 font-black text-[9px] sm:text-xs font-mono">
               REC: {getUltimateHoldemAdvice(street, playerCards, boardCards).action}
             </span>
           </div>
@@ -538,9 +543,9 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
       </div>
 
       {/* Action Controls Bar with 3D Chip Rack */}
-      <div className="bg-black/60 p-4 rounded-2xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="shrink-0 mt-auto bg-black/60 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border border-white/10 flex items-center justify-between gap-2 sm:gap-4">
         {/* Chip Rack */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           <VegasChipRack
             values={[5, 10, 25, 50, 100]}
             selectedValue={baseBet}
@@ -550,26 +555,26 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
         </div>
 
         {/* Street Actions */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {street === 'betting' || street === 'showdown' ? (
             <button
               disabled={totalAnteBlind + tripsBet > bankroll}
               onClick={handleDeal}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-600 text-white font-black uppercase text-xs tracking-wider shadow-xl hover:brightness-110 active:scale-95 transition"
+              className="px-4 py-2 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-rose-500 to-amber-600 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-xl hover:brightness-110 active:scale-95 transition"
             >
-              {street === 'showdown' ? 'Deal Next Hand' : `Deal Hand (£${totalAnteBlind + tripsBet})`}
+              {street === 'showdown' ? 'Next Hand' : `Deal (£${totalAnteBlind + tripsBet})`}
             </button>
           ) : street === 'preflop' ? (
             <>
               <button
                 onClick={handlePreflopCheck}
-                className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-black uppercase text-xs tracking-wider transition"
+                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider transition"
               >
                 Check
               </button>
               <button
                 onClick={handlePreflopRaise4x}
-                className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-xs tracking-wider shadow-lg transition"
+                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-lg transition"
               >
                 Raise 4x (£{baseBet * 4})
               </button>
@@ -578,13 +583,13 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
             <>
               <button
                 onClick={handleFlopCheck}
-                className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-black uppercase text-xs tracking-wider transition"
+                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider transition"
               >
                 Check
               </button>
               <button
                 onClick={handleFlopRaise2x}
-                className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-xs tracking-wider shadow-lg transition"
+                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-lg transition"
               >
                 Raise 2x (£{baseBet * 2})
               </button>
@@ -593,13 +598,13 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
             <>
               <button
                 onClick={handleFold}
-                className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-red-700 hover:bg-red-600 text-white font-black uppercase text-xs tracking-wider transition"
+                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-red-700 hover:bg-red-600 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider transition"
               >
                 Fold
               </button>
               <button
                 onClick={handleRiverRaise1x}
-                className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-xs tracking-wider shadow-lg transition"
+                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-lg transition"
               >
                 Raise 1x (£{baseBet})
               </button>

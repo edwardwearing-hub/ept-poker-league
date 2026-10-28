@@ -354,8 +354,20 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0d0f12] text-white px-2.5 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 font-sans">
-      <div className="max-w-7xl mx-auto flex flex-col gap-3 sm:gap-3.5">
+    <div
+      className={
+        activeTab === 'arena'
+          ? 'h-[calc(100dvh-116px)] flex flex-col justify-between overflow-hidden select-none touch-manipulation md:h-auto md:overflow-visible md:min-h-screen bg-[#0d0f12] text-white px-1.5 sm:px-4 md:px-6 py-1.5 sm:py-3 md:py-4 font-sans'
+          : 'min-h-screen bg-[#0d0f12] text-white px-2.5 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 font-sans'
+      }
+    >
+      <div
+        className={
+          activeTab === 'arena'
+            ? 'h-full flex-1 min-h-0 max-w-7xl mx-auto flex flex-col justify-between overflow-hidden w-full gap-1.5 sm:gap-3.5'
+            : 'max-w-7xl mx-auto flex flex-col gap-3 sm:gap-3.5'
+        }
+      >
         
         {/* =====================================================================
             LAYER A: COMPACT ACADEMY HEADER
@@ -514,7 +526,11 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
 
         {/* Guest Mode Warning Banner (Compact) */}
         {(activePlayerName === 'Guest Trainee' || activePlayerName.toLowerCase().startsWith('guest')) && (
-          <div className="bg-gradient-to-r from-amber-950/60 via-black to-amber-950/60 border border-amber-500/40 rounded-xl px-3.5 py-2 flex items-center justify-between gap-3 text-xs shadow animate-in fade-in duration-200">
+          <div
+            className={`${
+              activeTab === 'arena' ? 'hidden md:flex' : 'flex'
+            } bg-gradient-to-r from-amber-950/60 via-black to-amber-950/60 border border-amber-500/40 rounded-xl px-3.5 py-2 items-center justify-between gap-3 text-xs shadow animate-in fade-in duration-200`}
+          >
             <div className="flex items-center gap-2 text-amber-200 text-xs">
               <span className="text-sm">👁️</span>
               <span>
@@ -579,7 +595,13 @@ export default function AcademyHub({ defaultTab = 'arena' }: Props) {
             ACTIVE MODE VIEWPORT
             Renders the visual layers (Controls, Poker Table, Coach Panel).
             ===================================================================== */}
-        <div className="pt-0.5">
+        <div
+          className={
+            activeTab === 'arena'
+              ? 'flex-1 min-h-0 w-full flex flex-col overflow-hidden pt-0.5'
+              : 'pt-0.5'
+          }
+        >
           {activeTab === 'arena' && (
             <BotTrainerArena
               trackerStats={trackerStats}

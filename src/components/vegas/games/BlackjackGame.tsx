@@ -319,7 +319,10 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
   };
 
   return (
-    <div className="bg-gradient-to-b from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden space-y-6">
+    <div
+      style={{ touchAction: 'manipulation' }}
+      className="h-full flex-1 min-h-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation relative rounded-2xl sm:rounded-3xl bg-gradient-to-b from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 p-2 sm:p-3 shadow-2xl font-sans"
+    >
       {/* Big Win Splash Banner */}
       <VegasWinSplash
         winAmount={splashWin}
@@ -331,190 +334,190 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
       />
 
       {/* Top Header & Rule Shortcut */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black uppercase tracking-widest">
-              Game #1 • Vegas Table Classic
+      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
+              Blackjack 21
             </span>
-            <span className="text-zinc-400 text-xs font-mono">House Edge: ~0.5%</span>
+            <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">House Edge: ~0.5%</span>
           </div>
-          <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 mt-1">
-            <span>Vegas Strip Blackjack (21)</span>
-            <span className="text-xs font-mono font-bold text-gold px-2 py-0.5 rounded bg-gold/15 border border-gold/30">
-              3:2 Natural Payout
+          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
+            <span>Vegas Strip</span>
+            <span className="text-[9px] font-mono font-bold text-gold px-1.5 py-0.2 rounded bg-gold/15 border border-gold/30">
+              3:2 Natural
             </span>
           </h3>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Link
             href="/academy?tab=leaderboard&discipline=blackjack"
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-[10px] font-black uppercase tracking-wider transition shadow"
             title="View Blackjack & Table Games League Standings"
           >
-            <Trophy size={14} className="text-gold" />
+            <Trophy size={12} className="text-gold" />
             <span className="hidden sm:inline">Table League</span>
             <span className="sm:hidden">League</span>
           </Link>
           <button
             onClick={onOpenTutorial}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition"
           >
-            <HelpCircle size={14} className="text-gold" />
+            <HelpCircle size={12} className="text-gold" />
             <span className="hidden sm:inline">Rules & Tutorial</span>
             <span className="sm:hidden">Rules</span>
           </button>
         </div>
       </div>
 
-      {/* AI Glamorous Dealer Sarah Header */}
-      <VegasAiDealer
-        dialogue={dealerDialogue}
-        gameTitle="Blackjack"
-        status={
-          gameState === 'betting'
-            ? 'Awaiting Wager'
-            : gameState === 'player-turn'
-            ? 'Player Decision'
-            : 'Settling Hand'
-        }
-      />
+      {/* AI Glamorous Dealer Sarah Header (Compact on mobile) */}
+      <div className="shrink-0">
+        <VegasAiDealer
+          dialogue={dealerDialogue}
+          gameTitle="Blackjack"
+          status={
+            gameState === 'betting'
+              ? 'Awaiting Wager'
+              : gameState === 'player-turn'
+              ? 'Player Decision'
+              : 'Settling Hand'
+          }
+        />
+      </div>
 
       {/* Live Basic Strategy Coach Advice HUD */}
       {gameState === 'player-turn' && playerCards.length >= 2 && dealerCards.length >= 1 && (
-        <div className="bg-gradient-to-r from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 p-3 sm:p-4 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-lg">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
-              <Brain size={16} />
+        <div className="shrink-0 bg-gradient-to-r from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 p-1.5 sm:p-2.5 rounded-xl flex items-center justify-between gap-2 text-[10px] sm:text-xs shadow-md">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
+              <Brain size={13} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase font-mono font-black text-emerald-300">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] uppercase font-mono font-black text-emerald-300 truncate">
                   Basic Strategy Advisor
-                </span>
-                <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
-                  ⚡ Mathematically Proven
                 </span>
               </div>
               {(() => {
                 const adv = getBlackjackAdvice(playerCards, dealerCards[0]);
                 return (
-                  <>
-                    <div className="font-bold text-white text-xs mt-0.5">{adv.headline}</div>
-                    <p className="text-[11px] text-zinc-300 leading-snug">{adv.explanation}</p>
-                  </>
+                  <div className="font-bold text-white text-[10px] sm:text-xs truncate">
+                    {adv.headline} — {adv.explanation}
+                  </div>
                 );
               })()}
             </div>
           </div>
-          <div className="hidden sm:block text-right shrink-0">
-            <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 font-black text-xs font-mono">
+          <div className="shrink-0">
+            <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 font-black text-[10px] font-mono">
               REC: {getBlackjackAdvice(playerCards, dealerCards[0]).action}
             </span>
           </div>
         </div>
       )}
 
-      {/* 3D Tilted Casino Table Arena with Padded Leather Armrest, Mahogany Racetrack, 3D Shoe, and Dealer Chip Tray */}
-      <Vegas3DTableArena
-        gameType="blackjack"
-        shoeCardsRemaining={shoe.length}
-        watermarkTitle="LAS VEGAS"
-        watermarkSubtitle="BLACKJACK PAYS 3 TO 2 • DEALER MUST STAND ON 17"
-      >
-        {/* Dealer Zone */}
-        <div className="relative z-10 flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-200">
-            <span>Dealer Hand</span>
-            {gameState !== 'betting' && (
-              <span className="px-2.5 py-0.5 rounded-full bg-black/80 border border-gold/40 text-gold font-mono text-sm font-black shadow-lg">
-                {gameState === 'player-turn' ? `${dealerCards[0]?.value || ''}` : `${fullDealerHand.total}`}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-3 min-h-[95px] justify-center">
-            {dealerCards.map((card, idx) => (
-              <VegasCard
-                key={idx}
-                card={card}
-                faceDown={idx === 1 && (gameState === 'player-turn' || gameState === 'betting')}
-                size="lg"
-              />
-            ))}
-            {dealerCards.length === 0 && (
-              <div className="text-xs font-bold text-zinc-300 uppercase tracking-widest px-3.5 py-1.5 rounded-xl bg-black/70 border border-white/10">
-                Awaiting First Deal
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Center Table Wager Circle with 3D Chips */}
-        <div className="relative z-10 py-2 flex flex-col items-center justify-center">
-          {outcomeMessage ? (
-            <div
-              className={`inline-block px-6 py-3 rounded-2xl border text-sm sm:text-base font-black shadow-2xl animate-in zoom-in-95 duration-200 ${
-                payoutDelta && payoutDelta > 0
-                  ? 'bg-emerald-950/95 border-emerald-400 text-emerald-200 shadow-[0_0_35px_rgba(52,211,153,0.7)]'
-                  : payoutDelta && payoutDelta < 0
-                  ? 'bg-red-950/95 border-red-500 text-red-200 shadow-[0_0_35px_rgba(239,68,68,0.7)]'
-                  : 'bg-zinc-900 border-white/20 text-zinc-300'
-              }`}
-            >
-              {outcomeMessage}
+      {/* 3D Tilted Casino Table Arena (Flexibly fills vertical space without scroll) */}
+      <div className="flex-1 min-h-0 my-1 flex flex-col justify-between overflow-hidden relative">
+        <Vegas3DTableArena
+          gameType="blackjack"
+          shoeCardsRemaining={shoe.length}
+          watermarkTitle="LAS VEGAS"
+          watermarkSubtitle="BLACKJACK PAYS 3 TO 2 • DEALER MUST STAND ON 17"
+        >
+          {/* Dealer Zone */}
+          <div className="relative z-10 flex flex-col items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider text-emerald-200">
+              <span>Dealer Hand</span>
+              {gameState !== 'betting' && (
+                <span className="px-2 py-0.2 rounded-full bg-black/80 border border-gold/40 text-gold font-mono text-xs font-black shadow-lg">
+                  {gameState === 'player-turn' ? `${dealerCards[0]?.value || ''}` : `${fullDealerHand.total}`}
+                </span>
+              )}
             </div>
-          ) : (
-            <div className="relative group">
-              {/* Pulsing Golden Betting Spot with Solid Backplate */}
-              <div className="w-24 h-24 rounded-full border-2 border-gold/80 bg-zinc-950/95 flex flex-col items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,0.9),0_0_25px_rgba(212,175,55,0.4)]">
-                <span className="text-[11px] font-black uppercase text-gold tracking-widest">BET SPOT</span>
-                <div className="mt-1">
-                  <VegasChipStack amount={activeWager} size="md" />
+            <div className="flex items-center gap-1.5 sm:gap-3 min-h-[70px] sm:min-h-[85px] justify-center">
+              {dealerCards.map((card, idx) => (
+                <VegasCard
+                  key={idx}
+                  card={card}
+                  faceDown={idx === 1 && (gameState === 'player-turn' || gameState === 'betting')}
+                  size="md"
+                />
+              ))}
+              {dealerCards.length === 0 && (
+                <div className="text-[10px] sm:text-xs font-bold text-zinc-300 uppercase tracking-widest px-2.5 py-1 rounded-xl bg-black/70 border border-white/10">
+                  Awaiting Deal
                 </div>
-              </div>
-              <div className="text-xs font-mono text-center text-white mt-1 font-black">
-                £{activeWager} Active
-              </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Player Zone */}
-        <div className="relative z-10 flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-200">
-            <span>Your Hand</span>
-            {playerCards.length > 0 && (
-              <span
-                className={`px-3 py-0.5 rounded-full border font-mono text-sm font-black shadow-lg ${
-                  playerHand.isBlackjack
-                    ? 'bg-gold text-black border-white shadow-[0_0_20px_#ffd700]'
-                    : playerHand.isBust
-                    ? 'bg-red-950 text-red-300 border-red-500'
-                    : 'bg-black/80 border-gold/40 text-gold'
+          {/* Center Table Wager Circle with 3D Chips */}
+          <div className="relative z-10 py-1 flex-1 min-h-0 flex flex-col items-center justify-center">
+            {outcomeMessage ? (
+              <div
+                className={`inline-block px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border text-xs sm:text-base font-black shadow-2xl animate-in zoom-in-95 duration-200 ${
+                  payoutDelta && payoutDelta > 0
+                    ? 'bg-emerald-950/95 border-emerald-400 text-emerald-200 shadow-[0_0_35px_rgba(52,211,153,0.7)]'
+                    : payoutDelta && payoutDelta < 0
+                    ? 'bg-red-950/95 border-red-500 text-red-200 shadow-[0_0_35px_rgba(239,68,68,0.7)]'
+                    : 'bg-zinc-900 border-white/20 text-zinc-300'
                 }`}
               >
-                {playerHand.total} {playerHand.isSoft && !playerHand.isBlackjack && !playerHand.isBust ? '(Soft)' : ''}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-3 min-h-[95px] justify-center">
-            {playerCards.map((card, idx) => (
-              <VegasCard key={idx} card={card} size="lg" />
-            ))}
-            {playerCards.length === 0 && (
-              <div className="text-xs text-white/40 italic font-medium px-4 py-2 rounded-xl bg-black/40 border border-white/5">
-                Place your chips in the bet spot to begin
+                {outcomeMessage}
+              </div>
+            ) : (
+              <div className="relative group scale-90 sm:scale-100">
+                {/* Pulsing Golden Betting Spot with Solid Backplate */}
+                <div className="w-18 h-18 sm:w-22 sm:h-22 rounded-full border-2 border-gold/80 bg-zinc-950/95 flex flex-col items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,0.9),0_0_25px_rgba(212,175,55,0.4)]">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase text-gold tracking-widest">BET SPOT</span>
+                  <div className="mt-0.5">
+                    <VegasChipStack amount={activeWager} size="sm" />
+                  </div>
+                </div>
+                <div className="text-[10px] sm:text-xs font-mono text-center text-white mt-0.5 font-black">
+                  £{activeWager} Active
+                </div>
               </div>
             )}
           </div>
-        </div>
-      </Vegas3DTableArena>
 
-      {/* Controls Bar with Authentic 3D Chip Rack */}
-      <div className="bg-black/70 p-4 rounded-2xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+          {/* Player Zone */}
+          <div className="relative z-10 flex flex-col items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider text-emerald-200">
+              <span>Your Hand</span>
+              {playerCards.length > 0 && (
+                <span
+                  className={`px-2 py-0.2 rounded-full border font-mono text-xs font-black shadow-lg ${
+                    playerHand.isBlackjack
+                      ? 'bg-gold text-black border-white shadow-[0_0_20px_#ffd700]'
+                      : playerHand.isBust
+                      ? 'bg-red-950 text-red-300 border-red-500'
+                      : 'bg-black/80 border-gold/40 text-gold'
+                  }`}
+                >
+                  {playerHand.total} {playerHand.isSoft && !playerHand.isBlackjack && !playerHand.isBust ? '(Soft)' : ''}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-3 min-h-[70px] sm:min-h-[85px] justify-center">
+              {playerCards.map((card, idx) => (
+                <VegasCard key={idx} card={card} size="md" />
+              ))}
+              {playerCards.length === 0 && (
+                <div className="text-[10px] sm:text-xs text-white/40 italic font-medium px-3 py-1 rounded-xl bg-black/40 border border-white/5">
+                  Place your chips in the bet spot to begin
+                </div>
+              )}
+            </div>
+          </div>
+        </Vegas3DTableArena>
+      </div>
+
+      {/* Controls Bar with Authentic 3D Chip Rack (Pinned to bottom of locked container) */}
+      <div className="shrink-0 mt-auto bg-black/80 p-2 sm:p-3 rounded-2xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3">
         {/* Chip Rack */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <VegasChipRack
             values={[5, 10, 25, 50, 100]}
             selectedValue={bet}
@@ -524,33 +527,33 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           {gameState === 'betting' || gameState === 'game-over' ? (
             <button
               disabled={bet > bankroll}
               onClick={handleDeal}
-              className="w-full sm:w-auto px-10 py-3.5 rounded-2xl bg-gradient-to-r from-[#ffd700] via-[#cfb53b] to-[#ffd700] text-black font-black uppercase text-xs tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.5)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
+              className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-[#ffd700] via-[#cfb53b] to-[#ffd700] text-black font-black uppercase text-xs tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.5)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
             >
               {gameState === 'game-over' ? 'DEAL NEXT HAND' : `DEAL (£${bet})`}
             </button>
           ) : gameState === 'player-turn' ? (
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
               <button
                 onClick={handleHit}
-                className="flex-1 sm:flex-initial px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-xs tracking-wider shadow-lg active:scale-95 transition"
+                className="flex-1 sm:flex-initial px-4 sm:px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-xs tracking-wider shadow-lg active:scale-95 transition"
               >
                 HIT
               </button>
               <button
                 onClick={() => handleStand()}
-                className="flex-1 sm:flex-initial px-6 py-3 rounded-2xl bg-amber-600 hover:bg-amber-500 text-white font-black uppercase text-xs tracking-wider shadow-lg active:scale-95 transition"
+                className="flex-1 sm:flex-initial px-4 sm:px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-black uppercase text-xs tracking-wider shadow-lg active:scale-95 transition"
               >
                 STAND
               </button>
               {playerCards.length === 2 && bankroll >= activeWager * 2 && (
                 <button
                   onClick={handleDoubleDown}
-                  className="flex-1 sm:flex-initial px-6 py-3 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-black uppercase text-xs tracking-wider shadow-lg active:scale-95 transition"
+                  className="flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black uppercase text-xs tracking-wider shadow-lg active:scale-95 transition"
                 >
                   DOUBLE (£{activeWager * 2})
                 </button>

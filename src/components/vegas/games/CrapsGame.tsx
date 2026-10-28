@@ -269,7 +269,10 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
   };
 
   return (
-    <div className="bg-gradient-to-b from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden space-y-6">
+    <div
+      style={{ touchAction: 'manipulation' }}
+      className="h-full flex-1 min-h-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation relative bg-gradient-to-b from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 rounded-2xl sm:rounded-3xl p-2 sm:p-5 shadow-2xl font-sans"
+    >
       {/* Big Win Splash Banner */}
       <VegasWinSplash
         winAmount={splashWin}
@@ -281,37 +284,37 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
       />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black uppercase tracking-widest">
-              Game #3 • Vegas Strip Dice
+      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
+              Vegas Strip Dice
             </span>
-            <span className="text-zinc-400 text-xs font-mono">Near Zero Edge with Odds</span>
+            <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">Near Zero Edge with Odds</span>
           </div>
-          <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 mt-1">
-            <span>Las Vegas High-Roller Craps</span>
-            <span className="text-xs font-mono font-bold text-gold px-2 py-0.5 rounded bg-gold/15 border border-gold/30">
+          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
+            <span>Las Vegas Craps</span>
+            <span className="text-[9px] font-mono font-bold text-gold px-1.5 py-0.2 rounded bg-gold/15 border border-gold/30">
               Pass & Don&apos;t Pass
             </span>
           </h3>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Link
             href="/academy?tab=leaderboard&discipline=roulette-craps"
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-[10px] font-black uppercase tracking-wider transition shadow"
             title="View Roulette & Craps League Standings"
           >
-            <Trophy size={14} className="text-gold" />
+            <Trophy size={12} className="text-gold" />
             <span className="hidden sm:inline">Dice League</span>
             <span className="sm:hidden">League</span>
           </Link>
           <button
             onClick={onOpenTutorial}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition"
           >
-            <HelpCircle size={14} className="text-gold" />
+            <HelpCircle size={12} className="text-gold" />
             <span className="hidden sm:inline">Rules & Tutorial</span>
             <span className="sm:hidden">Rules</span>
           </button>
@@ -319,80 +322,82 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
       </div>
 
       {/* AI Glamorous Dealer Sarah Header */}
-      <VegasAiDealer
-        dialogue={dealerDialogue}
-        gameTitle="Craps"
-        status={point === null ? 'Come Out Roll' : `Point is ${point}`}
-      />
+      <div className="shrink-0 mb-1">
+        <VegasAiDealer
+          dialogue={dealerDialogue}
+          gameTitle="Craps"
+          status={point === null ? 'Come Out Roll' : `Point is ${point}`}
+        />
+      </div>
 
       {/* Live Craps Strategy Coach Advice HUD */}
-      <div className="bg-gradient-to-r from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 p-3 sm:p-4 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-lg">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
-            <Brain size={16} />
+      <div className="shrink-0 bg-gradient-to-r from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 p-2 sm:p-3 rounded-xl flex items-center justify-between gap-2 text-xs shadow-lg mb-1">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
+            <Brain size={14} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase font-mono font-black text-emerald-300">
-                Shooter Odds Advisor
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] uppercase font-mono font-black text-emerald-300">
+                Odds Advisor
               </span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
-                ⚡ Zero Edge Strategy
+              <span className="text-[8px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold hidden sm:inline">
+                ⚡ Zero Edge
               </span>
             </div>
             {(() => {
               const adv = getCrapsAdvice(point);
               return (
-                <>
-                  <div className="font-bold text-white text-xs mt-0.5">{adv.headline}</div>
-                  <p className="text-[11px] text-zinc-300 leading-snug">{adv.explanation}</p>
-                </>
+                <div className="truncate text-[10px] sm:text-[11px] text-zinc-300 font-bold">
+                  {adv.headline}
+                </div>
               );
             })()}
           </div>
         </div>
-        <div className="hidden sm:block text-right shrink-0">
-          <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 font-black text-xs font-mono">
+
+        <div className="shrink-0">
+          <span className="px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 font-black text-[9px] sm:text-xs font-mono">
             REC: {getCrapsAdvice(point).action}
           </span>
         </div>
       </div>
 
       {/* Point Puck Bar & 3D Dice Throw Arena */}
-      <div className="flex flex-col sm:flex-row items-center justify-between bg-black/70 p-4 rounded-2xl border border-white/10 gap-4 shadow-xl">
+      <div className="shrink-0 flex items-center justify-between bg-black/70 p-1.5 sm:p-3 rounded-xl border border-white/10 gap-2 shadow-xl mb-1">
         {/* 3D Realistic Point Puck */}
-        <div className="flex items-center gap-3">
-          <div className="text-zinc-400 font-bold uppercase text-[10px]">Point Puck:</div>
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div className="text-zinc-400 font-bold uppercase text-[9px] hidden sm:inline">Point:</div>
           <div
-            className={`w-14 h-14 rounded-full border-4 flex flex-col items-center justify-center font-mono font-black text-xs uppercase shadow-xl transition-all duration-300 ${
+            className={`w-9 h-9 sm:w-12 sm:h-12 rounded-full border-2 sm:border-4 flex flex-col items-center justify-center font-mono font-black text-[9px] sm:text-xs uppercase shadow-xl transition-all duration-300 ${
               point !== null
-                ? 'bg-gradient-to-br from-white via-zinc-100 to-zinc-300 text-black border-gold shadow-[0_0_20px_rgba(212,175,55,0.7)] scale-105'
+                ? 'bg-gradient-to-br from-white via-zinc-100 to-zinc-300 text-black border-gold shadow-[0_0_15px_rgba(212,175,55,0.7)]'
                 : 'bg-gradient-to-br from-zinc-900 to-black text-zinc-500 border-zinc-700'
             }`}
           >
-            <span className="text-[9px] font-bold leading-none">{point !== null ? 'ON' : 'OFF'}</span>
-            {point !== null && <span className="text-sm text-black leading-none mt-0.5">{point}</span>}
+            <span className="text-[7.5px] sm:text-[9px] font-bold leading-none">{point !== null ? 'ON' : 'OFF'}</span>
+            {point !== null && <span className="text-[11px] sm:text-sm text-black leading-none mt-0.5">{point}</span>}
           </div>
         </div>
 
         {/* 3D Dice Throw Arena Display */}
-        <div className="flex items-center gap-4 bg-emerald-950/40 border border-emerald-500/30 px-6 py-2 rounded-2xl shadow-inner">
-          <div className="flex items-center gap-3">
-            <CrapsDiceVisual value={dice[0]} rolling={rolling} size="md" />
-            <CrapsDiceVisual value={dice[1]} rolling={rolling} size="md" />
+        <div className="flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/30 px-3 py-1 rounded-xl shadow-inner">
+          <div className="flex items-center gap-1.5">
+            <CrapsDiceVisual value={dice[0]} rolling={rolling} size="sm" />
+            <CrapsDiceVisual value={dice[1]} rolling={rolling} size="sm" />
           </div>
-          <div className="text-2xl font-black text-gold font-mono">
+          <div className="text-base sm:text-xl font-black text-gold font-mono">
             = {dice[0] + dice[1]}
           </div>
         </div>
 
         {/* Roll History */}
-        <div className="flex items-center gap-1.5 overflow-x-auto">
-          <span className="text-[10px] uppercase font-bold text-zinc-400 mr-1">Rolls:</span>
-          {history.map((h, i) => (
+        <div className="flex items-center gap-1 overflow-x-auto max-w-[100px] sm:max-w-none">
+          <span className="text-[9px] uppercase font-bold text-zinc-400 mr-0.5 hidden sm:inline">Rolls:</span>
+          {history.slice(0, 5).map((h, i) => (
             <span
               key={i}
-              className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-black shadow ${
+              className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center font-mono text-[9px] sm:text-[10px] font-black shadow shrink-0 ${
                 h.total === 7
                   ? 'bg-red-700 text-white'
                   : h.total === 11
@@ -589,15 +594,15 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
 
       {/* Outcome Announcement */}
       {message && (
-        <div className="bg-black/70 border border-gold/40 text-center py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-zinc-200">
+        <div className="shrink-0 bg-black/70 border border-gold/40 text-center py-1 px-3 rounded-lg text-xs font-bold text-zinc-200 mb-1">
           {message}
         </div>
       )}
 
       {/* Controls Bar with Authentic 3D Chip Rack */}
-      <div className="bg-black/60 p-4 rounded-2xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="shrink-0 mt-auto bg-black/60 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border border-white/10 flex items-center justify-between gap-2 sm:gap-4">
         {/* Chip Rack */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <VegasChipRack
             values={[5, 10, 25, 50, 100]}
             selectedValue={selectedChip}
@@ -607,7 +612,7 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
           {totalActiveBets > 0 && !rolling && (
             <button
               onClick={clearBets}
-              className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 text-xs font-bold transition"
+              className="px-2 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 text-[10px] sm:text-xs font-bold transition"
             >
               Clear
             </button>
@@ -615,10 +620,10 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
         </div>
 
         {/* Wager and Roll Button */}
-        <div className="flex items-center gap-4 w-full md:w-auto justify-end">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <div className="text-right">
-            <div className="text-[10px] uppercase font-bold text-zinc-400">Active Wager:</div>
-            <div className="text-lg font-mono font-black text-gold">
+            <div className="text-[9px] uppercase font-bold text-zinc-400">Bet:</div>
+            <div className="text-xs sm:text-base font-mono font-black text-gold">
               £{totalActiveBets.toLocaleString()}
             </div>
           </div>
@@ -626,9 +631,9 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
           <button
             disabled={rolling || totalActiveBets === 0 || totalActiveBets > bankroll}
             onClick={rollDice}
-            className="px-10 py-3.5 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white font-black uppercase text-xs tracking-wider shadow-[0_0_20px_rgba(225,29,72,0.4)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
+            className="px-4 py-2 sm:px-8 sm:py-3 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-[0_0_15px_rgba(225,29,72,0.4)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
           >
-            {rolling ? 'ROLLING DICE...' : 'SHOOT DICE 🎲'}
+            {rolling ? 'ROLLING...' : 'SHOOT 🎲'}
           </button>
         </div>
       </div>

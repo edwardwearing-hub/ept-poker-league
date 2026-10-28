@@ -23,13 +23,15 @@ import {
   Gamepad2,
   CheckCircle2,
   AlertCircle,
+  BookOpen,
+  Activity,
+  X,
 } from 'lucide-react';
 import {
   getActivePlayerName,
   loadTrackerStatsForPlayer,
   saveTrackerStatsForPlayer,
   transferGuestChipsToPlayer,
-  getUnclaimedGuestWinnings,
 } from '@/lib/poker-trainer/tracker';
 import { isSoundEnabled, setSoundEnabled } from '@/lib/vegas/VegasAudio';
 import { computeTotalAcademyChips, LEAGUE_PLAYERS } from '@/lib/poker-trainer/leaderboard';
@@ -98,7 +100,7 @@ export default function VegasLobby() {
   );
   const [showBailoutModal, setShowBailoutModal] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
-  const [theaterMode, setTheaterMode] = useState(true);
+  const [showCompanionDrawer, setShowCompanionDrawer] = useState(false);
   const [authSyncNotice, setAuthSyncNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -216,15 +218,17 @@ export default function VegasLobby() {
       if (activePlayerName && !isGuest) {
         fetch('/api/player/academy-profile', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
           },
           body: JSON.stringify({ name: activePlayerName, stats: next }),
         })
           .then((res) => {
             if (res.status === 401) {
-              setAuthSyncNotice('Saved on this device. Sign in with your PIN to sync to the public Academy Leaderboard.');
+              setAuthSyncNotice(
+                'Saved on this device. Sign in with your PIN to sync to the public Academy Leaderboard.'
+              );
             } else if (res.ok) {
               setAuthSyncNotice(null);
             }
@@ -244,9 +248,19 @@ export default function VegasLobby() {
   const currentGame = VEGAS_GAMES_CATALOG.find((g) => g.id === selectedGameId);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300 pb-12">
-      {/* Las Vegas Neon Marquee Top Banner */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-red-950/70 via-black to-purple-950/80 border-2 border-gold/50 p-4 sm:p-6 md:p-8 shadow-[0_0_40px_rgba(212,175,55,0.25)] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
+    <div
+      className={
+        selectedGameId
+          ? 'h-[calc(100dvh-116px)] flex flex-col justify-between overflow-hidden select-none touch-manipulation md:h-auto md:overflow-visible md:space-y-6 md:pb-12 animate-in fade-in duration-300'
+          : 'space-y-6 animate-in fade-in duration-300 pb-12'
+      }
+    >
+      {/* Las Vegas Neon Marquee Top Banner (Hidden when playing an active game on mobile to prevent scrolling) */}
+      <div
+        className={`${
+          selectedGameId ? 'hidden md:flex' : 'flex'
+        } relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-red-950/70 via-black to-purple-950/80 border-2 border-gold/50 p-4 sm:p-6 md:p-8 shadow-[0_0_40px_rgba(212,175,55,0.25)] flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6`}
+      >
         <div className="space-y-2 max-w-2xl">
           <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-gold/15 border border-gold/40 text-gold text-[10px] sm:text-xs font-black uppercase tracking-widest">
             <Sparkles size={13} />
@@ -316,7 +330,12 @@ export default function VegasLobby() {
                 <span>🤡</span> Bankrupt Status:
               </span>
               <span className="text-red-200">
-                Felted ×{trackerStats.bankruptcyCount || 0} (+£{(trackerStats.bailoutChipsReceived || (trackerStats.bankruptcyCount || 0) * 1000).toLocaleString()})
+                Felted ×{trackerStats.bankruptcyCount || 0} (+£
+                {(
+                  trackerStats.bailoutChipsReceived ||
+                  (trackerStats.bankruptcyCount || 0) * 1000
+                ).toLocaleString()}
+                )
               </span>
             </div>
           )}
@@ -332,7 +351,11 @@ export default function VegasLobby() {
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold text-zinc-300 hover:text-gold transition border border-white/10 hover:border-gold/30 bg-white/5"
               title="Toggle Casino Sound FX"
             >
-              {soundOn ? <Volume2 size={12} className="text-gold" /> : <VolumeX size={12} className="text-zinc-500" />}
+              {soundOn ? (
+                <Volume2 size={12} className="text-gold" />
+              ) : (
+                <VolumeX size={12} className="text-zinc-500" />
+              )}
               <span>Sound: {soundOn ? 'ON' : 'MUTED'}</span>
             </button>
 
@@ -348,7 +371,11 @@ export default function VegasLobby() {
 
       {/* Auth / Sync Notification Toast */}
       {authSyncNotice && (
-        <div className="bg-gradient-to-r from-blue-950/80 via-black to-blue-950/80 border border-blue-500/60 rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs text-blue-200 shadow-lg">
+        <div
+          className={`${
+            selectedGameId ? 'hidden md:flex' : 'flex'
+          } bg-gradient-to-r from-blue-950/80 via-black to-blue-950/80 border border-blue-500/60 rounded-2xl px-4 py-2.5 items-center justify-between gap-3 text-xs text-blue-200 shadow-lg`}
+        >
           <div className="flex items-center gap-2">
             <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
             <span>{authSyncNotice}</span>
@@ -362,9 +389,13 @@ export default function VegasLobby() {
         </div>
       )}
 
-      {/* Unlinked Guest Winnings Banner: Prompts player to claim their slot machine bankroll! */}
+      {/* Unlinked Guest Winnings Banner */}
       {isGuest && totalChips > 10000 && (
-        <div className="bg-gradient-to-r from-emerald-950/90 via-black to-emerald-950/90 border-2 border-emerald-400/80 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_0_30px_rgba(16,185,129,0.35)] animate-in fade-in">
+        <div
+          className={`${
+            selectedGameId ? 'hidden md:flex' : 'flex'
+          } bg-gradient-to-r from-emerald-950/90 via-black to-emerald-950/90 border-2 border-emerald-400/80 rounded-2xl p-4 flex-col md:flex-row items-center justify-between gap-4 shadow-[0_0_30px_rgba(16,185,129,0.35)] animate-in fade-in`}
+        >
           <div className="flex items-center gap-3.5 text-xs text-emerald-100">
             <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 flex items-center justify-center text-lg font-black shrink-0 shadow">
               🎰
@@ -411,7 +442,11 @@ export default function VegasLobby() {
 
       {/* Guest Mode Alert Banner (Standard) */}
       {isGuest && totalChips <= 10000 && (
-        <div className="bg-gradient-to-r from-amber-950/70 via-black to-amber-950/70 border border-amber-500/50 rounded-2xl px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+        <div
+          className={`${
+            selectedGameId ? 'hidden md:flex' : 'flex'
+          } bg-gradient-to-r from-amber-950/70 via-black to-amber-950/70 border border-amber-500/50 rounded-2xl px-4 py-3 flex-col sm:flex-row items-center justify-between gap-3 shadow-lg`}
+        >
           <div className="flex items-center gap-3 text-xs text-amber-200">
             <span className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center justify-center text-sm font-black shrink-0">
               👁️
@@ -434,145 +469,187 @@ export default function VegasLobby() {
 
       {/* ACTIVE GAME STAGE OR CASINO FLOOR LOBBY */}
       {selectedGameId ? (
-        <div className="space-y-4">
-          {/* Navigation & Layout Controls */}
-          <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex-1 min-h-0 w-full flex flex-col justify-between overflow-hidden">
+          {/* Compact Top Bar with Guide & Ticker Drawer Trigger (Integrated directly inside PubFruityGame on mobile) */}
+          <div
+            className={`${
+              selectedGameId === 'pub-fruity' ? 'hidden md:flex mb-2' : 'flex'
+            } shrink-0 items-center justify-between flex-wrap gap-1.5 sm:gap-2 pb-1 sm:pb-2`}
+          >
             <button
               onClick={() => setSelectedGameId(null)}
-              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl bg-black/60 hover:bg-black/90 border border-white/10 hover:border-gold/50 text-xs font-black uppercase tracking-wider text-zinc-300 hover:text-gold transition shadow"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1 sm:py-2 rounded-xl bg-black/60 hover:bg-black/90 border border-white/10 hover:border-gold/50 text-[11px] sm:text-xs font-black uppercase tracking-wider text-zinc-300 hover:text-gold transition shadow"
             >
-              <ArrowLeft size={14} />
-              <span>← <span className="hidden sm:inline">Back to Casino Floor</span><span className="sm:hidden">Floor</span></span>
+              <ArrowLeft size={13} />
+              <span>
+                ← <span className="hidden sm:inline">Back to Casino Floor</span>
+                <span className="sm:hidden">Floor</span>
+              </span>
             </button>
 
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
               <Link
                 href={`/academy?tab=leaderboard&discipline=${getGameDiscipline(selectedGameId)}`}
-                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500/20 via-gold/20 to-yellow-500/20 text-gold border border-gold/40 hover:border-gold text-xs font-black uppercase tracking-wider hover:bg-gold/30 transition shadow"
-                title={`Open the dedicated ${getDisciplineName(getGameDiscipline(selectedGameId))} Leaderboard`}
+                className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500/20 via-gold/20 to-yellow-500/20 text-gold border border-gold/40 hover:border-gold text-[10px] sm:text-xs font-black uppercase tracking-wider hover:bg-gold/30 transition shadow"
+                title={`Open the dedicated ${getDisciplineName(
+                  getGameDiscipline(selectedGameId)
+                )} Leaderboard`}
               >
-                <Trophy size={14} className="text-gold" />
-                <span className="hidden sm:inline">{getDisciplineName(getGameDiscipline(selectedGameId))} League →</span>
+                <Trophy size={13} className="text-gold" />
+                <span className="hidden sm:inline">
+                  {getDisciplineName(getGameDiscipline(selectedGameId))} League →
+                </span>
                 <span className="sm:hidden">League 🏆</span>
               </Link>
 
-              {/* Theater Mode is only relevant on desktop (xl screen) where sidebar exists */}
-              <button
-                onClick={() => setTheaterMode(!theaterMode)}
-                className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 hover:bg-black/90 text-zinc-300 hover:text-gold border border-white/10 hover:border-gold/30 text-xs font-bold transition shadow"
-                title={theaterMode ? 'Switch to side-by-side view' : 'Expand table to full screen width'}
-              >
-                {theaterMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-                <span>{theaterMode ? 'Side Ticker View' : 'Full Table View'}</span>
-              </button>
+              {/* Compact Button to Open Guide & Ticker Slide-Over Modal Drawer */}
+              {currentGame && (
+                <button
+                  onClick={() => setShowCompanionDrawer(true)}
+                  className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-2 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border border-blue-400/50 text-[10px] sm:text-xs font-black uppercase tracking-wider transition shadow active:scale-95"
+                  title="Open Guide & Live Session Ticker Drawer"
+                >
+                  <Activity size={13} className="text-blue-400" />
+                  <span>Guide &amp; Ticker</span>
+                </button>
+              )}
 
               <button
                 onClick={() => setTutorialGame(currentGame || null)}
-                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gold/15 text-gold border border-gold/40 text-xs font-bold hover:bg-gold/25 transition shadow"
+                className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-2 rounded-xl bg-gold/15 text-gold border border-gold/40 text-[10px] sm:text-xs font-bold hover:bg-gold/25 transition shadow"
               >
-                <HelpCircle size={14} />
+                <HelpCircle size={13} />
                 <span className="hidden sm:inline">How to Play</span>
                 <span className="sm:hidden">Rules</span>
               </button>
             </div>
           </div>
 
-          {/* TABLE ARENA: Supports both Theater Mode (Full Screen Table) and Split Mode */}
-          <div className={`grid grid-cols-1 ${theaterMode ? 'gap-6' : 'xl:grid-cols-12 gap-6 items-start'}`}>
-            <div className={`${theaterMode ? 'w-full' : 'xl:col-span-8'} space-y-4`}>
-              {/* Active Game Component */}
-              {selectedGameId === 'blackjack' && (
-                <BlackjackGame
-                  bankroll={totalChips}
-                  onUpdateBankroll={handleUpdateBankroll}
-                  onOpenTutorial={() => setTutorialGame(currentGame || null)}
-                />
-              )}
+          {/* TABLE ARENA */}
+          <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
+            {selectedGameId === 'blackjack' && (
+              <BlackjackGame
+                bankroll={totalChips}
+                onUpdateBankroll={handleUpdateBankroll}
+                onOpenTutorial={() => setTutorialGame(currentGame || null)}
+              />
+            )}
 
-              {selectedGameId === 'slots' && (
-                <SlotsGame
-                  bankroll={totalChips}
-                  onUpdateBankroll={handleUpdateBankroll}
-                  onOpenTutorial={() => setTutorialGame(currentGame || null)}
-                  onSwitchToPubFruity={() => setSelectedGameId('pub-fruity')}
-                />
-              )}
+            {selectedGameId === 'slots' && (
+              <SlotsGame
+                bankroll={totalChips}
+                onUpdateBankroll={handleUpdateBankroll}
+                onOpenTutorial={() => setTutorialGame(currentGame || null)}
+                onSwitchToPubFruity={() => setSelectedGameId('pub-fruity')}
+              />
+            )}
 
-              {selectedGameId === 'pub-fruity' && (
-                <PubFruityGame
-                  bankroll={totalChips}
-                  onUpdateBankroll={handleUpdateBankroll}
-                  onOpenTutorial={() => setTutorialGame(currentGame || null)}
-                  onSwitchToVegas={() => setSelectedGameId('slots')}
-                />
-              )}
+            {selectedGameId === 'pub-fruity' && (
+              <PubFruityGame
+                bankroll={totalChips}
+                onUpdateBankroll={handleUpdateBankroll}
+                onOpenTutorial={() => setTutorialGame(currentGame || null)}
+                onSwitchToVegas={() => setSelectedGameId('slots')}
+                onBackToFloor={() => setSelectedGameId(null)}
+                onOpenGuideTicker={() => setShowCompanionDrawer(true)}
+              />
+            )}
 
-              {selectedGameId === 'craps' && (
-                <CrapsGame
-                  bankroll={totalChips}
-                  onUpdateBankroll={handleUpdateBankroll}
-                  onOpenTutorial={() => setTutorialGame(currentGame || null)}
-                />
-              )}
+            {selectedGameId === 'craps' && (
+              <CrapsGame
+                bankroll={totalChips}
+                onUpdateBankroll={handleUpdateBankroll}
+                onOpenTutorial={() => setTutorialGame(currentGame || null)}
+              />
+            )}
 
-              {selectedGameId === 'roulette' && (
-                <RouletteGame
-                  bankroll={totalChips}
-                  onUpdateBankroll={handleUpdateBankroll}
-                  onOpenTutorial={() => setTutorialGame(currentGame || null)}
-                />
-              )}
+            {selectedGameId === 'roulette' && (
+              <RouletteGame
+                bankroll={totalChips}
+                onUpdateBankroll={handleUpdateBankroll}
+                onOpenTutorial={() => setTutorialGame(currentGame || null)}
+              />
+            )}
 
-              {selectedGameId === 'baccarat' && (
-                <BaccaratGame
-                  bankroll={totalChips}
-                  onUpdateBankroll={handleUpdateBankroll}
-                  onOpenTutorial={() => setTutorialGame(currentGame || null)}
-                />
-              )}
+            {selectedGameId === 'baccarat' && (
+              <BaccaratGame
+                bankroll={totalChips}
+                onUpdateBankroll={handleUpdateBankroll}
+                onOpenTutorial={() => setTutorialGame(currentGame || null)}
+              />
+            )}
 
-              {selectedGameId === 'live-poker' && (
-                <LivePokerPromo onOpenTutorial={() => setTutorialGame(currentGame || null)} />
-              )}
+            {selectedGameId === 'live-poker' && (
+              <LivePokerPromo onOpenTutorial={() => setTutorialGame(currentGame || null)} />
+            )}
 
-              {selectedGameId === 'video-poker' && (
-                <VideoPokerGame
-                  bankroll={totalChips}
-                  onUpdateBankroll={handleUpdateBankroll}
-                  onOpenTutorial={() => setTutorialGame(currentGame || null)}
-                />
-              )}
+            {selectedGameId === 'video-poker' && (
+              <VideoPokerGame
+                bankroll={totalChips}
+                onUpdateBankroll={handleUpdateBankroll}
+                onOpenTutorial={() => setTutorialGame(currentGame || null)}
+              />
+            )}
 
-              {selectedGameId === 'sportsbook' && (
-                <SportsbookGame
-                  bankroll={totalChips}
-                  onUpdateBankroll={handleUpdateBankroll}
-                  onOpenTutorial={() => setTutorialGame(currentGame || null)}
-                />
-              )}
+            {selectedGameId === 'sportsbook' && (
+              <SportsbookGame
+                bankroll={totalChips}
+                onUpdateBankroll={handleUpdateBankroll}
+                onOpenTutorial={() => setTutorialGame(currentGame || null)}
+              />
+            )}
 
-              {selectedGameId === 'ultimate-holdem' && (
-                <UltimateHoldemGame
-                  bankroll={totalChips}
-                  onUpdateBankroll={handleUpdateBankroll}
-                  onOpenTutorial={() => setTutorialGame(currentGame || null)}
-                />
-              )}
+            {selectedGameId === 'ultimate-holdem' && (
+              <UltimateHoldemGame
+                bankroll={totalChips}
+                onUpdateBankroll={handleUpdateBankroll}
+                onOpenTutorial={() => setTutorialGame(currentGame || null)}
+              />
+            )}
 
-              {selectedGameId === 'pai-gow' && (
-                <PaiGowGame
-                  bankroll={totalChips}
-                  onUpdateBankroll={handleUpdateBankroll}
-                  onOpenTutorial={() => setTutorialGame(currentGame || null)}
-                />
-              )}
-            </div>
-
-            {/* Rules, How to Play & Live Ticker Companion Box */}
-            <div className={`${theaterMode ? 'w-full' : 'xl:col-span-4'} space-y-4 ${theaterMode ? '' : 'xl:sticky xl:top-24'}`}>
-              {currentGame && <VegasGameCompanion game={currentGame} />}
-            </div>
+            {selectedGameId === 'pai-gow' && (
+              <PaiGowGame
+                bankroll={totalChips}
+                onUpdateBankroll={handleUpdateBankroll}
+                onOpenTutorial={() => setTutorialGame(currentGame || null)}
+              />
+            )}
           </div>
+
+          {/* Slide-Over Modal Drawer for Guide & Ticker Companion */}
+          {showCompanionDrawer && currentGame && (
+            <div className="fixed inset-0 z-[100] flex justify-end animate-in fade-in duration-200">
+              <div
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+                onClick={() => setShowCompanionDrawer(false)}
+                aria-hidden="true"
+              />
+              <div
+                className="relative z-[101] w-[92vw] max-w-md h-full bg-zinc-950 border-l-2 border-gold/50 shadow-[0_0_50px_rgba(0,0,0,0.95)] flex flex-col overflow-hidden animate-in slide-in-from-right duration-200"
+                role="dialog"
+                aria-modal="true"
+                aria-label={`${currentGame.title} Guide & Ticker`}
+              >
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/90 shrink-0">
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-gold">
+                    <BookOpen size={15} />
+                    <span>{currentGame.title} • Guide &amp; Ticker</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowCompanionDrawer(false)}
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 text-zinc-400 hover:text-white transition active:scale-95"
+                    aria-label="Close Guide & Ticker Drawer"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-3 sm:p-4 touch-momentum">
+                  <VegasGameCompanion game={currentGame} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         /* CASINO FLOOR LOBBY: Category Pills & 10 Game Cards */
@@ -624,123 +701,123 @@ export default function VegasLobby() {
                 status="Hostess & Head Dealer"
               />
 
-              {/* 10 Realistic AI Casino Tables Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCatalog.map((game) => (
-              <div
-                key={game.id}
-                onClick={() => setSelectedGameId(game.id)}
-                className="rounded-3xl overflow-hidden border border-gold/30 hover:border-gold/80 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.8)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.25)] bg-gradient-to-b from-zinc-900/90 via-black to-zinc-950 cursor-pointer"
-              >
-                {/* Photorealistic AI Casino Table Preview */}
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-black select-none">
-                  <img
-                    src={game.image}
-                    alt={`${game.title} Casino Table`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 brightness-90 group-hover:brightness-105"
-                    loading="lazy"
-                  />
-                  {/* Atmospheric cinematic gradients */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/60 pointer-events-none" />
+              {/* Realistic AI Casino Tables Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCatalog.map((game) => (
+                  <div
+                    key={game.id}
+                    onClick={() => setSelectedGameId(game.id)}
+                    className="rounded-3xl overflow-hidden border border-gold/30 hover:border-gold/80 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.8)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.25)] bg-gradient-to-b from-zinc-900/90 via-black to-zinc-950 cursor-pointer"
+                  >
+                    {/* Photorealistic AI Casino Table Preview */}
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-black select-none">
+                      <img
+                        src={game.image}
+                        alt={`${game.title} Casino Table`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 brightness-90 group-hover:brightness-105"
+                        loading="lazy"
+                      />
+                      {/* Atmospheric cinematic gradients */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/60 pointer-events-none" />
 
-                  {/* Top Badges Floating Over Felt */}
-                  <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-none">
-                    <span className="px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-gold border border-gold/40 flex items-center gap-1 font-mono font-black text-xs shadow-lg">
-                      <Crown size={12} className="text-gold" />
-                      <span>#{game.number}</span>
-                    </span>
-                    <span className="text-[10px] font-mono font-bold text-emerald-300 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-emerald-500/40 shadow-lg">
-                      Edge: {game.houseEdge}
-                    </span>
-                  </div>
+                      {/* Top Badges Floating Over Felt */}
+                      <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-none">
+                        <span className="px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-gold border border-gold/40 flex items-center gap-1 font-mono font-black text-xs shadow-lg">
+                          <Crown size={12} className="text-gold" />
+                          <span>#{game.number}</span>
+                        </span>
+                        <span className="text-[10px] font-mono font-bold text-emerald-300 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-emerald-500/40 shadow-lg">
+                          Edge: {game.houseEdge}
+                        </span>
+                      </div>
 
-                  {/* Central Take A Seat Play Pill on Hover */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                    <div className="px-4 py-2 rounded-full bg-black/85 backdrop-blur-md border-2 border-gold text-gold font-black uppercase text-xs tracking-widest shadow-[0_0_25px_rgba(212,175,55,0.8)] flex items-center gap-2 transform group-hover:scale-105 transition-transform">
-                      <Play size={13} fill="currentColor" />
-                      <span>Take A Seat</span>
-                    </div>
-                  </div>
+                      {/* Central Take A Seat Play Pill on Hover */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                        <div className="px-4 py-2 rounded-full bg-black/85 backdrop-blur-md border-2 border-gold text-gold font-black uppercase text-xs tracking-widest shadow-[0_0_25px_rgba(212,175,55,0.8)] flex items-center gap-2 transform group-hover:scale-105 transition-transform">
+                          <Play size={13} fill="currentColor" />
+                          <span>Take A Seat</span>
+                        </div>
+                      </div>
 
-                  {/* Bottom Chip Range Floating on Felt */}
-                  <div className="absolute bottom-2.5 inset-x-3 flex items-center justify-between text-[11px] font-mono font-bold text-zinc-300 pointer-events-none">
-                    <span className="px-2 py-0.5 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 text-gold">
-                      Min £{game.minBet}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 text-white">
-                      Max £{game.maxBet.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Table Details & Info */}
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="text-xl font-black text-white group-hover:text-gold transition flex items-center gap-2">
-                        <span>{game.title}</span>
-                      </h3>
-                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-zinc-400 shrink-0">
-                        {game.category === 'table'
-                          ? 'Table Classic'
-                          : game.category === 'machine'
-                          ? 'Machine'
-                          : game.category === 'poker'
-                          ? 'Cardroom'
-                          : 'Sportsbook'}
-                      </span>
+                      {/* Bottom Chip Range Floating on Felt */}
+                      <div className="absolute bottom-2.5 inset-x-3 flex items-center justify-between text-[11px] font-mono font-bold text-zinc-300 pointer-events-none">
+                        <span className="px-2 py-0.5 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 text-gold">
+                          Min £{game.minBet}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 text-white">
+                          Max £{game.maxBet.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="text-xs text-gold/80 font-bold">
-                      {game.tagline}
+                    {/* Table Details & Info */}
+                    <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="text-xl font-black text-white group-hover:text-gold transition flex items-center gap-2">
+                            <span>{game.title}</span>
+                          </h3>
+                          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-zinc-400 shrink-0">
+                            {game.category === 'table'
+                              ? 'Table Classic'
+                              : game.category === 'machine'
+                              ? 'Machine'
+                              : game.category === 'poker'
+                              ? 'Cardroom'
+                              : 'Sportsbook'}
+                          </span>
+                        </div>
+
+                        <div className="text-xs text-gold/80 font-bold">
+                          {game.tagline}
+                        </div>
+
+                        <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                          {game.appeal}
+                        </p>
+                      </div>
+
+                      {/* Actions: Tutorial, League & Direct Play */}
+                      <div className="pt-3 border-t border-white/10 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTutorialGame(game);
+                          }}
+                          className="py-2 px-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-gold/30 text-xs font-bold text-zinc-300 hover:text-white transition flex items-center justify-center gap-1"
+                          title="Tutorial & Rules"
+                        >
+                          <HelpCircle size={13} className="text-gold" />
+                          <span>Tutorial</span>
+                        </button>
+
+                        <Link
+                          href={`/academy?tab=leaderboard&discipline=${getGameDiscipline(game.id)}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="py-2 px-2.5 rounded-xl bg-gold/10 hover:bg-gold/20 border border-gold/30 hover:border-gold text-xs font-black uppercase tracking-wider text-gold hover:text-white transition flex items-center justify-center gap-1 shadow"
+                          title={`View ${getDisciplineName(getGameDiscipline(game.id))} League Leaderboard`}
+                        >
+                          <Trophy size={13} className="text-gold" />
+                          <span>League</span>
+                        </Link>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedGameId(game.id);
+                          }}
+                          className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black uppercase text-xs tracking-wider shadow hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-1.5"
+                        >
+                          <Play size={13} fill="currentColor" />
+                          <span>Play Table</span>
+                        </button>
+                      </div>
                     </div>
-
-                    <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
-                      {game.appeal}
-                    </p>
                   </div>
-
-                  {/* Actions: Tutorial, League & Direct Play */}
-                  <div className="pt-3 border-t border-white/10 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setTutorialGame(game);
-                      }}
-                      className="py-2 px-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-gold/30 text-xs font-bold text-zinc-300 hover:text-white transition flex items-center justify-center gap-1"
-                      title="Tutorial & Rules"
-                    >
-                      <HelpCircle size={13} className="text-gold" />
-                      <span>Tutorial</span>
-                    </button>
-
-                    <Link
-                      href={`/academy?tab=leaderboard&discipline=${getGameDiscipline(game.id)}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="py-2 px-2.5 rounded-xl bg-gold/10 hover:bg-gold/20 border border-gold/30 hover:border-gold text-xs font-black uppercase tracking-wider text-gold hover:text-white transition flex items-center justify-center gap-1 shadow"
-                      title={`View ${getDisciplineName(getGameDiscipline(game.id))} League Leaderboard`}
-                    >
-                      <Trophy size={13} className="text-gold" />
-                      <span>League</span>
-                    </Link>
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedGameId(game.id);
-                      }}
-                      className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black uppercase text-xs tracking-wider shadow hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-1.5"
-                    >
-                      <Play size={13} fill="currentColor" />
-                      <span>Play Table</span>
-                    </button>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
             </>
           )}
         </div>
@@ -783,7 +860,7 @@ export default function VegasLobby() {
               onClick={() => setShowBailoutModal(false)}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black uppercase text-xs tracking-wider shadow hover:brightness-110 active:scale-95 transition"
             >
-              Accept £1,000 Bailout & Continue →
+              Accept £1,000 Bailout &amp; Continue →
             </button>
           </div>
         </div>

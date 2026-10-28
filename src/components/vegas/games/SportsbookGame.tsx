@@ -297,7 +297,10 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
   };
 
   return (
-    <div className="relative w-full rounded-[2.5rem] bg-gradient-to-b from-[#18181b] via-[#09090b] to-black p-3 sm:p-6 border-4 border-zinc-700 shadow-[0_30px_70px_rgba(0,0,0,0.95)] select-none overflow-hidden space-y-6">
+    <div
+      style={{ touchAction: 'manipulation' }}
+      className="h-full flex-1 min-h-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation relative rounded-2xl sm:rounded-[2.5rem] bg-gradient-to-b from-[#18181b] via-[#09090b] to-black p-2 sm:p-5 border-2 sm:border-4 border-zinc-700 shadow-2xl font-sans"
+    >
       {/* Stadium Overhead Floodlight Beam */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -318,38 +321,38 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
       />
 
       {/* Header with Stadium LED Ticker */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4 relative z-10">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-              Game #8 • Westgate SuperBook™
+      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1 relative z-10">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-black uppercase tracking-widest flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+              Westgate SuperBook™
             </span>
-            <span className="text-emerald-400 text-xs font-mono font-bold">4K Stadium LED Wall</span>
+            <span className="text-emerald-400 text-[10px] font-mono font-bold hidden sm:inline">4K LED Wall</span>
           </div>
-          <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2 mt-1">
-            <span>Vegas VIP Sportsbook & Parlay Lounge</span>
-            <span className="text-xs font-mono font-bold text-amber-300 px-2 py-0.5 rounded bg-amber-400/10 border border-amber-400/30">
-              Multi-Leg Boosts
+          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
+            <span>VIP Sportsbook Lounge</span>
+            <span className="text-[9px] font-mono font-bold text-amber-300 px-1.5 py-0.2 rounded bg-amber-400/10 border border-amber-400/30">
+              Parlay Boosts
             </span>
           </h3>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Link
             href="/academy?tab=leaderboard&discipline=sportsbook"
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-[10px] font-black uppercase tracking-wider transition shadow"
             title="View EPT Sportsbook League Standings"
           >
-            <Trophy size={14} className="text-gold" />
+            <Trophy size={12} className="text-gold" />
             <span className="hidden sm:inline">Sportsbook League</span>
             <span className="sm:hidden">League</span>
           </Link>
           <button
             onClick={onOpenTutorial}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition"
           >
-            <HelpCircle size={14} className="text-gold" />
+            <HelpCircle size={12} className="text-gold" />
             <span className="hidden sm:inline">Rules & Tutorial</span>
             <span className="sm:hidden">Rules</span>
           </button>
@@ -357,18 +360,18 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
       </div>
 
       {/* Main Sportsbook Grid: LED Fixtures Board (Left 8 cols) + Physical Thermal Bet Slip (Right 4 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start relative z-10">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-6 items-stretch relative z-10 overflow-hidden">
         {/* Left: Stadium LED Fixtures Wall */}
-        <div className="lg:col-span-8 space-y-4">
-          <div className="flex items-center justify-between bg-black/80 px-3.5 py-2 rounded-xl border border-zinc-800 text-[11px] font-mono font-black text-amber-400">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>LIVE LAS VEGAS BOARD (ODDS VIA CAESARS BOOK)</span>
+        <div className="h-full flex flex-col lg:col-span-8 space-y-1.5 overflow-hidden">
+          <div className="shrink-0 flex items-center justify-between bg-black/80 px-2.5 py-1 rounded-xl border border-zinc-800 text-[10px] sm:text-[11px] font-mono font-black text-amber-400">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>LIVE LAS VEGAS BOARD (CAESARS)</span>
             </div>
-            <span className="text-zinc-500 hidden sm:inline">MONEYLINE (1 X 2) • OVER/UNDER</span>
+            <span className="text-zinc-500 hidden sm:inline">1 X 2 • OVER/UNDER</span>
           </div>
 
-          <div className="space-y-3">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1">
             {fixtures.map((f) => (
               <div
                 key={f.id}
@@ -477,7 +480,7 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
         </div>
 
         {/* Right: Authentic 3D Thermal Paper Sportsbook Ticket */}
-        <div id="betslip" className="lg:col-span-4 relative select-none scroll-mt-20">
+        <div id="betslip" className="hidden lg:block lg:col-span-4 h-full overflow-y-auto pr-1 relative select-none">
           {/* Jagged Serrated Perforations (Top Edge) */}
           <div className="w-full h-3 overflow-hidden leading-none flex">
             {Array.from({ length: 30 }).map((_, i) => (
@@ -667,23 +670,48 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
         </div>
       </div>
 
-      {/* Mobile Floating Bet Slip Jump Button */}
-      {betSlip.length > 0 && (
-        <div className="fixed bottom-4 right-4 z-50 lg:hidden animate-in fade-in slide-in-from-bottom-4 duration-200">
-          <button
-            type="button"
-            onClick={() => {
-              document.getElementById('betslip')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black font-black text-xs uppercase shadow-[0_0_25px_rgba(245,158,11,0.9)] border-2 border-white active:scale-95 transition cursor-pointer"
-          >
-            <span>🎫 Ticket ({betSlip.length})</span>
-            <span>•</span>
-            <span>£{stake}</span>
-            <span>↓</span>
-          </button>
+      {/* Mobile Sticky Betting Console Bar */}
+      <div className="shrink-0 mt-auto bg-gradient-to-b from-zinc-900 via-black to-zinc-950 p-2 sm:p-3 rounded-xl border border-zinc-700 flex flex-col gap-1.5 shadow-2xl lg:hidden z-20">
+        <div className="flex items-center justify-between gap-2">
+          {/* Stake Chip Selector */}
+          <div className="flex items-center gap-1 overflow-x-auto">
+            <span className="text-zinc-400 font-bold uppercase text-[9px] font-mono shrink-0">Stake:</span>
+            <VegasChipRack
+              values={[10, 25, 50, 100, 250]}
+              selectedValue={stake}
+              onSelect={setStake}
+              disabled={simulating}
+            />
+          </div>
+
+          <div className="text-right shrink-0">
+            <div className="text-[9px] text-zinc-400 uppercase font-mono">
+              {isParlay ? `Parlay (${parlayMultiplier.toFixed(2)}x)` : `${betSlip.length} Singles`}
+            </div>
+            <div className="text-xs sm:text-sm font-mono font-black text-emerald-400">
+              Est: £{potentialReturn.toLocaleString()}
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Action Button */}
+        <button
+          disabled={betSlip.length === 0 || stake > bankroll || simulating}
+          onClick={handleSimulateMatches}
+          className={`w-full py-2.5 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow transition active:scale-95 ${
+            simulating
+              ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+              : 'bg-gradient-to-r from-[#ffd700] via-[#f59e0b] to-[#ffd700] text-black shadow-[0_0_15px_rgba(245,158,11,0.5)] disabled:opacity-40'
+          }`}
+        >
+          <Sparkles size={14} />
+          <span>
+            {simulating
+              ? 'SIMULATING...'
+              : `PRINT TICKET (£${stake}) & SIMULATE`}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }

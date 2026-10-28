@@ -265,7 +265,10 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
   };
 
   return (
-    <div className="bg-gradient-to-b from-teal-950/80 via-black to-zinc-950 border border-teal-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden space-y-6">
+    <div
+      style={{ touchAction: 'manipulation' }}
+      className="h-full flex-1 min-h-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation relative bg-gradient-to-b from-teal-950/80 via-black to-zinc-950 border border-teal-500/40 rounded-2xl sm:rounded-3xl p-2 sm:p-5 shadow-2xl font-sans"
+    >
       {/* Big Win Splash Banner */}
       <VegasWinSplash
         winAmount={splashWin}
@@ -277,75 +280,75 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
       />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[10px] font-black uppercase tracking-widest">
-              Game #10 • 7-Card Asian/Vegas Classic
+      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
+              Asian/Vegas Classic
             </span>
-            <span className="text-zinc-400 text-xs font-mono">41% Push Rate</span>
+            <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">41% Push Rate</span>
           </div>
-          <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 mt-1">
+          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
             <span>Pai Gow Poker</span>
-            <span className="text-xs font-mono font-bold text-teal-300 px-2 py-0.5 rounded bg-teal-500/20 border border-teal-500/40">
-              5-Card High / 2-Card Low
+            <span className="text-[9px] font-mono font-bold text-teal-300 px-1.5 py-0.2 rounded bg-teal-500/20 border border-teal-500/40">
+              5 High / 2 Low
             </span>
           </h3>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Link
             href="/academy?tab=leaderboard&discipline=blackjack"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-xs font-bold text-gold transition"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-[10px] font-bold text-gold transition"
           >
-            <Trophy size={14} />
-            <span>Leaderboard</span>
+            <Trophy size={12} />
+            <span className="hidden sm:inline">Leaderboard</span>
           </Link>
           <button
             onClick={onOpenTutorial}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition"
           >
-            <HelpCircle size={14} className="text-gold" />
-            <span>Rules & Tutorial</span>
+            <HelpCircle size={12} className="text-gold" />
+            <span className="hidden sm:inline">Rules & Tutorial</span>
+            <span className="sm:hidden">Rules</span>
           </button>
         </div>
       </div>
 
       {/* AI Dealer Sarah */}
-      <VegasAiDealer
-        dialogue={dealerDialogue}
-        gameTitle="Pai Gow Poker"
-        status={
-          step === 'betting'
-            ? 'Awaiting Wager'
-            : step === 'setting'
-            ? 'Splitting 5 & 2 Hands'
-            : 'Settling Hand'
-        }
-      />
+      <div className="shrink-0 mb-1">
+        <VegasAiDealer
+          dialogue={dealerDialogue}
+          gameTitle="Pai Gow Poker"
+          status={
+            step === 'betting'
+              ? 'Awaiting Wager'
+              : step === 'setting'
+              ? 'Splitting 5 & 2 Hands'
+              : 'Settling Hand'
+          }
+        />
+      </div>
 
       {/* Live Pai Gow House Way Strategy Advisor HUD */}
       {step === 'setting' && (
-        <div className="bg-gradient-to-r from-teal-950/80 via-black to-zinc-950 border border-teal-500/40 p-3 sm:p-4 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-lg">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-teal-500/20 border border-teal-400/40 flex items-center justify-center text-teal-300 shrink-0">
-              <Brain size={16} />
+        <div className="shrink-0 bg-gradient-to-r from-teal-950/80 via-black to-zinc-950 border border-teal-500/40 p-1.5 sm:p-2.5 rounded-xl flex items-center justify-between gap-2 text-xs shadow-lg mb-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-teal-500/20 border border-teal-400/40 flex items-center justify-center text-teal-300 shrink-0">
+              <Brain size={14} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase font-mono font-black text-teal-300">
-                  House Way Strategy Advisor
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] uppercase font-mono font-black text-teal-300">
+                  House Way Advisor
                 </span>
-                <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
+                <span className="text-[8px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold hidden sm:inline">
                   ⚡ 41% Push Defense
                 </span>
               </div>
-              <div className="font-bold text-white text-xs mt-0.5">
+              <div className="font-bold text-white text-[10px] sm:text-xs truncate">
                 Optimal 5-Card High & 2-Card Low Split Applied
               </div>
-              <p className="text-[11px] text-zinc-300 leading-snug">
-                Splitting by official casino House Way protects your 2-card hand while ensuring your 5-card hand remains strictly stronger. This minimizes house advantage to under 2.8%.
-              </p>
             </div>
           </div>
           <div className="hidden sm:block text-right shrink-0">
@@ -451,8 +454,8 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
       </Vegas3DTableArena>
 
       {/* Controls Bar with Authentic 3D Chip Rack */}
-      <div className="bg-black/70 p-4 rounded-2xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
+      <div className="shrink-0 mt-auto bg-black/70 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border border-white/10 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <VegasChipRack
             values={[5, 10, 25, 50, 100]}
             selectedValue={bet}
@@ -463,30 +466,31 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
           {step === 'setting' && (
             <button
               onClick={handleApplyHouseWay}
-              className="ml-2 px-3.5 py-2 rounded-xl bg-purple-900/70 hover:bg-purple-800 text-purple-200 border border-purple-500/50 text-xs font-bold flex items-center gap-1.5 transition shadow"
+              className="px-2 sm:px-3 py-1.5 rounded-lg bg-purple-900/70 hover:bg-purple-800 text-purple-200 border border-purple-500/50 text-[10px] sm:text-xs font-bold flex items-center gap-1 transition shadow"
             >
-              <Wand2 size={13} />
-              <span>Reset to House Way</span>
+              <Wand2 size={12} />
+              <span className="hidden sm:inline">Reset to House Way</span>
+              <span className="sm:hidden">House Way</span>
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-2 shrink-0">
           {step === 'betting' || step === 'showdown' ? (
             <button
               disabled={bet > bankroll}
               onClick={handleDeal}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-black uppercase text-xs tracking-wider shadow-xl hover:brightness-110 active:scale-95 transition"
+              className="px-4 py-2 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-xl hover:brightness-110 active:scale-95 transition"
             >
-              {step === 'showdown' ? 'Deal Next 7 Cards' : `Deal 7 Cards (£${bet})`}
+              {step === 'showdown' ? 'Next 7 Cards' : `Deal 7 Cards (£${bet})`}
             </button>
           ) : (
             <button
               disabled={highCards.length !== 5 || lowCards.length !== 2}
               onClick={handleConfirmHands}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black uppercase text-xs tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
+              className="px-4 py-2 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
             >
-              CONFIRM & SHOWDOWN
+              CONFIRM
             </button>
           )}
         </div>

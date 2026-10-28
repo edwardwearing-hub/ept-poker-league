@@ -506,7 +506,10 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
   });
 
   return (
-    <div className="relative w-full rounded-[2.5rem] bg-gradient-to-b from-[#1b1424] via-[#110c18] to-[#08050c] p-2 sm:p-4 shadow-[0_25px_60px_rgba(0,0,0,0.95)] border-4 border-[#3c1d56] select-none overflow-hidden font-sans">
+    <div
+      style={{ touchAction: 'manipulation' }}
+      className="h-full flex-1 min-h-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation relative rounded-2xl sm:rounded-[2.5rem] bg-gradient-to-b from-[#1b1424] via-[#110c18] to-[#08050c] p-1.5 sm:p-4 shadow-[0_25px_60px_rgba(0,0,0,0.95)] border-2 sm:border-4 border-[#3c1d56] font-sans"
+    >
       {/* Big Win Splash Banner */}
       <VegasWinSplash
         winAmount={splashWin}
@@ -519,41 +522,41 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
       />
 
       {/* 1. TOP HUD STATUS BAR */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-2xl bg-black/70 border border-white/10 mb-3 text-white">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-fuchsia-600 to-purple-500 border border-white/40 flex items-center justify-center text-sm shadow-md shrink-0">
+      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-2 rounded-xl sm:rounded-2xl bg-black/70 border border-white/10 mb-1 sm:mb-2 text-white">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-fuchsia-600 to-purple-500 border border-white/40 flex items-center justify-center text-xs sm:text-sm shadow-md shrink-0">
             🎰
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-gradient-to-r from-purple-800 to-fuchsia-700 border border-purple-400/50 text-xs font-black">
+          <div className="flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-purple-800 to-fuchsia-700 border border-purple-400/50 text-[10px] sm:text-xs font-black">
             <span className="text-yellow-300">★ 1</span>
             <span className="text-white hidden sm:inline">{playerName}</span>
           </div>
         </div>
 
         {/* Center: Recessed Total Bet Display */}
-        <div className="flex items-center gap-1.5 sm:gap-2 bg-[#12071f] border-2 border-[#7e22ce] rounded-xl px-2.5 sm:px-3 py-1 shadow-inner">
-          <span className="text-[10px] font-black uppercase tracking-wider text-purple-300">BET</span>
-          <span className="font-mono font-black text-sm sm:text-base text-yellow-300">
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-[#12071f] border-2 border-[#7e22ce] rounded-xl px-2 sm:px-3 py-0.5 sm:py-1 shadow-inner">
+          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-purple-300">BET</span>
+          <span className="font-mono font-black text-xs sm:text-base text-yellow-300">
             £{totalBet.toLocaleString()}
           </span>
-          <span className="text-[9px] text-zinc-400 font-mono hidden sm:inline">({activeLines} Lines)</span>
+          <span className="text-[8px] sm:text-[9px] text-zinc-400 font-mono hidden sm:inline">({activeLines} Lines)</span>
         </div>
 
         {/* Right: Bankroll & Tools */}
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-          <div className="flex items-center gap-1 bg-[#12071f] border-2 border-[#7e22ce] rounded-xl px-2.5 sm:px-3 py-1 shadow-inner">
-            <span className="font-mono font-black text-sm sm:text-base text-white">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 bg-[#12071f] border-2 border-[#7e22ce] rounded-xl px-2 sm:px-3 py-0.5 sm:py-1 shadow-inner">
+            <span className="font-mono font-black text-xs sm:text-base text-white">
               £{bankroll.toLocaleString()}
             </span>
           </div>
 
           <Link
             href="/academy?tab=leaderboard&discipline=slots"
-            className="px-2 sm:px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600/30 to-fuchsia-600/30 hover:bg-purple-600/50 border border-purple-400/60 text-yellow-300 font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5"
+            className="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-purple-600/30 to-fuchsia-600/30 hover:bg-purple-600/50 border border-purple-400/60 text-yellow-300 font-black text-[10px] sm:text-xs uppercase tracking-wider transition shadow flex items-center gap-1"
             title="View Slots & Fruit Machine League Standings"
           >
-            <Trophy size={14} className="text-yellow-300" />
-            <span className="hidden sm:inline">Slots League</span>
+            <Trophy size={12} className="text-yellow-300" />
+            <span className="hidden sm:inline">League</span>
           </Link>
 
           {onSwitchToPubFruity && (
@@ -675,9 +678,9 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
       </div>
 
       {/* 4. THE 3D MECHANICAL REEL CABINET WITH CONVEX GLASS & CHROME BEZEL */}
-      <div className="relative flex flex-col md:flex-row items-center justify-center gap-4 py-2">
+      <div className="flex-1 min-h-0 relative flex flex-col items-center justify-center py-1 sm:py-2 overflow-hidden">
         {/* Main 3-Reel x 3-Row Convex Window Chassis */}
-        <div className="flex-1 w-full max-w-3xl bg-gradient-to-b from-[#251733] via-[#120a1c] to-[#08040d] p-3 sm:p-6 rounded-[2.2rem] border-4 border-[#eab308] shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_3px_10px_rgba(255,255,255,0.3)] relative overflow-hidden">
+        <div className="w-full max-w-3xl bg-gradient-to-b from-[#251733] via-[#120a1c] to-[#08040d] p-2 sm:p-5 rounded-2xl sm:rounded-[2.2rem] border-2 sm:border-4 border-[#eab308] shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_3px_10px_rgba(255,255,255,0.3)] relative overflow-hidden">
           {/* Chrome Corner Brackets */}
           <div className="absolute top-2 left-2 w-6 h-6 border-t-2 border-l-2 border-white/60 pointer-events-none" />
           <div className="absolute top-2 right-2 w-6 h-6 border-t-2 border-r-2 border-white/60 pointer-events-none" />
@@ -776,7 +779,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
                       return (
                         <div
                           key={rowIdx}
-                          className={`h-24 sm:h-28 flex flex-col items-center justify-center relative transition-transform duration-150 ${
+                          className={`h-16 sm:h-24 md:h-28 flex flex-col items-center justify-center relative transition-transform duration-150 ${
                             isSpinning ? 'blur-[1px] scale-95 opacity-80' : 'scale-100 opacity-100'
                           } ${
                             isWinCell && !isSpinning
@@ -788,14 +791,14 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
                         >
                           {/* 3D Symbol Icon */}
                           <div
-                            className={`text-4xl sm:text-5xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] transition-transform ${
+                            className={`text-2xl sm:text-4xl md:text-5xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] transition-transform ${
                               isWinCell && !isSpinning ? 'animate-bounce scale-110' : ''
                             }`}
                           >
                             {sym.icon}
                           </div>
                           {/* Symbol Name Badge */}
-                          <span className="text-[9px] sm:text-[10px] font-mono font-black text-amber-200 uppercase tracking-tight mt-1 drop-shadow">
+                          <span className="text-[8px] sm:text-[10px] font-mono font-black text-amber-200 uppercase tracking-tight mt-0.5 sm:mt-1 drop-shadow">
                             {sym.name}
                           </span>
                         </div>
@@ -858,7 +861,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
       </div>
 
       {/* 5. TACTILE CASINO BUTTON DECK (CONSOLE) */}
-      <div className="mt-3 rounded-2xl p-3 sm:p-4 bg-gradient-to-b from-[#2a173d] via-[#1a0c28] to-[#0c0514] border-t-2 border-[#f59e0b]/80 shadow-[0_-8px_20px_rgba(0,0,0,0.8),inset_0_2px_4px_rgba(255,215,0,0.4)] flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+      <div className="shrink-0 mt-auto rounded-xl sm:rounded-2xl p-1.5 sm:p-4 bg-gradient-to-b from-[#2a173d] via-[#1a0c28] to-[#0c0514] border-t-2 border-[#f59e0b]/80 shadow-[0_-8px_20px_rgba(0,0,0,0.8),inset_0_2px_4px_rgba(255,215,0,0.4)] flex flex-wrap items-center justify-between gap-1.5 sm:gap-4">
         {/* Left Side: Bet Per Line & Lines Selector */}
         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
           {/* Bet per line chips */}

@@ -3,10 +3,9 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import SidebarContent from "@/components/SidebarContent";
 import MobileNav from "@/components/MobileNav";
-import SiteFooter from "@/components/SiteFooter";
 import OfflineDetector from "@/components/OfflineDetector";
 import AuthGuard from "@/components/auth/AuthGuard";
-import { DevModeDock } from "@/components/dev/DevWrapper";
+import AppMainLayout from "@/components/layout/AppMainLayout";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { getGlobalStats } from '@/lib/data';
 
@@ -100,15 +99,10 @@ export default async function RootLayout({
         </aside>
 
         {/* Main Content Area */}
-        {/* Adjusted padding for mobile to account for fixed header and bottom quick dock */}
         <AuthGuard>
-          <main className="md:ml-72 min-h-screen px-3 py-4 pt-16 sm:px-6 sm:py-6 sm:pt-20 md:p-8 pb-28 md:pb-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-charcoal-light to-charcoal">
-            <div className="max-w-7xl mx-auto">
-              {children}
-            </div>
-            <SiteFooter />
-            <DevModeDock />
-          </main>
+          <AppMainLayout>
+            {children}
+          </AppMainLayout>
         </AuthGuard>
       </body>
     </html>

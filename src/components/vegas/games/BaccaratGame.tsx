@@ -283,7 +283,10 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
   const totalRounds = beadPlate.length || 1;
 
   return (
-    <div className="bg-gradient-to-b from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden space-y-6">
+    <div
+      style={{ touchAction: 'manipulation' }}
+      className="h-full flex-1 min-h-0 flex flex-col justify-between overflow-hidden select-none touch-manipulation relative bg-gradient-to-b from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 rounded-2xl sm:rounded-3xl p-2 sm:p-5 shadow-2xl font-sans"
+    >
       {/* Big Win Splash Banner */}
       <VegasWinSplash
         winAmount={splashWin}
@@ -295,37 +298,37 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
       />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-[10px] font-black uppercase tracking-widest">
-              Game #5 • High-Roller Classic
+      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
+              High-Roller Classic
             </span>
-            <span className="text-zinc-400 text-xs font-mono">House Edge: 1.06% (Banker)</span>
+            <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">House Edge: 1.06% (Banker)</span>
           </div>
-          <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2 mt-1">
+          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
             <span>Baccarat (Punto Banco)</span>
-            <span className="text-xs font-mono font-bold text-gold px-2 py-0.5 rounded bg-gold/15 border border-gold/30">
+            <span className="text-[9px] font-mono font-bold text-gold px-1.5 py-0.2 rounded bg-gold/15 border border-gold/30">
               Target 9 Points
             </span>
           </h3>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Link
             href="/academy?tab=leaderboard&discipline=blackjack"
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-xs font-black uppercase tracking-wider transition shadow"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-[10px] font-black uppercase tracking-wider transition shadow"
             title="View Blackjack & Table Games League Standings"
           >
-            <Trophy size={14} className="text-gold" />
+            <Trophy size={12} className="text-gold" />
             <span className="hidden sm:inline">Table League</span>
             <span className="sm:hidden">League</span>
           </Link>
           <button
             onClick={onOpenTutorial}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition"
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition"
           >
-            <HelpCircle size={14} className="text-gold" />
+            <HelpCircle size={12} className="text-gold" />
             <span className="hidden sm:inline">Rules & Tutorial</span>
             <span className="sm:hidden">Rules</span>
           </button>
@@ -333,66 +336,67 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
       </div>
 
       {/* AI Glamorous Dealer Sarah Header */}
-      <VegasAiDealer
-        dialogue={dealerDialogue}
-        gameTitle="Baccarat"
-        status={dealing ? 'Dealing Tableau' : 'Awaiting Wager'}
-      />
+      <div className="shrink-0 mb-1">
+        <VegasAiDealer
+          dialogue={dealerDialogue}
+          gameTitle="Baccarat"
+          status={dealing ? 'Dealing Tableau' : 'Awaiting Wager'}
+        />
+      </div>
 
       {/* Live Baccarat Strategy Coach Advice HUD */}
-      <div className="bg-gradient-to-r from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 p-3 sm:p-4 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-lg">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shrink-0">
-            <Brain size={16} />
+      <div className="shrink-0 bg-gradient-to-r from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 p-2 sm:p-3 rounded-xl flex items-center justify-between gap-2 text-xs shadow-lg mb-1">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shrink-0">
+            <Brain size={14} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase font-mono font-black text-indigo-300">
-                Baccarat Odds Advisor
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] uppercase font-mono font-black text-indigo-300">
+                Odds Advisor
               </span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
-                ⚡ Lowest House Edge
+              <span className="text-[8px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold hidden sm:inline">
+                ⚡ Lowest Edge
               </span>
             </div>
             {(() => {
               const adv = getBaccaratAdvice();
               return (
-                <>
-                  <div className="font-bold text-white text-xs mt-0.5">{adv.headline}</div>
-                  <p className="text-[11px] text-zinc-300 leading-snug">{adv.explanation}</p>
-                </>
+                <div className="truncate text-[10px] sm:text-[11px] text-zinc-300 font-bold">
+                  {adv.headline}
+                </div>
               );
             })()}
           </div>
         </div>
-        <div className="hidden sm:block text-right shrink-0">
-          <span className="px-3 py-1.5 rounded-xl bg-red-500/20 border border-red-500/50 text-red-200 font-black text-xs font-mono">
+        <div className="shrink-0">
+          <span className="px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg bg-red-500/20 border border-red-500/50 text-red-200 font-black text-[9px] sm:text-xs font-mono">
             REC: {getBaccaratAdvice().action}
           </span>
         </div>
       </div>
 
       {/* Macau / Evolution Style Bead Road Scoreboard */}
-      <div className="bg-black/80 p-3 sm:p-4 rounded-2xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs shadow-xl">
+      <div className="shrink-0 bg-black/80 p-1.5 sm:p-3 rounded-xl border border-white/10 flex items-center justify-between gap-2 font-mono text-[10px] sm:text-xs shadow-xl mb-1">
         {/* Statistics Ratio */}
-        <div className="flex items-center gap-4 text-xs font-black">
-          <div className="flex items-center gap-1.5 text-red-400">
-            <span className="w-3 h-3 rounded-full bg-red-600 inline-block" />
-            <span>Banker: {Math.round((bankerCount / totalRounds) * 100)}% ({bankerCount})</span>
+        <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-black shrink-0">
+          <div className="flex items-center gap-1 text-red-400">
+            <span className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-red-600 inline-block" />
+            <span>Banker: {Math.round((bankerCount / totalRounds) * 100)}%</span>
           </div>
-          <div className="flex items-center gap-1.5 text-blue-400">
-            <span className="w-3 h-3 rounded-full bg-blue-600 inline-block" />
-            <span>Player: {Math.round((playerCount / totalRounds) * 100)}% ({playerCount})</span>
+          <div className="flex items-center gap-1 text-blue-400">
+            <span className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-blue-600 inline-block" />
+            <span>Player: {Math.round((playerCount / totalRounds) * 100)}%</span>
           </div>
-          <div className="flex items-center gap-1.5 text-emerald-400">
-            <span className="w-3 h-3 rounded-full bg-emerald-600 inline-block" />
+          <div className="hidden sm:flex items-center gap-1 text-emerald-400">
+            <span className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-emerald-600 inline-block" />
             <span>Tie: {tieCount}</span>
           </div>
         </div>
 
         {/* Bead Plate Cells */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
-          <span className="text-[10px] uppercase font-bold text-zinc-500 mr-1">Road:</span>
+        <div className="flex items-center gap-1 overflow-x-auto max-w-[140px] sm:max-w-none">
+          <span className="text-[9px] uppercase font-bold text-zinc-500 mr-0.5 hidden sm:inline">Road:</span>
           {beadPlate.map((res, idx) => (
             <div
               key={idx}
@@ -577,15 +581,15 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
 
       {/* Outcome Announcement */}
       {outcomeMessage && (
-        <div className="bg-black/70 border border-gold/40 text-center py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-zinc-200">
+        <div className="shrink-0 bg-black/70 border border-gold/40 text-center py-1 px-3 rounded-lg text-xs font-bold text-zinc-200 mb-1">
           {outcomeMessage}
         </div>
       )}
 
       {/* Controls Bar with Authentic 3D Chip Rack */}
-      <div className="bg-black/60 p-4 rounded-2xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="shrink-0 mt-auto bg-black/60 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border border-white/10 flex items-center justify-between gap-2 sm:gap-4">
         {/* Chip Rack */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <VegasChipRack
             values={[5, 10, 25, 50, 100]}
             selectedValue={selectedChip}
@@ -595,7 +599,7 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
           {totalWager > 0 && !dealing && (
             <button
               onClick={clearBets}
-              className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 text-xs font-bold transition"
+              className="px-2 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 text-[10px] sm:text-xs font-bold transition"
             >
               Clear
             </button>
@@ -603,10 +607,10 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
         </div>
 
         {/* Wager and Deal Button */}
-        <div className="flex items-center gap-4 w-full md:w-auto justify-end">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <div className="text-right">
-            <div className="text-[10px] uppercase font-bold text-zinc-400">Total Bet:</div>
-            <div className="text-lg font-mono font-black text-gold">
+            <div className="text-[9px] uppercase font-bold text-zinc-400">Total Bet:</div>
+            <div className="text-xs sm:text-base font-mono font-black text-gold">
               £{totalWager.toLocaleString()}
             </div>
           </div>
@@ -614,9 +618,9 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
           <button
             disabled={dealing || totalWager === 0 || totalWager > bankroll}
             onClick={handleDeal}
-            className="px-10 py-3.5 rounded-2xl bg-gradient-to-r from-[#ffd700] via-[#cfb53b] to-[#ffd700] text-black font-black uppercase text-xs tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.5)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
+            className="px-4 py-2 sm:px-8 sm:py-3 rounded-xl bg-gradient-to-r from-[#ffd700] via-[#cfb53b] to-[#ffd700] text-black font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-[0_0_15px_rgba(212,175,55,0.5)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
           >
-            {dealing ? 'DEALING TABLEAU...' : 'DEAL TABLEAU'}
+            {dealing ? 'DEALING...' : 'DEAL TABLEAU'}
           </button>
         </div>
       </div>
