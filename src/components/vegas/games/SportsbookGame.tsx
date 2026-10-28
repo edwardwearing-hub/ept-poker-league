@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { HelpCircle, Trophy, Sparkles, Plus, Check, Trash2, ArrowRight, ChevronLeft } from 'lucide-react';
+import { HelpCircle, Trophy, Sparkles, Plus, Check, Trash2, ArrowRight, ChevronLeft, ChevronDown, ChevronUp, FileText, X } from 'lucide-react';
 import { VegasChipRack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import { playChipSound, playWinSound } from '@/lib/vegas/VegasAudio';
@@ -108,6 +108,7 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
     totalReturn: number;
     message: string;
   } | null>(null);
+  const [showMobileSlip, setShowMobileSlip] = useState(false);
 
   const parlayMultiplier = betSlip.reduce((acc, b) => acc * b.odds, 1);
   const potentialReturn = isParlay
@@ -427,92 +428,98 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
                 </div>
 
                 {/* 3D LED Matrix Odds Buttons */}
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 text-xs font-mono">
-                  {/* Home Win */}
-                  <button
-                    onClick={() => toggleSelection(f, `${f.homeTeam} Win`, f.homeOdds, 'home')}
-                    onPointerDown={(e) => {
-                      if (e.button === 0) toggleSelection(f, `${f.homeTeam} Win`, f.homeOdds, 'home');
-                    }}
-                    className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
-                      isSelected(f.id, `${f.homeTeam} Win`)
-                        ? 'bg-gradient-to-b from-[#ffd700] via-[#f59e0b] to-[#b45309] text-black border-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.7),inset_0_2px_4px_rgba(255,255,255,0.7)] font-black'
-                        : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-amber-400/50 shadow-sm'
-                    }`}
-                  >
-                    <span className="text-[10px] uppercase font-sans truncate max-w-[85px]">
-                      {f.homeTeam}
-                    </span>
-                    <span className="font-black text-sm mt-0.5">{f.homeOdds.toFixed(2)}</span>
-                  </button>
-
-                  {/* Draw */}
-                  {f.drawOdds && (
+                <div className="flex flex-col gap-1.5 sm:grid sm:grid-cols-5 sm:gap-2 text-xs font-mono">
+                  {/* Tier 1: 1X2 Match Outcome */}
+                  <div className={`grid ${f.drawOdds ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 sm:contents`}>
+                    {/* Home Win */}
                     <button
-                      onClick={() => toggleSelection(f, 'Draw', f.drawOdds!, 'draw')}
+                      onClick={() => toggleSelection(f, `${f.homeTeam} Win`, f.homeOdds, 'home')}
                       onPointerDown={(e) => {
-                        if (e.button === 0) toggleSelection(f, 'Draw', f.drawOdds!, 'draw');
+                        if (e.button === 0) toggleSelection(f, `${f.homeTeam} Win`, f.homeOdds, 'home');
                       }}
-                      className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
-                        isSelected(f.id, 'Draw')
+                      className={`py-2 px-2 min-h-[44px] rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
+                        isSelected(f.id, `${f.homeTeam} Win`)
                           ? 'bg-gradient-to-b from-[#ffd700] via-[#f59e0b] to-[#b45309] text-black border-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.7),inset_0_2px_4px_rgba(255,255,255,0.7)] font-black'
                           : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-amber-400/50 shadow-sm'
                       }`}
                     >
-                      <span className="text-[10px] uppercase font-sans">Draw</span>
-                      <span className="font-black text-sm mt-0.5">{f.drawOdds.toFixed(2)}</span>
+                      <span className="text-[10px] uppercase font-sans truncate max-w-[85px]">
+                        {f.homeTeam}
+                      </span>
+                      <span className="font-black text-sm mt-0.5">{f.homeOdds.toFixed(2)}</span>
                     </button>
-                  )}
 
-                  {/* Away Win */}
-                  <button
-                    onClick={() => toggleSelection(f, `${f.awayTeam} Win`, f.awayOdds, 'away')}
-                    onPointerDown={(e) => {
-                      if (e.button === 0) toggleSelection(f, `${f.awayTeam} Win`, f.awayOdds, 'away');
-                    }}
-                    className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
-                      isSelected(f.id, `${f.awayTeam} Win`)
-                        ? 'bg-gradient-to-b from-[#ffd700] via-[#f59e0b] to-[#b45309] text-black border-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.7),inset_0_2px_4px_rgba(255,255,255,0.7)] font-black'
-                        : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-amber-400/50 shadow-sm'
-                    }`}
-                  >
-                    <span className="text-[10px] uppercase font-sans truncate max-w-[85px]">
-                      {f.awayTeam}
-                    </span>
-                    <span className="font-black text-sm mt-0.5">{f.awayOdds.toFixed(2)}</span>
-                  </button>
+                    {/* Draw */}
+                    {f.drawOdds && (
+                      <button
+                        onClick={() => toggleSelection(f, 'Draw', f.drawOdds!, 'draw')}
+                        onPointerDown={(e) => {
+                          if (e.button === 0) toggleSelection(f, 'Draw', f.drawOdds!, 'draw');
+                        }}
+                        className={`py-2 px-2 min-h-[44px] rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
+                          isSelected(f.id, 'Draw')
+                            ? 'bg-gradient-to-b from-[#ffd700] via-[#f59e0b] to-[#b45309] text-black border-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.7),inset_0_2px_4px_rgba(255,255,255,0.7)] font-black'
+                            : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-amber-400/50 shadow-sm'
+                        }`}
+                      >
+                        <span className="text-[10px] uppercase font-sans">Draw</span>
+                        <span className="font-black text-sm mt-0.5">{f.drawOdds.toFixed(2)}</span>
+                      </button>
+                    )}
 
-                  {/* Over 2.5 */}
-                  <button
-                    onClick={() => toggleSelection(f, 'Over 2.5 Goals', f.overOdds, 'over')}
-                    onPointerDown={(e) => {
-                      if (e.button === 0) toggleSelection(f, 'Over 2.5 Goals', f.overOdds, 'over');
-                    }}
-                    className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
-                      isSelected(f.id, 'Over 2.5 Goals')
-                        ? 'bg-gradient-to-b from-cyan-400 via-cyan-500 to-blue-600 text-black border-cyan-200 shadow-[0_0_18px_rgba(6,182,212,0.7)] font-black'
-                        : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-cyan-400/50 shadow-sm'
-                    }`}
-                  >
-                    <span className="text-[10px] uppercase font-sans">Over 2.5</span>
-                    <span className="font-black text-sm mt-0.5">{f.overOdds.toFixed(2)}</span>
-                  </button>
+                    {/* Away Win */}
+                    <button
+                      onClick={() => toggleSelection(f, `${f.awayTeam} Win`, f.awayOdds, 'away')}
+                      onPointerDown={(e) => {
+                        if (e.button === 0) toggleSelection(f, `${f.awayTeam} Win`, f.awayOdds, 'away');
+                      }}
+                      className={`py-2 px-2 min-h-[44px] rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
+                        isSelected(f.id, `${f.awayTeam} Win`)
+                          ? 'bg-gradient-to-b from-[#ffd700] via-[#f59e0b] to-[#b45309] text-black border-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.7),inset_0_2px_4px_rgba(255,255,255,0.7)] font-black'
+                          : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-amber-400/50 shadow-sm'
+                      }`}
+                    >
+                      <span className="text-[10px] uppercase font-sans truncate max-w-[85px]">
+                        {f.awayTeam}
+                      </span>
+                      <span className="font-black text-sm mt-0.5">{f.awayOdds.toFixed(2)}</span>
+                    </button>
+                  </div>
 
-                  {/* Under 2.5 */}
-                  <button
-                    onClick={() => toggleSelection(f, 'Under 2.5 Goals', f.underOdds, 'under')}
-                    onPointerDown={(e) => {
-                      if (e.button === 0) toggleSelection(f, 'Under 2.5 Goals', f.underOdds, 'under');
-                    }}
-                    className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
-                      isSelected(f.id, 'Under 2.5 Goals')
-                        ? 'bg-gradient-to-b from-cyan-400 via-cyan-500 to-blue-600 text-black border-cyan-200 shadow-[0_0_18px_rgba(6,182,212,0.7)] font-black'
-                        : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-cyan-400/50 shadow-sm'
-                    }`}
-                  >
-                    <span className="text-[10px] uppercase font-sans">Under 2.5</span>
-                    <span className="font-black text-sm mt-0.5">{f.underOdds.toFixed(2)}</span>
-                  </button>
+                  {/* Tier 2: Over / Under 2.5 Goals */}
+                  <div className="grid grid-cols-2 gap-1.5 sm:contents">
+                    {/* Over 2.5 */}
+                    <button
+                      onClick={() => toggleSelection(f, 'Over 2.5 Goals', f.overOdds, 'over')}
+                      onPointerDown={(e) => {
+                        if (e.button === 0) toggleSelection(f, 'Over 2.5 Goals', f.overOdds, 'over');
+                      }}
+                      className={`py-2 px-2 min-h-[44px] rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
+                        isSelected(f.id, 'Over 2.5 Goals')
+                          ? 'bg-gradient-to-b from-cyan-400 via-cyan-500 to-blue-600 text-black border-cyan-200 shadow-[0_0_18px_rgba(6,182,212,0.7)] font-black'
+                          : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-cyan-400/50 shadow-sm'
+                      }`}
+                    >
+                      <span className="text-[10px] uppercase font-sans">Over 2.5</span>
+                      <span className="font-black text-sm mt-0.5">{f.overOdds.toFixed(2)}</span>
+                    </button>
+
+                    {/* Under 2.5 */}
+                    <button
+                      onClick={() => toggleSelection(f, 'Under 2.5 Goals', f.underOdds, 'under')}
+                      onPointerDown={(e) => {
+                        if (e.button === 0) toggleSelection(f, 'Under 2.5 Goals', f.underOdds, 'under');
+                      }}
+                      className={`py-2 px-2 min-h-[44px] rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
+                        isSelected(f.id, 'Under 2.5 Goals')
+                          ? 'bg-gradient-to-b from-cyan-400 via-cyan-500 to-blue-600 text-black border-cyan-200 shadow-[0_0_18px_rgba(6,182,212,0.7)] font-black'
+                          : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-cyan-400/50 shadow-sm'
+                      }`}
+                    >
+                      <span className="text-[10px] uppercase font-sans">Under 2.5</span>
+                      <span className="font-black text-sm mt-0.5">{f.underOdds.toFixed(2)}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -716,11 +723,210 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
         </div>
       </div>
 
+      {/* Mobile Slide-Over Parlay Slip Drawer */}
+      {showMobileSlip && (
+        <div
+          className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setShowMobileSlip(false)}
+        >
+          <div
+            className="w-full max-h-[82vh] bg-[#fcfbf7] text-zinc-900 rounded-t-2xl flex flex-col shadow-2xl border-t-2 border-amber-400 overflow-hidden font-mono select-none animate-in slide-in-from-bottom duration-250"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-zinc-900 text-white p-3 flex items-center justify-between border-b border-zinc-800">
+              <div className="flex items-center gap-2">
+                <FileText size={16} className="text-amber-400" />
+                <span className="font-black text-xs uppercase tracking-wider">
+                  Mobile Slip ({betSlip.length} {betSlip.length === 1 ? 'Leg' : 'Legs'})
+                </span>
+                {isParlay && parlayMultiplier > 1 && (
+                  <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">
+                    {parlayMultiplier.toFixed(2)}x
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {betSlip.length > 0 && (
+                  <button
+                    onClick={() => {
+                      triggerHaptic(15);
+                      setBetSlip([]);
+                    }}
+                    className="p-1 text-red-400 hover:text-red-300 text-[10px] font-sans font-bold flex items-center gap-1 active:scale-95"
+                  >
+                    <Trash2 size={12} />
+                    <span>Clear</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowMobileSlip(false)}
+                  className="p-1 rounded-lg bg-zinc-800 text-zinc-300 hover:text-white active:scale-95"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Ticket Mode Toggle */}
+            <div className="p-2 bg-zinc-100 border-b border-zinc-200">
+              <div className="grid grid-cols-2 gap-1.5 bg-zinc-200 p-1 rounded-lg text-xs font-bold font-sans">
+                <button
+                  onClick={() => {
+                    triggerHaptic(15);
+                    setIsParlay(true);
+                  }}
+                  className={`py-1.5 rounded font-black uppercase text-[11px] transition ${
+                    isParlay ? 'bg-zinc-900 text-white shadow' : 'text-zinc-600 hover:text-zinc-900'
+                  }`}
+                >
+                  Parlay ({parlayMultiplier > 1 ? `${parlayMultiplier.toFixed(2)}x` : '—'})
+                </button>
+                <button
+                  onClick={() => {
+                    triggerHaptic(15);
+                    setIsParlay(false);
+                  }}
+                  className={`py-1.5 rounded font-black uppercase text-[11px] transition ${
+                    !isParlay ? 'bg-zinc-900 text-white shadow' : 'text-zinc-600 hover:text-zinc-900'
+                  }`}
+                >
+                  Singles
+                </button>
+              </div>
+            </div>
+
+            {/* Selections List */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[38vh]">
+              {betSlip.length === 0 ? (
+                <div className="text-center py-8 text-zinc-500 text-xs italic font-sans">
+                  No active selections. Tap any fixture odds on the board to build your parlay ticket.
+                </div>
+              ) : (
+                betSlip.map((b) => (
+                  <div
+                    key={`${b.fixtureId}-${b.pickName}`}
+                    className="flex items-center justify-between text-xs border-b border-zinc-200 pb-1.5"
+                  >
+                    <div className="flex-1 min-w-0 pr-2">
+                      <div className="font-black text-zinc-900 truncate flex items-center gap-1">
+                        <Check size={12} className="text-emerald-600 shrink-0" />
+                        <span className="truncate">{b.pickName}</span>
+                      </div>
+                      <div className="text-[10px] text-zinc-600 truncate">{b.matchName}</div>
+                    </div>
+                    <div className="text-right shrink-0 flex items-center gap-2">
+                      <span className="font-black text-zinc-900 font-mono text-sm">@{b.odds.toFixed(2)}</span>
+                      <button
+                        onClick={() => {
+                          triggerHaptic(15);
+                          setBetSlip((prev) =>
+                            prev.filter((x) => !(x.fixtureId === b.fixtureId && x.pickName === b.pickName))
+                          );
+                        }}
+                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                        title="Void selection"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Calculations & Summary */}
+            <div className="bg-zinc-100 p-3 border-t border-zinc-300 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-zinc-600 uppercase font-sans font-bold">Stake:</span>
+                <div className="flex items-center gap-1 overflow-x-auto">
+                  <VegasChipRack
+                    values={[5, 10, 25, 50, 100, 250]}
+                    selectedValue={stake}
+                    onSelect={setStake}
+                    disabled={simulating}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-zinc-600 font-bold uppercase font-sans">Estimated Payout:</span>
+                <span className="font-black text-emerald-700 font-mono text-base">
+                  £{potentialReturn.toLocaleString()}
+                </span>
+              </div>
+
+              {/* Action Button inside drawer */}
+              <button
+                disabled={betSlip.length === 0 || stake > bankroll || simulating}
+                onClick={() => {
+                  setShowMobileSlip(false);
+                  handleSimulateMatches();
+                }}
+                onPointerDown={(e) => {
+                  if (e.button === 0 && betSlip.length > 0 && stake <= bankroll && !simulating) {
+                    triggerHaptic(15);
+                    setShowMobileSlip(false);
+                    handleSimulateMatches();
+                  }
+                }}
+                className={`w-full py-3 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg transition active:scale-95 touch-manipulation ${
+                  simulating
+                    ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-[#ffd700] via-[#f59e0b] to-[#ffd700] text-black shadow-[0_0_15px_rgba(245,158,11,0.5)] disabled:opacity-40'
+                }`}
+              >
+                <Sparkles size={14} />
+                <span>{simulating ? 'SIMULATING...' : `PRINT TICKET (£${stake}) & SIMULATE`}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Sticky Betting Console Bar */}
-      <div className="shrink-0 mt-auto bg-gradient-to-b from-zinc-900 via-black to-zinc-950 p-2 sm:p-3 rounded-xl border border-zinc-700 flex flex-col gap-1.5 shadow-2xl lg:hidden z-20">
+      <div className="shrink-0 mt-auto bg-gradient-to-b from-zinc-900 via-black to-zinc-950 p-2 sm:p-2.5 rounded-xl border border-zinc-700 flex flex-col gap-1.5 shadow-2xl lg:hidden z-20">
+        {/* Row 1: Expandable Bet Slip Toggle Pill & Est Return */}
         <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic(15);
+              setShowMobileSlip((prev) => !prev);
+            }}
+            onPointerDown={(e) => {
+              if (e.button === 0) {
+                triggerHaptic(15);
+                setShowMobileSlip((prev) => !prev);
+              }
+            }}
+            className={`px-2.5 py-1 rounded-lg border flex items-center gap-1.5 transition active:scale-95 touch-manipulation ${
+              betSlip.length > 0
+                ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+            }`}
+          >
+            <FileText size={12} className={betSlip.length > 0 ? 'text-amber-400' : 'text-zinc-500'} />
+            <span className="text-[10px] font-mono uppercase">
+              {betSlip.length > 0
+                ? `${betSlip.length} Leg${betSlip.length > 1 ? 's' : ''} (@${isParlay ? parlayMultiplier.toFixed(2) + 'x' : 'Singles'})`
+                : 'Slip (0)'}
+            </span>
+            {showMobileSlip ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+          </button>
+
+          <div className="text-right shrink-0">
+            <span className="text-[9px] text-zinc-400 uppercase font-mono mr-1">Est:</span>
+            <span className="text-xs sm:text-sm font-mono font-black text-emerald-400">
+              £{potentialReturn.toLocaleString()}
+            </span>
+          </div>
+        </div>
+
+        {/* Row 2: Stake Chip Rack + Print Ticket Button */}
+        <div className="flex items-center justify-between gap-1.5">
           {/* Stake Chip Selector */}
-          <div className="flex items-center gap-1 overflow-x-auto">
+          <div className="flex items-center gap-1 min-w-0 overflow-x-auto touch-pan-x no-scrollbar py-0.5">
             <span className="text-zinc-400 font-bold uppercase text-[9px] font-mono shrink-0">Stake:</span>
             <VegasChipRack
               values={[5, 10, 25, 50, 100, 250]}
@@ -730,39 +936,28 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
             />
           </div>
 
-          <div className="text-right shrink-0">
-            <div className="text-[9px] text-zinc-400 uppercase font-mono">
-              {isParlay ? `Parlay (${parlayMultiplier.toFixed(2)}x)` : `${betSlip.length} Singles`}
-            </div>
-            <div className="text-xs sm:text-sm font-mono font-black text-emerald-400">
-              Est: £{potentialReturn.toLocaleString()}
-            </div>
-          </div>
+          {/* Action Button */}
+          <button
+            disabled={betSlip.length === 0 || stake > bankroll || simulating}
+            onClick={handleSimulateMatches}
+            onPointerDown={(e) => {
+              if (e.button === 0 && betSlip.length > 0 && stake <= bankroll && !simulating) {
+                triggerHaptic(15);
+                handleSimulateMatches();
+              }
+            }}
+            className={`shrink-0 px-3.5 py-2 rounded-xl font-black uppercase text-[11px] tracking-wider flex items-center justify-center gap-1.5 shadow transition active:scale-95 touch-manipulation min-h-[40px] ${
+              simulating
+                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                : 'bg-gradient-to-r from-[#ffd700] via-[#f59e0b] to-[#ffd700] text-black shadow-[0_0_15px_rgba(245,158,11,0.5)] disabled:opacity-40'
+            }`}
+          >
+            <Sparkles size={13} />
+            <span>
+              {simulating ? 'SIMULATING...' : `PRINT (£${stake})`}
+            </span>
+          </button>
         </div>
-
-        {/* Action Button */}
-        <button
-          disabled={betSlip.length === 0 || stake > bankroll || simulating}
-          onClick={handleSimulateMatches}
-          onPointerDown={(e) => {
-            if (e.button === 0 && betSlip.length > 0 && stake <= bankroll && !simulating) {
-              triggerHaptic(15);
-              handleSimulateMatches();
-            }
-          }}
-          className={`w-full py-2.5 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow transition active:scale-95 touch-manipulation ${
-            simulating
-              ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-              : 'bg-gradient-to-r from-[#ffd700] via-[#f59e0b] to-[#ffd700] text-black shadow-[0_0_15px_rgba(245,158,11,0.5)] disabled:opacity-40'
-          }`}
-        >
-          <Sparkles size={14} />
-          <span>
-            {simulating
-              ? 'SIMULATING...'
-              : `PRINT TICKET (£${stake}) & SIMULATE`}
-          </span>
-        </button>
       </div>
     </div>
   );

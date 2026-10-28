@@ -23,8 +23,43 @@ interface Props {
 
 const RED_NUMS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 
+export interface CornerBet {
+  id: string;
+  name: string;
+  numbers: number[];
+  colIndex: number; // 0 to 10
+  rowLevel: 'upper' | 'lower'; // upper = rows 1&2, lower = rows 2&3
+}
+
+export const ROULETTE_CORNERS: CornerBet[] = [];
+for (let c = 0; c < 11; c++) {
+  // Lower corner (Row 3 & Row 2): numbers [3c+1, 3c+2, 3c+4, 3c+5]
+  const n3a = c * 3 + 1;
+  const n2a = c * 3 + 2;
+  const n3b = (c + 1) * 3 + 1;
+  const n2b = (c + 1) * 3 + 2;
+  ROULETTE_CORNERS.push({
+    id: `c-${n3a}-${n2a}-${n3b}-${n2b}`,
+    name: `Corner ${n3a}-${n2a}-${n3b}-${n2b}`,
+    numbers: [n3a, n2a, n3b, n2b].sort((a, b) => a - b),
+    colIndex: c,
+    rowLevel: 'lower',
+  });
+
+  // Upper corner (Row 2 & Row 1): numbers [3c+2, 3c+3, 3c+5, 3c+6]
+  const n1a = c * 3 + 3;
+  const n1b = (c + 1) * 3 + 3;
+  ROULETTE_CORNERS.push({
+    id: `c-${n2a}-${n1a}-${n2b}-${n1b}`,
+    name: `Corner ${n2a}-${n1a}-${n2b}-${n1b}`,
+    numbers: [n2a, n1a, n2b, n1b].sort((a, b) => a - b),
+    colIndex: c,
+    rowLevel: 'upper',
+  });
+}
+
 interface BetAction {
-  category: 'number' | 'column' | 'dozen' | 'outside';
+  category: 'number' | 'column' | 'dozen' | 'outside' | 'corner';
   target: string | number;
   amount: number;
 }
@@ -36,6 +71,28 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   const [voiceOn, setVoiceOn] = useState(false);
   const [playerName, setPlayerName] = useState('Player 1');
   const [showGuideOdds, setShowGuideOdds] = useState(false);
+  const [showCornersPreset, setShowCornersPreset] = useState(false);
+
+  // Gesture disambiguation ref to allow smooth horizontal panning without placing accidental bets
+  const pointerStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+
+  const handlePointerDownTrack = (e: React.PointerEvent) => {
+    if (e.button === 0) {
+      pointerStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
+    }
+  };
+
+  const handleTapAction = (e: React.PointerEvent, action: () => void) => {
+    if (e.button !== 0) return;
+    if (pointerStartRef.current) {
+      const dx = Math.abs(e.clientX - pointerStartRef.current.x);
+      const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+      const dt = Date.now() - pointerStartRef.current.time;
+      pointerStartRef.current = null;
+      if (dx > 10 || dy > 10 || dt > 600) return;
+    }
+    action();
+  };
 
   // Bet records
   const [numberBets, setNumberBets] = useState<Record<string | number, number>>({});
@@ -49,6 +106,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
     odd: 0,
     high: 0, // 19-36
   });
+  const [cornerBets, setCornerBets] = useState<Record<string, number>>({});
 
   // Action history for UNDO and previous state for REBET
   const [betHistory, setBetHistory] = useState<BetAction[]>([]);
@@ -57,6 +115,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
     columns: Record<number, number>;
     dozens: Record<string, number>;
     outside: Record<string, number>;
+    corners: Record<string, number>;
   } | null>(null);
 
   // Wheel spin & outcomes
@@ -137,7 +196,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   const totalColumnBet = Object.values(columnBets).reduce((a, b) => a + b, 0);
   const totalDozenBet = Object.values(dozenBets).reduce((a, b) => a + b, 0);
   const totalOutsideBet = Object.values(outsideBets).reduce((a, b) => a + b, 0);
-  const totalWager = totalNumberBet + totalColumnBet + totalDozenBet + totalOutsideBet;
+  const totalCornerBet = Object.values(cornerBets).reduce((a, b) => a + b, 0);
+  const totalWager = totalNumberBet + totalColumnBet + totalDozenBet + totalOutsideBet + totalCornerBet;
 
   // Add a Bet on a specific number (0, '00', 1-36)
   const addNumberBet = (num: number | string) => {
@@ -191,6 +251,19 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
     setBetHistory((prev) => [...prev, { category: 'outside', target: key, amount: selectedChip }]);
   };
 
+  // Add a Corner Wager (pays 8:1)
+  const addCornerBet = (cornerId: string) => {
+    if (spinning) return;
+    if (totalWager + selectedChip > bankroll) return;
+    triggerHaptic(15);
+    playChipSound();
+    setCornerBets((prev) => ({
+      ...prev,
+      [cornerId]: (prev[cornerId] || 0) + selectedChip,
+    }));
+    setBetHistory((prev) => [...prev, { category: 'corner', target: cornerId, amount: selectedChip }]);
+  };
+
   // CLEAR ALL BETS
   const handleClearBets = () => {
     if (spinning || totalWager === 0) return;
@@ -200,6 +273,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
     setColumnBets({ 1: 0, 2: 0, 3: 0 });
     setDozenBets({ '1st12': 0, '2nd12': 0, '3rd12': 0 });
     setOutsideBets({ low: 0, even: 0, red: 0, black: 0, odd: 0, high: 0 });
+    setCornerBets({});
     setBetHistory([]);
   };
 
@@ -235,6 +309,15 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
         ...prev,
         [lastAction.target as string]: Math.max(0, (prev[lastAction.target as string] || 0) - lastAction.amount),
       }));
+    } else if (lastAction.category === 'corner') {
+      setCornerBets((prev) => {
+        const cur = prev[lastAction.target] || 0;
+        const next = cur - lastAction.amount;
+        const copy = { ...prev };
+        if (next <= 0) delete copy[lastAction.target];
+        else copy[lastAction.target] = next;
+        return copy;
+      });
     }
   };
 
@@ -257,6 +340,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
     setColumnBets((prev) => doubleMap(prev));
     setDozenBets((prev) => doubleMap(prev));
     setOutsideBets((prev) => doubleMap(prev));
+    setCornerBets((prev) => doubleMap(prev));
 
     // Sarah reacts to doubling up
     askSarahAi('double_down', { wager: totalWager * 2 });
@@ -269,7 +353,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
       Object.values(lastRoundBets.numbers).reduce((a, b) => a + b, 0) +
       Object.values(lastRoundBets.columns).reduce((a, b) => a + b, 0) +
       Object.values(lastRoundBets.dozens).reduce((a, b) => a + b, 0) +
-      Object.values(lastRoundBets.outside).reduce((a, b) => a + b, 0);
+      Object.values(lastRoundBets.outside).reduce((a, b) => a + b, 0) +
+      Object.values(lastRoundBets.corners || {}).reduce((a, b) => a + b, 0);
 
     if (prevTotal > bankroll) return;
     triggerHaptic(15);
@@ -278,6 +363,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
     setColumnBets({ ...lastRoundBets.columns });
     setDozenBets({ ...lastRoundBets.dozens });
     setOutsideBets({ ...lastRoundBets.outside });
+    setCornerBets({ ...(lastRoundBets.corners || {}) });
   };
 
   // SPIN THE WHEEL
@@ -291,6 +377,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
       columns: { ...columnBets },
       dozens: { ...dozenBets },
       outside: { ...outsideBets },
+      corners: { ...cornerBets },
     });
 
     setSpinning(true);
@@ -346,6 +433,20 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
     if (isNum && numVal >= 1 && numVal <= 18 && outsideBets.low) totalWin += outsideBets.low * 2;
     if (isNum && numVal >= 19 && numVal <= 36 && outsideBets.high) totalWin += outsideBets.high * 2;
 
+    // 5. Corner Wagers (pays 8:1 + original wager back = 9x)
+    const winningHits: string[] = [];
+    if (isNum && numVal > 0) {
+      for (const [cId, amount] of Object.entries(cornerBets)) {
+        if (amount > 0) {
+          const cDef = ROULETTE_CORNERS.find((c) => c.id === cId);
+          if (cDef && cDef.numbers.includes(numVal)) {
+            totalWin += amount * 9;
+            winningHits.push(`${cDef.name} (Paid 8:1)`);
+          }
+        }
+      }
+    }
+
     const netResult = totalWin - totalWager;
     setSessionNet((prev) => prev + netResult);
     onUpdateBankroll(netResult);
@@ -355,7 +456,22 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
       playWinSound();
 
       // Collect specific winning hits to explain how the player won
-      const winningHits: string[] = [];
+      if (numberBets[winningNumber]) {
+        winningHits.push(`Straight Up #${winningNumber} (Paid 35:1)`);
+      }
+      if (isNum && numVal > 0) {
+        const col = numVal % 3 === 0 ? 1 : numVal % 3 === 2 ? 2 : 3;
+        if (columnBets[col]) winningHits.push(`Column ${col} (Paid 2:1)`);
+      }
+      if (isNum && numVal >= 1 && numVal <= 12 && dozenBets['1st12']) winningHits.push(`1st 12 (Paid 2:1)`);
+      if (isNum && numVal >= 13 && numVal <= 24 && dozenBets['2nd12']) winningHits.push(`2nd 12 (Paid 2:1)`);
+      if (isNum && numVal >= 25 && numVal <= 36 && dozenBets['3rd12']) winningHits.push(`3rd 12 (Paid 2:1)`);
+      if (color === 'red' && outsideBets.red) winningHits.push(`Red (Paid 1:1)`);
+      if (color === 'black' && outsideBets.black) winningHits.push(`Black (Paid 1:1)`);
+      if (isNum && numVal > 0 && numVal % 2 === 0 && outsideBets.even) winningHits.push(`Even (Paid 1:1)`);
+      if (isNum && numVal > 0 && numVal % 2 !== 0 && outsideBets.odd) winningHits.push(`Odd (Paid 1:1)`);
+      if (isNum && numVal >= 1 && numVal <= 18 && outsideBets.low) winningHits.push(`1-18 Low (Paid 1:1)`);
+      if (isNum && numVal >= 19 && numVal <= 36 && outsideBets.high) winningHits.push(`19-36 High (Paid 1:1)`);
       if (numberBets[winningNumber]) {
         winningHits.push(`Straight Up #${winningNumber} (Paid 35:1)`);
       }
@@ -617,7 +733,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
 
       {/* 3. THE MAIN EMERALD GREEN (OR 24K GOLD KONAMI) TABLE FELT WITH EPT WATERMARK & FINE TEXTURE */}
       <div
-        className={`flex-1 min-h-0 relative w-full rounded-xl sm:rounded-2xl p-1.5 sm:p-4 shadow-[inset_0_0_80px_rgba(0,0,0,0.85)] border-2 overflow-auto ${
+        className={`flex-1 min-h-0 relative w-full rounded-xl sm:rounded-2xl p-1.5 sm:p-4 shadow-[inset_0_0_80px_rgba(0,0,0,0.85)] border-2 overflow-x-auto overflow-y-hidden touch-pan-x overscroll-x-contain select-none scrollbar-thin scrollbar-thumb-white/20 ${
           isHighRoller
             ? 'bg-gradient-to-b from-[#b8860b] via-[#855e06] to-[#422c02] border-[#ffd700] shadow-[inset_0_0_80px_rgba(0,0,0,0.85),0_0_35px_rgba(255,215,0,0.35)]'
             : 'bg-[#0b7a37] border-[#15803d]'
@@ -665,6 +781,64 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
           </div>
         </div>
 
+        {/* Mobile Horizontal Scroll Indicator & Quick Corner Preset Pill */}
+        <div className="flex items-center justify-between gap-2 mb-1.5 z-20 relative">
+          <div className="flex sm:hidden items-center gap-1.5 px-2 py-0.5 rounded-lg bg-black/60 border border-white/20 text-[9px] font-mono text-zinc-300">
+            <span className="text-gold font-black animate-pulse">◀ SWIPE FELT ▶</span>
+            <span className="text-zinc-400">Pinch-Free</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowCornersPreset((prev) => !prev)}
+            className={`px-2 py-0.5 rounded-lg border text-[10px] font-mono font-black uppercase transition flex items-center gap-1 shadow touch-manipulation active:scale-95 ${
+              showCornersPreset || totalCornerBet > 0
+                ? 'bg-amber-400 text-black border-yellow-200 shadow-[0_0_12px_#f59e0b]'
+                : 'bg-black/70 text-amber-300 border-amber-500/40 hover:bg-black/90'
+            }`}
+          >
+            <span>🎯 CORNER WAGERS (8:1)</span>
+            <span className="text-[9px] font-mono">{showCornersPreset ? '▲' : '▼'}</span>
+            {totalCornerBet > 0 && (
+              <span className="ml-1 font-mono font-black text-black bg-white px-1.5 rounded-full text-[8.5px]">
+                £{totalCornerBet}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Quick Corners Preset Drawer */}
+        {showCornersPreset && (
+          <div className="mb-2 p-2 rounded-xl bg-black/90 border border-amber-500/50 shadow-2xl z-30 relative animate-in slide-in-from-top-2 duration-150">
+            <div className="text-[10px] font-mono font-bold text-amber-200 mb-1.5 flex items-center justify-between">
+              <span>Quick Tap Corners (Quads 8:1 Payout):</span>
+              <span className="text-[9px] text-zinc-400">4 numbers per wager</span>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-11 gap-1 max-h-36 overflow-y-auto pr-1">
+              {ROULETTE_CORNERS.map((c) => {
+                const bet = cornerBets[c.id] || 0;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => addCornerBet(c.id)}
+                    className={`p-1.5 rounded-lg border text-[9px] font-mono font-black transition flex flex-col items-center justify-center touch-manipulation active:scale-95 ${
+                      bet > 0
+                        ? 'bg-gradient-to-b from-[#ffd700] to-[#f59e0b] text-black border-white shadow-[0_0_10px_#ffd700]'
+                        : 'bg-zinc-900/90 text-zinc-300 border-zinc-700 hover:border-amber-400'
+                    }`}
+                  >
+                    <span className="truncate max-w-full">{c.numbers.join(',')}</span>
+                    <span className={`text-[8px] mt-0.5 ${bet > 0 ? 'text-black font-black' : 'text-gold'}`}>
+                      {bet > 0 ? `£${bet}` : '8:1'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="min-w-[760px] flex items-stretch gap-3 relative z-10">
           {/* A. LEFT STATS VERTICAL TOWER (Dark rounded capsule pill) */}
           <div className="w-16 rounded-2xl bg-black/90 border-2 border-white/30 p-2 flex flex-col items-center justify-between shrink-0 shadow-2xl">
@@ -707,18 +881,19 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
 
           {/* B. THE ROULETTE FELT GRID (Framed in crisp white casino silkscreen) */}
           <div
-            className={`flex-1 flex flex-col border-2 border-white rounded-2xl p-2 shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)] backdrop-blur-[0.5px] ${
+            className={`flex-1 flex flex-col border-2 border-white rounded-2xl p-2 shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)] backdrop-blur-[0.5px] relative ${
               isHighRoller ? 'bg-[#855e06]/90' : 'bg-[#0d853e]/90'
             }`}
           >
             {/* TOP SECTION: ZEROS (LEFT) + 3x12 NUMBERS (CENTER) + 2 TO 1 (RIGHT) */}
-            <div className="flex items-stretch border-b-2 border-white">
+            <div className="flex items-stretch border-b-2 border-white relative">
               {/* 00 and 0 Left Column */}
               <div className="w-14 sm:w-16 flex flex-col border-r-2 border-white divide-y-2 divide-white shrink-0">
                 {/* 00 (Top half) */}
                 <button
                   type="button"
-                  onPointerDown={() => addNumberBet('00')}
+                  onPointerDown={handlePointerDownTrack}
+                  onPointerUp={(e) => handleTapAction(e, () => addNumberBet('00'))}
                   className={`flex-1 p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation ${
                     numberBets['00'] ? 'bg-emerald-900/60' : ''
                   }`}
@@ -743,7 +918,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                 {/* 0 (Bottom half) */}
                 <button
                   type="button"
-                  onPointerDown={() => addNumberBet(0)}
+                  onPointerDown={handlePointerDownTrack}
+                  onPointerUp={(e) => handleTapAction(e, () => addNumberBet(0))}
                   className={`flex-1 p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation ${
                     numberBets[0] ? 'bg-emerald-900/60' : ''
                   }`}
@@ -766,10 +942,10 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                 </button>
               </div>
 
-              {/* 3 ROWS OF NUMBERS (12 COLUMNS) */}
-              <div className="flex-1 flex flex-col divide-y-2 divide-white">
+              {/* 3 ROWS OF NUMBERS (12 COLUMNS) WITH CORNER INTERSECTION HOTSPOTS */}
+              <div className="flex-1 flex flex-col divide-y-2 divide-white relative">
                 {/* Row 1 (Top): 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36 */}
-                <div className="flex divide-x-2 divide-white">
+                <div className="flex divide-x-2 divide-white relative">
                   {row1.map((num) => {
                     const isRed = RED_NUMS.includes(num);
                     const bet = numberBets[num] || 0;
@@ -778,8 +954,9 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                       <button
                         key={num}
                         type="button"
-                        onPointerDown={() => addNumberBet(num)}
-                        className={`flex-1 p-1.5 sm:p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation ${
+                        onPointerDown={handlePointerDownTrack}
+                        onPointerUp={(e) => handleTapAction(e, () => addNumberBet(num))}
+                        className={`flex-1 p-1.5 sm:p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation min-w-[50px] min-h-[50px] ${
                           bet > 0 ? 'bg-gold/15' : ''
                         }`}
                       >
@@ -810,7 +987,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                 </div>
 
                 {/* Row 2 (Middle): 2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35 */}
-                <div className="flex divide-x-2 divide-white">
+                <div className="flex divide-x-2 divide-white relative">
                   {row2.map((num) => {
                     const isRed = RED_NUMS.includes(num);
                     const bet = numberBets[num] || 0;
@@ -819,8 +996,9 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                       <button
                         key={num}
                         type="button"
-                        onPointerDown={() => addNumberBet(num)}
-                        className={`flex-1 p-1.5 sm:p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation ${
+                        onPointerDown={handlePointerDownTrack}
+                        onPointerUp={(e) => handleTapAction(e, () => addNumberBet(num))}
+                        className={`flex-1 p-1.5 sm:p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation min-w-[50px] min-h-[50px] ${
                           bet > 0 ? 'bg-gold/15' : ''
                         }`}
                       >
@@ -851,7 +1029,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                 </div>
 
                 {/* Row 3 (Bottom): 1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34 */}
-                <div className="flex divide-x-2 divide-white">
+                <div className="flex divide-x-2 divide-white relative">
                   {row3.map((num) => {
                     const isRed = RED_NUMS.includes(num);
                     const bet = numberBets[num] || 0;
@@ -860,8 +1038,9 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                       <button
                         key={num}
                         type="button"
-                        onPointerDown={() => addNumberBet(num)}
-                        className={`flex-1 p-1.5 sm:p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation ${
+                        onPointerDown={handlePointerDownTrack}
+                        onPointerUp={(e) => handleTapAction(e, () => addNumberBet(num))}
+                        className={`flex-1 p-1.5 sm:p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation min-w-[50px] min-h-[50px] ${
                           bet > 0 ? 'bg-gold/15' : ''
                         }`}
                       >
@@ -890,6 +1069,39 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                     );
                   })}
                 </div>
+
+                {/* 22 INTERACTIVE CORNER INTERSECTION HOTSPOTS */}
+                {ROULETTE_CORNERS.map((corner) => {
+                  const bet = cornerBets[corner.id] || 0;
+                  // Position at horizontal column boundary ((colIndex + 1) / 12)
+                  const leftPercent = ((corner.colIndex + 1) / 12) * 100;
+                  // Upper corners sit at the border between row 1 and row 2 (33.33%)
+                  // Lower corners sit at the border between row 2 and row 3 (66.66%)
+                  const topPercent = corner.rowLevel === 'upper' ? 33.33 : 66.66;
+
+                  return (
+                    <button
+                      key={corner.id}
+                      type="button"
+                      title={`${corner.name} (Quad 8:1)`}
+                      onClick={() => addCornerBet(corner.id)}
+                      onPointerDown={handlePointerDownTrack}
+                      onPointerUp={(e) => handleTapAction(e, () => addCornerBet(corner.id))}
+                      className={`absolute -translate-x-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full border flex items-center justify-center transition-all z-20 touch-manipulation shadow-md ${
+                        bet > 0
+                          ? 'bg-amber-400 text-black border-white shadow-[0_0_12px_#ffd700] scale-110'
+                          : 'bg-black/60 text-amber-300 border-amber-400/60 hover:bg-black/90 hover:scale-110 opacity-70 hover:opacity-100'
+                      }`}
+                      style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
+                    >
+                      {bet > 0 ? (
+                        <VegasChipStack amount={bet} size="xs" />
+                      ) : (
+                        <span className="text-[9px] font-black leading-none text-gold">✛</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Right Column: 2 TO 1 (for Row 1, Row 2, Row 3) */}
@@ -898,7 +1110,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                   <button
                     key={col}
                     type="button"
-                    onPointerDown={() => addColumnBet(col)}
+                    onPointerDown={handlePointerDownTrack}
+                    onPointerUp={(e) => handleTapAction(e, () => addColumnBet(col))}
                     className={`flex-1 p-2 flex items-center justify-center text-center font-serif font-black text-white text-xs sm:text-sm tracking-tight leading-tight hover:bg-white/10 transition relative touch-manipulation ${
                       columnBets[col] ? 'bg-gold/20' : ''
                     }`}
@@ -924,7 +1137,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                 <button
                   key={d.id}
                   type="button"
-                  onPointerDown={() => addDozenBet(d.id as '1st12' | '2nd12' | '3rd12')}
+                  onPointerDown={handlePointerDownTrack}
+                  onPointerUp={(e) => handleTapAction(e, () => addDozenBet(d.id as '1st12' | '2nd12' | '3rd12'))}
                   className={`flex-1 py-3 px-2 text-center font-serif font-black text-white text-xs sm:text-sm tracking-widest uppercase hover:bg-white/10 transition relative touch-manipulation ${
                     dozenBets[d.id] ? 'bg-gold/20' : ''
                   }`}
@@ -952,7 +1166,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                 <button
                   key={b.id}
                   type="button"
-                  onPointerDown={() => addOutsideBet(b.id)}
+                  onPointerDown={handlePointerDownTrack}
+                  onPointerUp={(e) => handleTapAction(e, () => addOutsideBet(b.id))}
                   className={`flex-1 py-3 px-2 flex items-center justify-center hover:bg-white/10 transition relative touch-manipulation ${
                     outsideBets[b.id] ? 'bg-gold/20' : ''
                   }`}

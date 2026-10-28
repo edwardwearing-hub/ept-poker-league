@@ -815,7 +815,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
                       return (
                         <div
                           key={rowIdx}
-                          className={`h-16 sm:h-24 md:h-28 flex flex-col items-center justify-center relative transition-transform duration-150 ${
+                          className={`h-14 sm:h-24 md:h-28 flex flex-col items-center justify-center relative transition-transform duration-150 ${
                             isSpinning ? 'blur-[1px] scale-95 opacity-80' : 'scale-100 opacity-100'
                           } ${
                             isWinCell && !isSpinning
@@ -834,7 +834,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
                             {sym.icon}
                           </div>
                           {/* Symbol Name Badge */}
-                          <span className="text-[8px] sm:text-[10px] font-mono font-black text-amber-200 uppercase tracking-tight mt-0.5 sm:mt-1 drop-shadow">
+                          <span className="text-[7px] sm:text-[10px] font-mono font-black text-amber-200 uppercase tracking-tight mt-0.5 sm:mt-1 drop-shadow">
                             {sym.name}
                           </span>
                         </div>
@@ -848,20 +848,20 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
 
           {/* Outcome Message Ribbon */}
           {outcomeMessage && (
-            <div className="mt-3 text-center py-2 px-4 rounded-xl bg-gradient-to-r from-purple-950 via-black to-purple-950 border-2 border-gold text-xs sm:text-sm font-black text-yellow-300 shadow-[0_0_20px_rgba(212,175,55,0.4)] animate-in zoom-in-95 duration-200">
+            <div className="mt-2 sm:mt-3 text-center py-1.5 sm:py-2 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-purple-950 via-black to-purple-950 border-2 border-gold text-xs sm:text-sm font-black text-yellow-300 shadow-[0_0_20px_rgba(212,175,55,0.4)] animate-in zoom-in-95 duration-200">
               {outcomeMessage}
             </div>
           )}
 
           {/* Paytable Quick Reference Strip */}
-          <div className="mt-3 grid grid-cols-4 sm:grid-cols-7 gap-1.5 text-center text-[9px] sm:text-[10px] font-mono font-black text-zinc-300 bg-black/80 p-2 rounded-xl border border-white/10 shadow-inner">
+          <div className="mt-2 sm:mt-3 grid grid-cols-4 sm:grid-cols-7 gap-1 sm:gap-1.5 text-center text-[8px] sm:text-[10px] font-mono font-black text-zinc-300 bg-black/80 p-1.5 sm:p-2 rounded-xl border border-white/10 shadow-inner">
             <div className="hover:text-gold transition">💎 500x</div>
             <div className="hover:text-gold transition">7️⃣ 150x</div>
             <div className="hover:text-gold transition">🔔 60x</div>
             <div className="hover:text-gold transition">👑 40x</div>
-            <div className="hover:text-gold transition">🍇 25x</div>
-            <div className="hover:text-gold transition">🍉 15x</div>
-            <div className="hover:text-gold transition">🍒 10x</div>
+            <div className="hidden sm:block hover:text-gold transition">🍇 25x</div>
+            <div className="hidden sm:block hover:text-gold transition">🍉 15x</div>
+            <div className="hidden sm:block hover:text-gold transition">🍒 10x</div>
           </div>
         </div>
 
@@ -903,23 +903,25 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
       </div>
 
       {/* 5. TACTILE CASINO BUTTON DECK (CONSOLE) */}
-      <div className="shrink-0 mt-auto rounded-xl sm:rounded-2xl p-1.5 sm:p-4 bg-gradient-to-b from-[#2a173d] via-[#1a0c28] to-[#0c0514] border-t-2 border-[#f59e0b]/80 shadow-[0_-8px_20px_rgba(0,0,0,0.8),inset_0_2px_4px_rgba(255,215,0,0.4)] flex flex-wrap items-center justify-between gap-1.5 sm:gap-4 z-20">
-        {/* Left Side: Bet Per Line & Lines Selector */}
-        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+      <div className="shrink-0 mt-auto rounded-xl sm:rounded-2xl p-1.5 sm:p-3 bg-gradient-to-b from-[#2a173d] via-[#1a0c28] to-[#0c0514] border-t-2 border-[#f59e0b]/80 shadow-[0_-8px_20px_rgba(0,0,0,0.8),inset_0_2px_4px_rgba(255,215,0,0.4)] flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-3 z-20">
+        {/* Top Row on mobile / Left Side on desktop: Bet Per Line & Lines Selector */}
+        <div className="flex items-center justify-between w-full sm:w-auto gap-2">
           {/* Bet per line chips */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <span className="text-[10px] uppercase font-bold text-zinc-400">Bet / Line:</span>
-            <VegasChipRack
-              values={[5, 10, 25, 50, 100, 250]}
-              selectedValue={betPerLine}
-              onSelect={setBetPerLine}
-              disabled={isAnySpinning}
-            />
+          <div className="flex items-center gap-1 min-w-0">
+            <span className="text-[9px] sm:text-[10px] uppercase font-bold text-zinc-400 shrink-0">Bet/Line:</span>
+            <div className="overflow-x-auto touch-pan-x no-scrollbar flex items-center py-0.5">
+              <VegasChipRack
+                values={[5, 10, 25, 50, 100, 250]}
+                selectedValue={betPerLine}
+                onSelect={setBetPerLine}
+                disabled={isAnySpinning}
+              />
+            </div>
           </div>
 
           {/* Paylines Selector (1, 3, 5 Lines) */}
-          <div className="flex items-center gap-1.5 bg-black/70 p-1.5 rounded-xl border border-white/10">
-            <span className="text-[10px] uppercase font-bold text-zinc-400 px-1">Lines:</span>
+          <div className="flex items-center gap-1 bg-black/70 p-1 sm:p-1.5 rounded-xl border border-white/10 shrink-0">
+            <span className="text-[9px] sm:text-[10px] uppercase font-bold text-zinc-400 px-0.5 sm:px-1">Lines:</span>
             {[1, 3, 5].map((l) => (
               <button
                 key={l}
@@ -931,7 +933,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
                     setActiveLines(l);
                   }
                 }}
-                className={`px-3 py-1 rounded-lg font-mono font-black text-xs transition touch-manipulation active:scale-95 ${
+                className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg font-mono font-black text-xs transition touch-manipulation active:scale-95 ${
                   activeLines === l
                     ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-[0_0_10px_#c084fc]'
                     : 'bg-white/5 text-zinc-400 hover:text-white'
@@ -943,8 +945,8 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
           </div>
         </div>
 
-        {/* Right Side: TURBO, MAX BET, AUTO SPIN, & BIG JUICY GREEN SPIN BUTTON */}
-        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
+        {/* Bottom Row on mobile / Right Side on desktop: TURBO, MAX BET, AUTO SPIN, & BIG JUICY GREEN SPIN BUTTON */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
           {/* Turbo Toggle */}
           <button
             type="button"
@@ -958,15 +960,15 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
                 triggerHaptic(15);
               }
             }}
-            className={`flex-1 sm:flex-initial px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl border-2 font-black text-xs uppercase tracking-wider transition flex items-center justify-center gap-1.5 text-center touch-manipulation active:scale-95 ${
+            className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl border-2 font-black text-[10px] sm:text-xs uppercase tracking-wider transition flex items-center justify-center gap-1 text-center touch-manipulation active:scale-95 min-h-[40px] ${
               isTurbo
                 ? 'bg-gradient-to-r from-amber-500 to-yellow-500 border-yellow-200 text-black shadow-[0_0_15px_#f59e0b]'
                 : 'bg-white/10 border-white/20 text-zinc-300 hover:text-white'
             }`}
             title="Turbo Spin Mode (High speed mechanical reel spins)"
           >
-            <Zap size={13} className={isTurbo ? 'fill-black' : ''} />
-            <span>{isTurbo ? 'TURBO ON' : 'TURBO'}</span>
+            <Zap size={12} className={isTurbo ? 'fill-black' : ''} />
+            <span>TURBO</span>
           </button>
 
           {/* Max Bet */}
@@ -984,9 +986,9 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
                 setBetPerLine(100);
               }
             }}
-            className="flex-1 sm:flex-initial px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-xs uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4)] active:scale-95 transition disabled:opacity-40 text-center touch-manipulation"
+            className="px-2 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider shadow active:scale-95 transition disabled:opacity-40 text-center touch-manipulation min-h-[40px]"
           >
-            MAX BET
+            MAX
           </button>
 
           {/* Auto Spin */}
@@ -1006,7 +1008,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
                 if (next && !isAnySpinning) handleSpin();
               }
             }}
-            className={`flex-1 sm:flex-initial px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl border-2 font-black text-xs uppercase tracking-wider transition text-center touch-manipulation active:scale-95 ${
+            className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl border-2 font-black text-[10px] sm:text-xs uppercase tracking-wider transition text-center touch-manipulation active:scale-95 min-h-[40px] ${
               autoSpin
                 ? 'bg-red-600 border-white text-white shadow-[0_0_15px_#ef4444] animate-pulse'
                 : 'bg-white/10 border-white/20 text-zinc-300 hover:text-white'
@@ -1026,7 +1028,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
                 handleSpin();
               }
             }}
-            className="flex-[2] sm:flex-initial px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-2xl bg-gradient-to-b from-[#00e676] via-[#00c853] to-[#00873a] border-2 border-[#b9f6ca] text-white font-black text-xs sm:text-base uppercase tracking-widest shadow-[0_6px_20px_rgba(0,200,83,0.6),inset_0_2px_4px_rgba(255,255,255,0.8)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 flex items-center justify-center gap-1.5 sm:gap-2 touch-manipulation"
+            className="flex-1 sm:flex-initial px-4 py-2 sm:px-8 sm:py-3.5 rounded-xl bg-gradient-to-b from-[#00e676] via-[#00c853] to-[#00873a] border-2 border-[#b9f6ca] text-white font-black text-xs sm:text-base uppercase tracking-widest shadow-[0_6px_20px_rgba(0,200,83,0.6),inset_0_2px_4px_rgba(255,255,255,0.8)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 flex items-center justify-center gap-1.5 sm:gap-2 touch-manipulation min-h-[40px]"
             title="Spin (Spacebar)"
           >
             <Sparkles size={16} />

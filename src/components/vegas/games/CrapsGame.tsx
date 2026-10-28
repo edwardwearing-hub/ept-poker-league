@@ -47,6 +47,26 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
   const [splashWin, setSplashWin] = useState<number | null>(null);
   const [splashDetails, setSplashDetails] = useState<{ subtitle?: string; winDetail?: string; badge?: string }>({});
 
+  const pointerStartRef = React.useRef<{ x: number; y: number; time: number } | null>(null);
+
+  const handlePointerDownTrack = (e: React.PointerEvent) => {
+    if (e.button === 0) {
+      pointerStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
+    }
+  };
+
+  const handleTapAction = (e: React.PointerEvent, action: () => void) => {
+    if (e.button !== 0) return;
+    if (pointerStartRef.current) {
+      const dx = Math.abs(e.clientX - pointerStartRef.current.x);
+      const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+      const dt = Date.now() - pointerStartRef.current.time;
+      pointerStartRef.current = null;
+      if (dx > 10 || dy > 10 || dt > 600) return;
+    }
+    action();
+  };
+
   const totalActiveBets = Object.values(bets).reduce((a, b) => a + b, 0);
 
   const addBet = (type: BetType) => {
@@ -485,33 +505,32 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
             ))}
           </div>
 
-          {/* Main Betting Blocks with 3D Chips */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 relative z-10">
+          {/* Main Betting Blocks with 3D Chips (Pass Line, Don't Pass, The Field) */}
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 relative z-10">
             {/* Pass Line */}
             <div
               onClick={() => addBet('pass')}
-              onPointerDown={(e) => {
-                if (e.button === 0) addBet('pass');
-              }}
-              className={`p-4 rounded-xl border-2 cursor-pointer transition select-none touch-manipulation flex flex-col justify-between relative ${
+              onPointerDown={handlePointerDownTrack}
+              onPointerUp={(e) => handleTapAction(e, () => addBet('pass'))}
+              className={`p-2 sm:p-4 rounded-xl border-2 cursor-pointer transition select-none touch-manipulation flex flex-col justify-between relative min-h-[82px] sm:min-h-[115px] ${
                 bets.pass > 0
                   ? 'bg-emerald-950/90 border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.4)]'
                   : 'bg-black/60 border-white/20 hover:border-gold'
               }`}
             >
               <div>
-                <div className="text-xs font-black uppercase tracking-wider text-emerald-300 flex items-center justify-between">
-                  <span>PASS LINE (1:1)</span>
-                  <span className="text-[10px] text-zinc-400">Wins 7/11</span>
+                <div className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-emerald-300 flex items-center justify-between">
+                  <span>PASS (1:1)</span>
+                  <span className="text-[9px] text-zinc-400 hidden sm:inline">Wins 7/11</span>
                 </div>
-                <p className="text-[10px] text-zinc-300 mt-1">
-                  Root for shooter. Wins on Come Out 7/11; wins if Point rolls before 7.
+                <p className="text-[9px] sm:text-[10px] text-zinc-300 mt-0.5 line-clamp-2">
+                  Shooter line. Wins 7/11 Come Out; wins Point before 7.
                 </p>
               </div>
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-xs text-zinc-400">Wager:</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-mono font-black text-gold text-sm">
+              <div className="mt-1.5 sm:mt-3 flex items-center justify-between">
+                <span className="text-[10px] sm:text-xs text-zinc-400">Wager:</span>
+                <div className="flex items-center gap-1">
+                  <span className="font-mono font-black text-gold text-xs sm:text-sm">
                     £{bets.pass.toLocaleString()}
                   </span>
                   {bets.pass > 0 && <VegasChipStack amount={bets.pass} size="xs" />}
@@ -522,28 +541,27 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
             {/* Don't Pass */}
             <div
               onClick={() => addBet('dont-pass')}
-              onPointerDown={(e) => {
-                if (e.button === 0) addBet('dont-pass');
-              }}
-              className={`p-4 rounded-xl border-2 cursor-pointer transition select-none touch-manipulation flex flex-col justify-between relative ${
+              onPointerDown={handlePointerDownTrack}
+              onPointerUp={(e) => handleTapAction(e, () => addBet('dont-pass'))}
+              className={`p-2 sm:p-4 rounded-xl border-2 cursor-pointer transition select-none touch-manipulation flex flex-col justify-between relative min-h-[82px] sm:min-h-[115px] ${
                 bets['dont-pass'] > 0
                   ? 'bg-red-950/90 border-red-400 shadow-[0_0_20px_rgba(239,68,68,0.4)]'
                   : 'bg-black/60 border-white/20 hover:border-gold'
               }`}
             >
               <div>
-                <div className="text-xs font-black uppercase tracking-wider text-red-300 flex items-center justify-between">
-                  <span>DON&apos;T PASS (1:1)</span>
-                  <span className="text-[10px] text-zinc-400">Wins 2/3</span>
+                <div className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-red-300 flex items-center justify-between">
+                  <span>DON&apos;T (1:1)</span>
+                  <span className="text-[9px] text-zinc-400 hidden sm:inline">Wins 2/3</span>
                 </div>
-                <p className="text-[10px] text-zinc-300 mt-1">
-                  The Dark Side. Wins on 2/3 (12 push); wins if 7 rolls before the Point.
+                <p className="text-[9px] sm:text-[10px] text-zinc-300 mt-0.5 line-clamp-2">
+                  Dark side. Wins 2/3 (12 push); wins 7 before Point.
                 </p>
               </div>
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-xs text-zinc-400">Wager:</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-mono font-black text-gold text-sm">
+              <div className="mt-1.5 sm:mt-3 flex items-center justify-between">
+                <span className="text-[10px] sm:text-xs text-zinc-400">Wager:</span>
+                <div className="flex items-center gap-1">
+                  <span className="font-mono font-black text-gold text-xs sm:text-sm">
                     £{bets['dont-pass'].toLocaleString()}
                   </span>
                   {bets['dont-pass'] > 0 && <VegasChipStack amount={bets['dont-pass']} size="xs" />}
@@ -554,28 +572,27 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
             {/* The Field */}
             <div
               onClick={() => addBet('field')}
-              onPointerDown={(e) => {
-                if (e.button === 0) addBet('field');
-              }}
-              className={`p-4 rounded-xl border-2 cursor-pointer transition select-none touch-manipulation flex flex-col justify-between relative ${
+              onPointerDown={handlePointerDownTrack}
+              onPointerUp={(e) => handleTapAction(e, () => addBet('field'))}
+              className={`p-2 sm:p-4 rounded-xl border-2 cursor-pointer transition select-none touch-manipulation flex flex-col justify-between relative min-h-[82px] sm:min-h-[115px] ${
                 bets.field > 0
                   ? 'bg-purple-950/90 border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.4)]'
                   : 'bg-black/60 border-white/20 hover:border-gold'
               }`}
             >
               <div>
-                <div className="text-xs font-black uppercase tracking-wider text-purple-300 flex items-center justify-between">
-                  <span>THE FIELD (1-Roll)</span>
-                  <span className="text-[10px] text-gold font-bold">2=2x • 12=3x</span>
+                <div className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-purple-300 flex items-center justify-between">
+                  <span>FIELD (1-R)</span>
+                  <span className="text-[9px] text-gold font-bold hidden sm:inline">2=2x • 12=3x</span>
                 </div>
-                <p className="text-[10px] text-zinc-300 mt-1">
-                  Wins next roll if 2, 3, 4, 9, 10, 11, or 12 rolls!
+                <p className="text-[9px] sm:text-[10px] text-zinc-300 mt-0.5 line-clamp-2">
+                  Single roll. Wins on 2, 3, 4, 9, 10, 11, or 12!
                 </p>
               </div>
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-xs text-zinc-400">Wager:</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-mono font-black text-gold text-sm">
+              <div className="mt-1.5 sm:mt-3 flex items-center justify-between">
+                <span className="text-[10px] sm:text-xs text-zinc-400">Wager:</span>
+                <div className="flex items-center gap-1">
+                  <span className="font-mono font-black text-gold text-xs sm:text-sm">
                     £{bets.field.toLocaleString()}
                   </span>
                   {bets.field > 0 && <VegasChipStack amount={bets.field} size="xs" />}
@@ -585,21 +602,20 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
           </div>
 
           {/* Center Proposition Bets */}
-          <div className="grid grid-cols-3 gap-2 text-center text-xs relative z-10">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-center text-xs relative z-10">
             <div
               onClick={() => addBet('any7')}
-              onPointerDown={(e) => {
-                if (e.button === 0) addBet('any7');
-              }}
-              className={`p-2.5 rounded-xl border cursor-pointer transition select-none touch-manipulation relative ${
+              onPointerDown={handlePointerDownTrack}
+              onPointerUp={(e) => handleTapAction(e, () => addBet('any7'))}
+              className={`p-2 sm:p-2.5 rounded-xl border cursor-pointer transition select-none touch-manipulation relative min-h-[58px] sm:min-h-[70px] flex flex-col justify-center ${
                 bets.any7 > 0
                   ? 'bg-gold/20 border-gold text-gold font-bold ring-1 ring-gold shadow-[0_0_15px_rgba(212,175,55,0.4)]'
                   : 'bg-black/60 border-white/10 text-zinc-300 hover:border-white/30'
               }`}
             >
-              <div className="font-black text-amber-300">ANY 7 (4:1)</div>
-              <div className="text-[10px] text-zinc-400">Single roll 7</div>
-              <div className="font-mono text-xs font-black text-gold mt-1">£{bets.any7}</div>
+              <div className="font-black text-amber-300 text-[11px] sm:text-xs">ANY 7 (4:1)</div>
+              <div className="text-[9px] text-zinc-400">Single roll 7</div>
+              <div className="font-mono text-[11px] sm:text-xs font-black text-gold mt-0.5">£{bets.any7}</div>
               {bets.any7 > 0 && (
                 <div className="absolute -top-2 right-2">
                   <VegasChipStack amount={bets.any7} size="xs" />
@@ -609,18 +625,17 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
 
             <div
               onClick={() => addBet('hard6')}
-              onPointerDown={(e) => {
-                if (e.button === 0) addBet('hard6');
-              }}
-              className={`p-2.5 rounded-xl border cursor-pointer transition select-none touch-manipulation relative ${
+              onPointerDown={handlePointerDownTrack}
+              onPointerUp={(e) => handleTapAction(e, () => addBet('hard6'))}
+              className={`p-2 sm:p-2.5 rounded-xl border cursor-pointer transition select-none touch-manipulation relative min-h-[58px] sm:min-h-[70px] flex flex-col justify-center ${
                 bets.hard6 > 0
                   ? 'bg-gold/20 border-gold text-gold font-bold ring-1 ring-gold shadow-[0_0_15px_rgba(212,175,55,0.4)]'
                   : 'bg-black/60 border-white/10 text-zinc-300 hover:border-white/30'
               }`}
             >
-              <div className="font-black text-emerald-300">HARD 6 (9:1)</div>
-              <div className="text-[10px] text-zinc-400">Pair of 3s (⚂⚂)</div>
-              <div className="font-mono text-xs font-black text-gold mt-1">£{bets.hard6}</div>
+              <div className="font-black text-emerald-300 text-[11px] sm:text-xs">HARD 6 (9:1)</div>
+              <div className="text-[9px] text-zinc-400">Pair of 3s (⚂⚂)</div>
+              <div className="font-mono text-[11px] sm:text-xs font-black text-gold mt-0.5">£{bets.hard6}</div>
               {bets.hard6 > 0 && (
                 <div className="absolute -top-2 right-2">
                   <VegasChipStack amount={bets.hard6} size="xs" />
@@ -630,18 +645,17 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
 
             <div
               onClick={() => addBet('hard8')}
-              onPointerDown={(e) => {
-                if (e.button === 0) addBet('hard8');
-              }}
-              className={`p-2.5 rounded-xl border cursor-pointer transition select-none touch-manipulation relative ${
+              onPointerDown={handlePointerDownTrack}
+              onPointerUp={(e) => handleTapAction(e, () => addBet('hard8'))}
+              className={`p-2 sm:p-2.5 rounded-xl border cursor-pointer transition select-none touch-manipulation relative min-h-[58px] sm:min-h-[70px] flex flex-col justify-center ${
                 bets.hard8 > 0
                   ? 'bg-gold/20 border-gold text-gold font-bold ring-1 ring-gold shadow-[0_0_15px_rgba(212,175,55,0.4)]'
                   : 'bg-black/60 border-white/10 text-zinc-300 hover:border-white/30'
               }`}
             >
-              <div className="font-black text-emerald-300">HARD 8 (9:1)</div>
-              <div className="text-[10px] text-zinc-400">Pair of 4s (⚃⚃)</div>
-              <div className="font-mono text-xs font-black text-gold mt-1">£{bets.hard8}</div>
+              <div className="font-black text-emerald-300 text-[11px] sm:text-xs">HARD 8 (9:1)</div>
+              <div className="text-[9px] text-zinc-400">Pair of 4s (⚃⚃)</div>
+              <div className="font-mono text-[11px] sm:text-xs font-black text-gold mt-0.5">£{bets.hard8}</div>
               {bets.hard8 > 0 && (
                 <div className="absolute -top-2 right-2">
                   <VegasChipStack amount={bets.hard8} size="xs" />

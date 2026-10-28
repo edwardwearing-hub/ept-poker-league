@@ -212,7 +212,7 @@ export default function Vegas3DTableArena({
               </div>
 
               {/* Children (Game Specific Cards, Bets, Dice, Wheels, etc.) */}
-              <div className="relative z-10 flex-1 min-h-0 flex flex-col justify-between py-1 sm:py-2 overflow-hidden">
+              <div className="relative z-10 flex-1 min-h-0 flex flex-col justify-between py-1 sm:py-2 overflow-y-auto overflow-x-hidden touch-pan-y overscroll-y-contain scrollbar-thin scrollbar-thumb-white/20">
                 {children}
               </div>
             </div>
