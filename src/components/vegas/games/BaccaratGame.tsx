@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { HelpCircle, RotateCcw, Sparkles, Trophy, Brain } from 'lucide-react';
+import { HelpCircle, RotateCcw, Sparkles, Trophy, Brain, ChevronLeft } from 'lucide-react';
 import VegasCard, { CardModel } from '../VegasCard';
 import VegasAiDealer from '../VegasAiDealer';
 import { VegasChipRack, VegasChipStack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
+import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playCardSound, playChipSound, playWinSound } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getBaccaratAdvice } from '@/lib/vegas/VegasStrategyEngine';
@@ -16,6 +17,7 @@ interface Props {
   bankroll: number;
   onUpdateBankroll: (delta: number) => void;
   onOpenTutorial: () => void;
+  onBackToFloor?: () => void;
 }
 
 const SUITS: CardModel['suit'][] = ['♠', '♥', '♦', '♣'];
@@ -45,8 +47,9 @@ function calculateBaccaratHand(cards: CardModel[]): number {
 
 type BaccaratBet = 'player' | 'banker' | 'tie' | 'player-pair' | 'banker-pair';
 
-export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutorial }: Props) {
+export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutorial, onBackToFloor }: Props) {
   const [selectedChip, setSelectedChip] = useState(25);
+  const [showGuideOdds, setShowGuideOdds] = useState(false);
   const [bets, setBets] = useState<Record<BaccaratBet, number>>({
     player: 50,
     banker: 0,
@@ -298,23 +301,60 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
       />
 
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
-              High-Roller Classic
-            </span>
-            <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">House Edge: 1.06% (Banker)</span>
+      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 border-b border-white/10 pb-1.5 mb-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {onBackToFloor ? (
+            <button
+              type="button"
+              onClick={onBackToFloor}
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition active:scale-95 shrink-0"
+              title="Return to Casino Floor"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </button>
+          ) : (
+            <Link
+              href="/vegas"
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition shrink-0"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </Link>
+          )}
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
+                High-Roller Classic
+              </span>
+              <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">House Edge: 1.06% (Banker)</span>
+            </div>
+            <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1 mt-0.5 truncate">
+              <span>Baccarat (Punto Banco)</span>
+              <span className="text-[9px] font-mono font-bold text-gold px-1.5 py-0.2 rounded bg-gold/15 border border-gold/30">
+                Target 9 Points
+              </span>
+            </h3>
           </div>
-          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
-            <span>Baccarat (Punto Banco)</span>
-            <span className="text-[9px] font-mono font-bold text-gold px-1.5 py-0.2 rounded bg-gold/15 border border-gold/30">
-              Target 9 Points
-            </span>
-          </h3>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* Slide-over Guide & Odds Advisor Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowGuideOdds(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 border border-emerald-400/50 text-emerald-300 hover:text-white text-[10px] font-black uppercase tracking-wider transition shadow active:scale-95"
+            title="Open Sarah's Croupier Chat & Baccarat Odds Advisor"
+          >
+            <Brain size={12} className="text-emerald-400 shrink-0" />
+            <span className="hidden xs:inline">GUIDE / ODDS</span>
+            <span className="xs:hidden">ODDS</span>
+            <span className="ml-0.5 px-1 py-0.2 rounded bg-red-500/40 border border-red-400 text-white text-[9px] font-mono font-black animate-pulse">
+              {getBaccaratAdvice().action}
+            </span>
+          </button>
+
           <Link
             href="/academy?tab=leaderboard&discipline=blackjack"
             className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-[10px] font-black uppercase tracking-wider transition shadow"
@@ -329,14 +369,13 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
             className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition"
           >
             <HelpCircle size={12} className="text-gold" />
-            <span className="hidden sm:inline">Rules & Tutorial</span>
-            <span className="sm:hidden">Rules</span>
+            <span className="hidden sm:inline">Rules</span>
           </button>
         </div>
       </div>
 
-      {/* AI Glamorous Dealer Sarah Header */}
-      <div className="shrink-0 mb-1">
+      {/* AI Glamorous Dealer Sarah Header (Visible on desktop; collapsed into slide-over drawer on mobile) */}
+      <div className="shrink-0 mb-1 hidden md:block">
         <VegasAiDealer
           dialogue={dealerDialogue}
           gameTitle="Baccarat"
@@ -344,8 +383,8 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
         />
       </div>
 
-      {/* Live Baccarat Strategy Coach Advice HUD */}
-      <div className="shrink-0 bg-gradient-to-r from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 p-2 sm:p-3 rounded-xl flex items-center justify-between gap-2 text-xs shadow-lg mb-1">
+      {/* Live Baccarat Strategy Coach Advice HUD (Visible on desktop; collapsed into slide-over drawer on mobile) */}
+      <div className="shrink-0 hidden md:flex bg-gradient-to-r from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 p-2 sm:p-3 rounded-xl items-center justify-between gap-2 text-xs shadow-lg mb-1">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shrink-0">
             <Brain size={14} />
@@ -624,6 +663,25 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
           </button>
         </div>
       </div>
+
+      {/* Slide-Over Guide & Odds Advisor Drawer */}
+      <VegasGuideOddsDrawer
+        isOpen={showGuideOdds}
+        onClose={() => setShowGuideOdds(false)}
+        gameTitle="Baccarat (Punto Banco)"
+        dealerDialogue={dealerDialogue}
+        dealerStatus={dealing ? 'Dealing Tableau' : 'Awaiting Wager'}
+        advisorTitle="Baccarat Low House-Edge Strategy"
+        recommendation={getBaccaratAdvice().action}
+        recommendationHeadline={getBaccaratAdvice().headline}
+        recommendationExplanation="Banker is statistically the optimal bet in the casino, winning 50.68% of non-tie hands with only a 1.06% house edge (including 5% commission). Tie bets have a 14.36% house edge and should be avoided."
+        rulesSummary={[
+          { label: 'Banker Bet Edge', value: '1.06% (5% commission on win)', highlight: true },
+          { label: 'Player Bet Edge', value: '1.24% (1:1 even money payout)', highlight: true },
+          { label: 'Tie Bet Edge', value: '14.36% (High house edge trap)', highlight: false },
+          { label: 'Winning Hand', value: 'Closest total to 9 points' },
+        ]}
+      />
     </div>
   );
 }

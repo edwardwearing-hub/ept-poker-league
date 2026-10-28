@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { HelpCircle, Trophy, Sparkles, Plus, Check, Trash2, ArrowRight } from 'lucide-react';
+import { HelpCircle, Trophy, Sparkles, Plus, Check, Trash2, ArrowRight, ChevronLeft } from 'lucide-react';
 import { VegasChipRack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import { playChipSound, playWinSound } from '@/lib/vegas/VegasAudio';
@@ -12,6 +12,7 @@ interface Props {
   bankroll: number;
   onUpdateBankroll: (delta: number) => void;
   onOpenTutorial: () => void;
+  onBackToFloor?: () => void;
 }
 
 interface Fixture {
@@ -93,7 +94,7 @@ interface BetSelection {
   outcomeType: 'home' | 'draw' | 'away' | 'over' | 'under';
 }
 
-export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutorial }: Props) {
+export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutorial, onBackToFloor }: Props) {
   const [fixtures, setFixtures] = useState<Fixture[]>(DEFAULT_FIXTURES);
   const [betSlip, setBetSlip] = useState<BetSelection[]>([]);
   const [stake, setStake] = useState(25);
@@ -321,21 +322,43 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
       />
 
       {/* Header with Stadium LED Ticker */}
-      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1 relative z-10">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-black uppercase tracking-widest flex items-center gap-1 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-              Westgate SuperBook™
-            </span>
-            <span className="text-emerald-400 text-[10px] font-mono font-bold hidden sm:inline">4K LED Wall</span>
+      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 border-b border-white/10 pb-1.5 mb-1 relative z-10">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {onBackToFloor ? (
+            <button
+              type="button"
+              onClick={onBackToFloor}
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition active:scale-95 shrink-0"
+              title="Return to Casino Floor"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </button>
+          ) : (
+            <Link
+              href="/vegas"
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition shrink-0"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </Link>
+          )}
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-black uppercase tracking-widest flex items-center gap-1 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                Westgate SuperBook™
+              </span>
+              <span className="text-emerald-400 text-[10px] font-mono font-bold hidden sm:inline">4K LED Wall</span>
+            </div>
+            <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1 mt-0.5 truncate">
+              <span>VIP Sportsbook Lounge</span>
+              <span className="text-[9px] font-mono font-bold text-amber-300 px-1.5 py-0.2 rounded bg-amber-400/10 border border-amber-400/30">
+                Parlay Boosts
+              </span>
+            </h3>
           </div>
-          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
-            <span>VIP Sportsbook Lounge</span>
-            <span className="text-[9px] font-mono font-bold text-amber-300 px-1.5 py-0.2 rounded bg-amber-400/10 border border-amber-400/30">
-              Parlay Boosts
-            </span>
-          </h3>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">

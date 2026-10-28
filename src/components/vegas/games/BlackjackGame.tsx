@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { HelpCircle, Play, RotateCcw, Sparkles, Trophy, Brain } from 'lucide-react';
+import { HelpCircle, Play, RotateCcw, Sparkles, Trophy, Brain, ChevronLeft } from 'lucide-react';
 import VegasCard, { CardModel } from '../VegasCard';
 import VegasAiDealer from '../VegasAiDealer';
+import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { VegasChipRack, VegasChipStack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
@@ -16,6 +17,7 @@ interface Props {
   bankroll: number;
   onUpdateBankroll: (delta: number) => void;
   onOpenTutorial: () => void;
+  onBackToFloor?: () => void;
 }
 
 const SUITS: CardModel['suit'][] = ['♠', '♥', '♦', '♣'];
@@ -65,7 +67,7 @@ function calculateHandValue(cards: CardModel[]): { total: number; isSoft: boolea
   return { total, isSoft, isBust, isBlackjack };
 }
 
-export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutorial }: Props) {
+export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutorial, onBackToFloor }: Props) {
   const [shoe, setShoe] = useState<CardModel[]>(() => createShoe(4));
   const [bet, setBet] = useState(25);
   const [activeWager, setActiveWager] = useState(25);
@@ -83,9 +85,14 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
     winDetail?: string;
     badge?: string;
   }>({});
+  const [showGuideOdds, setShowGuideOdds] = useState(false);
 
   const playerHand = calculateHandValue(playerCards);
   const fullDealerHand = calculateHandValue(dealerCards);
+  const advice =
+    gameState === 'player-turn' && playerCards.length >= 2 && dealerCards.length >= 1
+      ? getBlackjackAdvice(playerCards, dealerCards[0])
+      : null;
 
   // Deal starting hands with realistic audio and sequential animation
   const handleDeal = () => {
@@ -334,23 +341,62 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
       />
 
       {/* Top Header & Rule Shortcut */}
-      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
-              Blackjack 21
-            </span>
-            <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">House Edge: ~0.5%</span>
+      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 border-b border-white/10 pb-1.5 mb-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {onBackToFloor ? (
+            <button
+              type="button"
+              onClick={onBackToFloor}
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition active:scale-95 shrink-0"
+              title="Return to Casino Floor"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </button>
+          ) : (
+            <Link
+              href="/vegas"
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition shrink-0"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </Link>
+          )}
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
+                Blackjack 21
+              </span>
+              <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">House Edge: ~0.5%</span>
+            </div>
+            <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1 mt-0.5 truncate">
+              <span>Vegas Strip</span>
+              <span className="text-[9px] font-mono font-bold text-gold px-1.5 py-0.2 rounded bg-gold/15 border border-gold/30">
+                3:2 Natural
+              </span>
+            </h3>
           </div>
-          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
-            <span>Vegas Strip</span>
-            <span className="text-[9px] font-mono font-bold text-gold px-1.5 py-0.2 rounded bg-gold/15 border border-gold/30">
-              3:2 Natural
-            </span>
-          </h3>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* Slide-over Guide & Odds Advisor Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowGuideOdds(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 border border-emerald-400/50 text-emerald-300 hover:text-white text-[10px] font-black uppercase tracking-wider transition shadow active:scale-95"
+            title="Open Sarah's Croupier Chat & Live Strategy Coach"
+          >
+            <Brain size={12} className="text-emerald-400 shrink-0" />
+            <span className="hidden xs:inline">GUIDE / ODDS</span>
+            <span className="xs:hidden">ODDS</span>
+            {advice && (
+              <span className="ml-0.5 px-1 py-0.2 rounded bg-emerald-500/40 border border-emerald-300 text-white text-[9px] font-mono font-black animate-pulse">
+                {advice.action}
+              </span>
+            )}
+          </button>
+
           <Link
             href="/academy?tab=leaderboard&discipline=blackjack"
             className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-[10px] font-black uppercase tracking-wider transition shadow"
@@ -365,14 +411,13 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
             className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition"
           >
             <HelpCircle size={12} className="text-gold" />
-            <span className="hidden sm:inline">Rules & Tutorial</span>
-            <span className="sm:hidden">Rules</span>
+            <span className="hidden sm:inline">Rules</span>
           </button>
         </div>
       </div>
 
-      {/* AI Glamorous Dealer Sarah Header (Compact on mobile) */}
-      <div className="shrink-0">
+      {/* AI Glamorous Dealer Sarah Header (Visible on desktop; collapsed into slide-over drawer on mobile) */}
+      <div className="shrink-0 hidden md:block">
         <VegasAiDealer
           dialogue={dealerDialogue}
           gameTitle="Blackjack"
@@ -386,9 +431,9 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
         />
       </div>
 
-      {/* Live Basic Strategy Coach Advice HUD */}
-      {gameState === 'player-turn' && playerCards.length >= 2 && dealerCards.length >= 1 && (
-        <div className="shrink-0 bg-gradient-to-r from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 p-1.5 sm:p-2.5 rounded-xl flex items-center justify-between gap-2 text-[10px] sm:text-xs shadow-md">
+      {/* Live Basic Strategy Coach Advice HUD (Visible on desktop; collapsed into slide-over drawer on mobile) */}
+      {advice && (
+        <div className="shrink-0 hidden md:flex bg-gradient-to-r from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 p-1.5 sm:p-2.5 rounded-xl items-center justify-between gap-2 text-[10px] sm:text-xs shadow-md">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
               <Brain size={13} />
@@ -399,19 +444,14 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
                   Basic Strategy Advisor
                 </span>
               </div>
-              {(() => {
-                const adv = getBlackjackAdvice(playerCards, dealerCards[0]);
-                return (
-                  <div className="font-bold text-white text-[10px] sm:text-xs truncate">
-                    {adv.headline} — {adv.explanation}
-                  </div>
-                );
-              })()}
+              <div className="font-bold text-white text-[10px] sm:text-xs truncate">
+                {advice.headline} — {advice.explanation}
+              </div>
             </div>
           </div>
           <div className="shrink-0">
             <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 font-black text-[10px] font-mono">
-              REC: {getBlackjackAdvice(playerCards, dealerCards[0]).action}
+              REC: {advice.action}
             </span>
           </div>
         </div>
@@ -566,6 +606,31 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
           )}
         </div>
       </div>
+
+      {/* Slide-Over Guide & Odds Advisor Drawer */}
+      <VegasGuideOddsDrawer
+        isOpen={showGuideOdds}
+        onClose={() => setShowGuideOdds(false)}
+        gameTitle="Blackjack 21"
+        dealerDialogue={dealerDialogue}
+        dealerStatus={
+          gameState === 'betting'
+            ? 'Awaiting Wager'
+            : gameState === 'player-turn'
+            ? 'Player Decision'
+            : 'Settling Hand'
+        }
+        advisorTitle="Basic Strategy Coach"
+        recommendation={advice?.action}
+        recommendationHeadline={advice?.headline}
+        recommendationExplanation={advice?.explanation}
+        rulesSummary={[
+          { label: 'Blackjack Payout', value: '3 to 2', highlight: true },
+          { label: 'Dealer Stands On', value: 'All 17s (Soft & Hard)' },
+          { label: 'House Edge', value: '~0.50% (Basic Strategy)', highlight: true },
+          { label: 'Insurance Bet', value: '7.4% Edge (Avoid)' },
+        ]}
+      />
     </div>
   );
 }

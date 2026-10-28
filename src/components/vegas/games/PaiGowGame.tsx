@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { HelpCircle, Play, RotateCcw, Sparkles, Wand2, Trophy, Brain } from 'lucide-react';
+import { HelpCircle, Play, RotateCcw, Sparkles, Wand2, Trophy, Brain, ChevronLeft } from 'lucide-react';
 import VegasCard, { CardModel } from '../VegasCard';
 import VegasAiDealer from '../VegasAiDealer';
 import { VegasChipRack, VegasChipStack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
+import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playCardSound, playChipSound, playWinSound } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 
@@ -15,6 +16,7 @@ interface Props {
   bankroll: number;
   onUpdateBankroll: (delta: number) => void;
   onOpenTutorial: () => void;
+  onBackToFloor?: () => void;
 }
 
 const SUITS: CardModel['suit'][] = ['♠', '♥', '♦', '♣'];
@@ -117,8 +119,9 @@ function houseWaySplit(sevenCards: CardModel[]): { high: CardModel[]; low: CardM
   return { high, low };
 }
 
-export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial }: Props) {
+export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial, onBackToFloor }: Props) {
   const [bet, setBet] = useState(25);
+  const [showGuideOdds, setShowGuideOdds] = useState(false);
   const [allPlayerCards, setAllPlayerCards] = useState<CardModel[]>([]);
   const [highCards, setHighCards] = useState<CardModel[]>([]);
   const [lowCards, setLowCards] = useState<CardModel[]>([]);
@@ -280,23 +283,62 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
       />
 
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
-              Asian/Vegas Classic
-            </span>
-            <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">41% Push Rate</span>
+      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 border-b border-white/10 pb-1.5 mb-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {onBackToFloor ? (
+            <button
+              type="button"
+              onClick={onBackToFloor}
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition active:scale-95 shrink-0"
+              title="Return to Casino Floor"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </button>
+          ) : (
+            <Link
+              href="/vegas"
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition shrink-0"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </Link>
+          )}
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
+                Asian/Vegas Classic
+              </span>
+              <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">41% Push Rate</span>
+            </div>
+            <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1 mt-0.5 truncate">
+              <span>Pai Gow Poker</span>
+              <span className="text-[9px] font-mono font-bold text-teal-300 px-1.5 py-0.2 rounded bg-teal-500/20 border border-teal-500/40">
+                5 High / 2 Low
+              </span>
+            </h3>
           </div>
-          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
-            <span>Pai Gow Poker</span>
-            <span className="text-[9px] font-mono font-bold text-teal-300 px-1.5 py-0.2 rounded bg-teal-500/20 border border-teal-500/40">
-              5 High / 2 Low
-            </span>
-          </h3>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* Slide-over Guide & Odds Advisor Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowGuideOdds(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gradient-to-r from-teal-500/20 to-emerald-500/20 hover:from-teal-500/30 border border-teal-400/50 text-teal-300 hover:text-white text-[10px] font-black uppercase tracking-wider transition shadow active:scale-95"
+            title="Open Sarah's Croupier Chat & Pai Gow House Way Advisor"
+          >
+            <Brain size={12} className="text-teal-400 shrink-0" />
+            <span className="hidden xs:inline">GUIDE / ODDS</span>
+            <span className="xs:hidden">ODDS</span>
+            {step === 'setting' && (
+              <span className="ml-0.5 px-1 py-0.2 rounded bg-teal-500/40 border border-teal-300 text-white text-[9px] font-mono font-black animate-pulse">
+                BALANCED
+              </span>
+            )}
+          </button>
+
           <Link
             href="/academy?tab=leaderboard&discipline=blackjack"
             className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-[10px] font-bold text-gold transition"
@@ -309,14 +351,13 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
             className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition"
           >
             <HelpCircle size={12} className="text-gold" />
-            <span className="hidden sm:inline">Rules & Tutorial</span>
-            <span className="sm:hidden">Rules</span>
+            <span className="hidden sm:inline">Rules</span>
           </button>
         </div>
       </div>
 
-      {/* AI Dealer Sarah */}
-      <div className="shrink-0 mb-1">
+      {/* AI Dealer Sarah (Visible on desktop; collapsed into slide-over drawer on mobile) */}
+      <div className="shrink-0 mb-1 hidden md:block">
         <VegasAiDealer
           dialogue={dealerDialogue}
           gameTitle="Pai Gow Poker"
@@ -330,9 +371,9 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
         />
       </div>
 
-      {/* Live Pai Gow House Way Strategy Advisor HUD */}
+      {/* Live Pai Gow House Way Strategy Advisor HUD (Visible on desktop; collapsed into slide-over drawer on mobile) */}
       {step === 'setting' && (
-        <div className="shrink-0 bg-gradient-to-r from-teal-950/80 via-black to-zinc-950 border border-teal-500/40 p-1.5 sm:p-2.5 rounded-xl flex items-center justify-between gap-2 text-xs shadow-lg mb-1">
+        <div className="shrink-0 hidden md:flex bg-gradient-to-r from-teal-950/80 via-black to-zinc-950 border border-teal-500/40 p-1.5 sm:p-2.5 rounded-xl items-center justify-between gap-2 text-xs shadow-lg mb-1">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-teal-500/20 border border-teal-400/40 flex items-center justify-center text-teal-300 shrink-0">
               <Brain size={14} />
@@ -495,6 +536,31 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial 
           )}
         </div>
       </div>
+
+      {/* Slide-Over Guide & Odds Advisor Drawer */}
+      <VegasGuideOddsDrawer
+        isOpen={showGuideOdds}
+        onClose={() => setShowGuideOdds(false)}
+        gameTitle="Pai Gow Poker"
+        dealerDialogue={dealerDialogue}
+        dealerStatus={
+          step === 'betting'
+            ? 'Awaiting Wager'
+            : step === 'setting'
+            ? 'Splitting 5 & 2 Hands'
+            : 'Settling Hand'
+        }
+        advisorTitle="House Way Strategy & Split Defense"
+        recommendation={step === 'setting' ? 'HOUSE WAY (BALANCED)' : null}
+        recommendationHeadline="Preserve Low Hand While Protecting High Hand"
+        recommendationExplanation="Pai Gow Poker is a defensive game where ~41% of all hands result in a push (tie). The official House Way method creates the strongest possible 2-card Low Hand without fouling (the 5-card High Hand must always rank higher than the 2-card Low Hand)."
+        rulesSummary={[
+          { label: 'Push Rate', value: '~41.5% of hands tie (stake returned)', highlight: true },
+          { label: 'Foul Condition', value: 'High hand must strictly beat Low hand' },
+          { label: 'Dealer Advantage', value: 'Dealer wins exact copy ties (2.84% edge)' },
+          { label: 'Hand Split', value: '5 cards high, 2 cards low' },
+        ]}
+      />
     </div>
   );
 }

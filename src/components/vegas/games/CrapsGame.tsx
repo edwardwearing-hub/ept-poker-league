@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { HelpCircle, RotateCcw, Dices, Sparkles, Trophy, Brain } from 'lucide-react';
+import { HelpCircle, RotateCcw, Dices, Sparkles, Trophy, Brain, ChevronLeft } from 'lucide-react';
 import VegasAiDealer from '../VegasAiDealer';
 import CrapsDiceVisual from '../CrapsDiceVisual';
 import { VegasChipRack, VegasChipStack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
+import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playChipSound, playDiceSound, playWinSound } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getCrapsAdvice } from '@/lib/vegas/VegasStrategyEngine';
@@ -16,14 +17,16 @@ interface Props {
   bankroll: number;
   onUpdateBankroll: (delta: number) => void;
   onOpenTutorial: () => void;
+  onBackToFloor?: () => void;
 }
 
 type BetType = 'pass' | 'dont-pass' | 'field' | 'any7' | 'hard6' | 'hard8';
 
-export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }: Props) {
+export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, onBackToFloor }: Props) {
   const [point, setPoint] = useState<number | null>(null);
   const [dice, setDice] = useState<[number, number]>([3, 4]);
   const [rolling, setRolling] = useState(false);
+  const [showGuideOdds, setShowGuideOdds] = useState(false);
   const [bets, setBets] = useState<Record<BetType, number>>({
     pass: 25,
     'dont-pass': 0,
@@ -284,23 +287,60 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
       />
 
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
-              Vegas Strip Dice
-            </span>
-            <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">Near Zero Edge with Odds</span>
+      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 border-b border-white/10 pb-1.5 mb-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {onBackToFloor ? (
+            <button
+              type="button"
+              onClick={onBackToFloor}
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition active:scale-95 shrink-0"
+              title="Return to Casino Floor"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </button>
+          ) : (
+            <Link
+              href="/vegas"
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition shrink-0"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </Link>
+          )}
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
+                Vegas Strip Dice
+              </span>
+              <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">Near Zero Edge with Odds</span>
+            </div>
+            <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1 mt-0.5 truncate">
+              <span>Las Vegas Craps</span>
+              <span className="text-[9px] font-mono font-bold text-gold px-1.5 py-0.2 rounded bg-gold/15 border border-gold/30">
+                Pass & Don&apos;t Pass
+              </span>
+            </h3>
           </div>
-          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
-            <span>Las Vegas Craps</span>
-            <span className="text-[9px] font-mono font-bold text-gold px-1.5 py-0.2 rounded bg-gold/15 border border-gold/30">
-              Pass & Don&apos;t Pass
-            </span>
-          </h3>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* Slide-over Guide & Odds Advisor Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowGuideOdds(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 border border-emerald-400/50 text-emerald-300 hover:text-white text-[10px] font-black uppercase tracking-wider transition shadow active:scale-95"
+            title="Open Sarah's Croupier Chat & Craps Odds Advisor"
+          >
+            <Brain size={12} className="text-emerald-400 shrink-0" />
+            <span className="hidden xs:inline">GUIDE / ODDS</span>
+            <span className="xs:hidden">ODDS</span>
+            <span className="ml-0.5 px-1 py-0.2 rounded bg-emerald-500/40 border border-emerald-300 text-white text-[9px] font-mono font-black animate-pulse">
+              {getCrapsAdvice(point).action}
+            </span>
+          </button>
+
           <Link
             href="/academy?tab=leaderboard&discipline=roulette-craps"
             className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold text-[10px] font-black uppercase tracking-wider transition shadow"
@@ -315,14 +355,13 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
             className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition"
           >
             <HelpCircle size={12} className="text-gold" />
-            <span className="hidden sm:inline">Rules & Tutorial</span>
-            <span className="sm:hidden">Rules</span>
+            <span className="hidden sm:inline">Rules</span>
           </button>
         </div>
       </div>
 
-      {/* AI Glamorous Dealer Sarah Header */}
-      <div className="shrink-0 mb-1">
+      {/* AI Glamorous Dealer Sarah Header (Visible on desktop; collapsed into slide-over drawer on mobile) */}
+      <div className="shrink-0 mb-1 hidden md:block">
         <VegasAiDealer
           dialogue={dealerDialogue}
           gameTitle="Craps"
@@ -330,8 +369,8 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
         />
       </div>
 
-      {/* Live Craps Strategy Coach Advice HUD */}
-      <div className="shrink-0 bg-gradient-to-r from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 p-2 sm:p-3 rounded-xl flex items-center justify-between gap-2 text-xs shadow-lg mb-1">
+      {/* Live Craps Strategy Coach Advice HUD (Visible on desktop; collapsed into slide-over drawer on mobile) */}
+      <div className="shrink-0 hidden md:flex bg-gradient-to-r from-emerald-950/80 via-black to-zinc-950 border border-emerald-500/40 p-2 sm:p-3 rounded-xl items-center justify-between gap-2 text-xs shadow-lg mb-1">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
             <Brain size={14} />
@@ -637,6 +676,25 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial }
           </button>
         </div>
       </div>
+
+      {/* Slide-Over Guide & Odds Advisor Drawer */}
+      <VegasGuideOddsDrawer
+        isOpen={showGuideOdds}
+        onClose={() => setShowGuideOdds(false)}
+        gameTitle="Las Vegas Craps"
+        dealerDialogue={dealerDialogue}
+        dealerStatus={point === null ? 'Come Out Roll' : `Point is ${point}`}
+        advisorTitle="Zero Edge Craps Odds Advisor"
+        recommendation={getCrapsAdvice(point).action}
+        recommendationHeadline={getCrapsAdvice(point).headline}
+        recommendationExplanation="Pass Line and Don't Pass bets carry minimal house edge (~1.41% and 1.36%). Once a Point is established, taking True Odds behind your bet has a true 0.00% statistical house edge."
+        rulesSummary={[
+          { label: 'Pass Line Edge', value: '1.41% (Low Variance)', highlight: true },
+          { label: "Don't Pass Edge", value: '1.36% (Lowest Line Bet)', highlight: true },
+          { label: 'Free True Odds', value: '0.00% Edge (True Mathematical Odds)', highlight: true },
+          { label: 'Proposition Bets (Any 7)', value: '16.67% Edge (Avoid)', highlight: false },
+        ]}
+      />
     </div>
   );
 }

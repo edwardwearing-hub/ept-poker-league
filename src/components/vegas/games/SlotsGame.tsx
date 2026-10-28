@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Sparkles, HelpCircle, Trophy, Volume2, VolumeX, Mic, MicOff, MessageSquare, Zap, Play, RotateCcw } from 'lucide-react';
+import { Sparkles, HelpCircle, Trophy, Volume2, VolumeX, Mic, MicOff, MessageSquare, Zap, Play, RotateCcw, Brain, ChevronLeft } from 'lucide-react';
 import { VegasChipRack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
+import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playSlotTick, playSlotStop, playWinSound, playJackpotSound, isSoundEnabled, setSoundEnabled } from '@/lib/vegas/VegasAudio';
 import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
@@ -16,6 +17,7 @@ interface Props {
   onUpdateBankroll: (delta: number) => void;
   onOpenTutorial: () => void;
   onSwitchToPubFruity?: () => void;
+  onBackToFloor?: () => void;
 }
 
 
@@ -112,11 +114,12 @@ interface WinningLine {
   multiplier: number;
 }
 
-export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, onSwitchToPubFruity }: Props) {
+export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, onSwitchToPubFruity, onBackToFloor }: Props) {
   // Bet configuration
   const [betPerLine, setBetPerLine] = useState<number>(25);
   const [activeLines, setActiveLines] = useState<number>(3); // 1 = Center, 3 = Horizontal rows, 5 = All (inc diagonals)
   const totalBet = betPerLine * activeLines;
+  const [showGuideOdds, setShowGuideOdds] = useState(false);
 
   // 3 Reels × 3 Rows Matrix: grid[col][row] where col in 0..2, row in 0..2 (0=top, 1=center, 2=bottom)
   const [reelGrid, setReelGrid] = useState<SlotSymbol[][]>([
@@ -522,12 +525,33 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
       />
 
       {/* 1. TOP HUD STATUS BAR */}
-      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-2 rounded-xl sm:rounded-2xl bg-black/70 border border-white/10 mb-1 sm:mb-2 text-white">
-        <div className="flex items-center gap-1.5 sm:gap-2">
+      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-xl sm:rounded-2xl bg-black/70 border border-white/10 mb-1 sm:mb-2 text-white">
+        {/* Left: Floor Return + Avatar */}
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          {onBackToFloor ? (
+            <button
+              type="button"
+              onClick={onBackToFloor}
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition active:scale-95 shrink-0"
+              title="Return to Casino Floor"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </button>
+          ) : (
+            <Link
+              href="/vegas"
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition shrink-0"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </Link>
+          )}
+
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-fuchsia-600 to-purple-500 border border-white/40 flex items-center justify-center text-xs sm:text-sm shadow-md shrink-0">
             🎰
           </div>
-          <div className="flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-purple-800 to-fuchsia-700 border border-purple-400/50 text-[10px] sm:text-xs font-black">
+          <div className="hidden xs:flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-purple-800 to-fuchsia-700 border border-purple-400/50 text-[10px] sm:text-xs font-black truncate">
             <span className="text-yellow-300">★ 1</span>
             <span className="text-white hidden sm:inline">{playerName}</span>
           </div>
@@ -542,21 +566,33 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
           <span className="text-[8px] sm:text-[9px] text-zinc-400 font-mono hidden sm:inline">({activeLines} Lines)</span>
         </div>
 
-        {/* Right: Bankroll & Tools */}
-        <div className="flex items-center gap-1 sm:gap-2">
+        {/* Right: Bankroll, Slide-over Guide/Odds Trigger & Tools */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <div className="flex items-center gap-1 bg-[#12071f] border-2 border-[#7e22ce] rounded-xl px-2 sm:px-3 py-0.5 sm:py-1 shadow-inner">
             <span className="font-mono font-black text-xs sm:text-base text-white">
               £{bankroll.toLocaleString()}
             </span>
           </div>
 
+          {/* Slide-over Guide & Odds Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowGuideOdds(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gradient-to-r from-purple-500/20 to-fuchsia-500/20 hover:from-purple-500/30 border border-purple-400/50 text-purple-300 hover:text-white text-[10px] font-black uppercase tracking-wider transition shadow active:scale-95 shrink-0"
+            title="Open Sarah's Hostess Chat & Slots Paytable Guide"
+          >
+            <Brain size={12} className="text-purple-400 shrink-0" />
+            <span className="hidden xs:inline">GUIDE / ODDS</span>
+            <span className="xs:hidden">ODDS</span>
+          </button>
+
           <Link
             href="/academy?tab=leaderboard&discipline=slots"
-            className="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-purple-600/30 to-fuchsia-600/30 hover:bg-purple-600/50 border border-purple-400/60 text-yellow-300 font-black text-[10px] sm:text-xs uppercase tracking-wider transition shadow flex items-center gap-1"
+            className="hidden sm:flex px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-purple-600/30 to-fuchsia-600/30 hover:bg-purple-600/50 border border-purple-400/60 text-yellow-300 font-black text-[10px] sm:text-xs uppercase tracking-wider transition shadow items-center gap-1"
             title="View Slots & Fruit Machine League Standings"
           >
             <Trophy size={12} className="text-yellow-300" />
-            <span className="hidden sm:inline">League</span>
+            <span>League</span>
           </Link>
 
           {onSwitchToPubFruity && (
@@ -575,34 +611,34 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
               setSoundOn(next);
               setSoundEnabled(next);
             }}
-            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition shrink-0"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition shrink-0"
             title="Toggle Sound"
           >
-            {soundOn ? <Volume2 size={15} /> : <VolumeX size={15} className="text-zinc-400" />}
+            {soundOn ? <Volume2 size={13} /> : <VolumeX size={13} className="text-zinc-400" />}
           </button>
 
           <button
             onClick={() => setVoiceOn(!voiceOn)}
-            className={`w-8 h-8 rounded-xl border flex items-center justify-center transition shrink-0 ${
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl border flex items-center justify-center transition shrink-0 ${
               voiceOn ? 'bg-gold/25 border-gold text-gold shadow-[0_0_10px_#ffd700]' : 'bg-white/10 hover:bg-white/20 border-white/20 text-zinc-400'
             }`}
             title="Toggle Hostess Voice"
           >
-            {voiceOn ? <Mic size={15} /> : <MicOff size={15} />}
+            {voiceOn ? <Mic size={13} /> : <MicOff size={13} />}
           </button>
 
           <button
             onClick={onOpenTutorial}
-            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-yellow-300 flex items-center justify-center transition shrink-0"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-yellow-300 flex items-center justify-center transition shrink-0"
             title="Rules & Paytable"
           >
-            <HelpCircle size={15} />
+            <HelpCircle size={14} />
           </button>
         </div>
       </div>
 
-      {/* 2. GLAMOROUS DEALER HOSTESS SARAH */}
-      <div className="relative mb-3 rounded-2xl bg-gradient-to-r from-[#20102b] via-[#14081c] to-[#1a0a24] border-2 border-gold/50 p-2.5 sm:p-3 shadow-[0_6px_20px_rgba(0,0,0,0.85)] flex flex-col sm:flex-row items-center justify-between gap-3 overflow-hidden">
+      {/* 2. GLAMOROUS DEALER HOSTESS SARAH (Visible on desktop; collapsed into slide-over drawer on mobile) */}
+      <div className="shrink-0 hidden md:flex relative mb-2 rounded-2xl bg-gradient-to-r from-[#20102b] via-[#14081c] to-[#1a0a24] border-2 border-gold/50 p-2.5 sm:p-3 shadow-[0_6px_20px_rgba(0,0,0,0.85)] flex-col sm:flex-row items-center justify-between gap-3 overflow-hidden">
         <div className="flex items-center gap-3.5 w-full sm:w-auto">
           <div className="relative shrink-0">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-t-full rounded-b-xl border-2 border-gold/80 overflow-hidden shadow-[0_0_15px_rgba(212,175,55,0.7)] bg-black">
@@ -962,6 +998,27 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
           </button>
         </div>
       </div>
+
+      {/* Slide-Over Guide & Odds Advisor Drawer */}
+      <VegasGuideOddsDrawer
+        isOpen={showGuideOdds}
+        onClose={() => setShowGuideOdds(false)}
+        gameTitle="Megabucks Slots"
+        dealerDialogue={dealerDialogue}
+        dealerStatus={isAnySpinning ? 'Reels Spinning' : 'Awaiting Spin'}
+        onAskSarah={() => askSarahAi('custom', { wager: totalBet })}
+        isAiThinking={isAiThinking}
+        advisorTitle="Megabucks Slot Machine Paytable & RTP"
+        recommendation={activeLines === 5 ? '5 LINES (MAX COVERAGE)' : 'MAX LINES RECOMMENDED'}
+        recommendationHeadline="Theoretical Return to Player: 96.50%"
+        recommendationExplanation="Playing all 5 paylines (3 horizontal rows + 2 diagonal lines) maximizes your hit frequency and qualifies for diagonal Progressive Jackpot triggers with 3 Mega Wild Diamonds."
+        rulesSummary={[
+          { label: 'Theoretical RTP', value: '96.50% Certified', highlight: true },
+          { label: 'Progressive Jackpot', value: `£${jackpotPool.toLocaleString()} (3 Diamonds)`, highlight: true },
+          { label: 'Triple 7s Payout', value: '50 to 1' },
+          { label: 'Active Paylines', value: `${activeLines} Lines Selected` },
+        ]}
+      />
     </div>
   );
 }

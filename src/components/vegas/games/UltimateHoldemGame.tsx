@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { HelpCircle, Play, RotateCcw, Sparkles, Brain, Trophy } from 'lucide-react';
+import { HelpCircle, Play, RotateCcw, Sparkles, Brain, Trophy, ChevronLeft } from 'lucide-react';
 import VegasCard, { CardModel } from '../VegasCard';
 import VegasAiDealer from '../VegasAiDealer';
 import { VegasChipRack, VegasChipStack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
+import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playCardSound, playChipSound, playWinSound, playJackpotSound } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getUltimateHoldemAdvice } from '@/lib/vegas/VegasStrategyEngine';
@@ -16,6 +17,7 @@ interface Props {
   bankroll: number;
   onUpdateBankroll: (delta: number) => void;
   onOpenTutorial: () => void;
+  onBackToFloor?: () => void;
 }
 
 const SUITS: CardModel['suit'][] = ['♠', '♥', '♦', '♣'];
@@ -99,11 +101,12 @@ function evaluate7CardHand(cards: CardModel[]): PokerScore {
   return { score: 100 + (values[0] || 0), name: 'High Card' };
 }
 
-export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenTutorial }: Props) {
+export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenTutorial, onBackToFloor }: Props) {
   const [deck, setDeck] = useState<CardModel[]>([]);
   const [baseBet, setBaseBet] = useState(25);
   const [tripsBet, setTripsBet] = useState(10);
   const [playMultiplier, setPlayMultiplier] = useState(0);
+  const [showGuideOdds, setShowGuideOdds] = useState(false);
 
   const [playerCards, setPlayerCards] = useState<CardModel[]>([]);
   const [dealerCards, setDealerCards] = useState<CardModel[]>([]);
@@ -328,23 +331,62 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
       />
 
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
-              Vegas Carnival
-            </span>
-            <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">2.2% House Edge</span>
+      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 border-b border-white/10 pb-1.5 mb-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {onBackToFloor ? (
+            <button
+              type="button"
+              onClick={onBackToFloor}
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition active:scale-95 shrink-0"
+              title="Return to Casino Floor"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </button>
+          ) : (
+            <Link
+              href="/vegas"
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition shrink-0"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </Link>
+          )}
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
+                Vegas Carnival
+              </span>
+              <span className="text-zinc-400 text-[10px] font-mono hidden sm:inline">2.2% House Edge</span>
+            </div>
+            <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1 mt-0.5 truncate">
+              <span>Ultimate Texas Hold&apos;em</span>
+              <span className="text-[9px] font-mono font-bold text-amber-300 px-1.5 py-0.2 rounded bg-amber-500/20 border border-amber-500/40">
+                500:1 Royal
+              </span>
+            </h3>
           </div>
-          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
-            <span>Ultimate Texas Hold&apos;em</span>
-            <span className="text-[9px] font-mono font-bold text-amber-300 px-1.5 py-0.2 rounded bg-amber-500/20 border border-amber-500/40">
-              500:1 Royal
-            </span>
-          </h3>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* Slide-over Guide & Odds Advisor Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowGuideOdds(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 border border-emerald-400/50 text-emerald-300 hover:text-white text-[10px] font-black uppercase tracking-wider transition shadow active:scale-95"
+            title="Open Sarah's Croupier Chat & GTO Advisor"
+          >
+            <Brain size={12} className="text-emerald-400 shrink-0" />
+            <span className="hidden xs:inline">GUIDE / ODDS</span>
+            <span className="xs:hidden">ODDS</span>
+            {street !== 'betting' && street !== 'showdown' && (
+              <span className="ml-0.5 px-1 py-0.2 rounded bg-emerald-500/40 border border-emerald-300 text-white text-[9px] font-mono font-black animate-pulse">
+                {getUltimateHoldemAdvice(street, playerCards, boardCards).action}
+              </span>
+            )}
+          </button>
+
           <Link
             href="/vegas?tab=arcade#leaderboard"
             className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-[10px] font-bold text-gold transition"
@@ -357,14 +399,13 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
             className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition"
           >
             <HelpCircle size={12} className="text-gold" />
-            <span className="hidden sm:inline">Rules & Tutorial</span>
-            <span className="sm:hidden">Rules</span>
+            <span className="hidden sm:inline">Rules</span>
           </button>
         </div>
       </div>
 
-      {/* AI Glamorous Dealer Sarah Header */}
-      <div className="shrink-0 mb-1">
+      {/* AI Glamorous Dealer Sarah Header (Visible on desktop; collapsed into slide-over drawer on mobile) */}
+      <div className="shrink-0 mb-1 hidden md:block">
         <VegasAiDealer
           dialogue={dealerDialogue}
           gameTitle="Ultimate Hold'em"
@@ -378,9 +419,9 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
         />
       </div>
 
-      {/* Live GTO Coach Advice HUD */}
+      {/* Live GTO Coach Advice HUD (Visible on desktop; collapsed into slide-over drawer on mobile) */}
       {street !== 'betting' && street !== 'showdown' && (
-        <div className="shrink-0 bg-gradient-to-r from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 p-1.5 sm:p-2.5 rounded-xl flex items-center justify-between gap-2 text-xs shadow-lg mb-1">
+        <div className="shrink-0 hidden md:flex bg-gradient-to-r from-indigo-950/80 via-black to-zinc-950 border border-indigo-500/40 p-1.5 sm:p-2.5 rounded-xl items-center justify-between gap-2 text-xs shadow-lg mb-1">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shrink-0">
               <Brain size={14} />
@@ -612,6 +653,39 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
           ) : null}
         </div>
       </div>
+
+      {/* Slide-Over Guide & Odds Advisor Drawer */}
+      <VegasGuideOddsDrawer
+        isOpen={showGuideOdds}
+        onClose={() => setShowGuideOdds(false)}
+        gameTitle="Ultimate Texas Hold'em"
+        dealerDialogue={dealerDialogue}
+        dealerStatus={
+          street === 'betting'
+            ? 'Awaiting Wager'
+            : street === 'showdown'
+            ? 'Settling Hand'
+            : 'Player Decision'
+        }
+        advisorTitle="Ultimate Hold'em GTO Coach"
+        recommendation={
+          street !== 'betting' && street !== 'showdown'
+            ? getUltimateHoldemAdvice(street, playerCards, boardCards).action
+            : null
+        }
+        recommendationHeadline={
+          street !== 'betting' && street !== 'showdown'
+            ? getUltimateHoldemAdvice(street, playerCards, boardCards).headline
+            : 'Equal Ante & Blind wagers with high-multiplier play strategy'
+        }
+        recommendationExplanation="GTO strategy in Ultimate Texas Hold'em relies on aggressive pre-flop 4x betting with pocket pairs (33+), any Ace, suited Kings (K5s+), and unsuited K-high (K8o+). Once the flop is dealt, raise 2x with two pair or better, hidden pair, or four to a flush."
+        rulesSummary={[
+          { label: 'Pre-Flop Max Play', value: '4x Ante (Highest expected value)', highlight: true },
+          { label: 'Flop Play', value: '2x Ante (With made hand or strong draw)' },
+          { label: 'River Play', value: '1x Ante or Fold' },
+          { label: 'Dealer Qualifies', value: 'Pair or Better (otherwise Ante pushes)' },
+        ]}
+      />
     </div>
   );
 }

@@ -470,11 +470,9 @@ export default function VegasLobby() {
       {/* ACTIVE GAME STAGE OR CASINO FLOOR LOBBY */}
       {selectedGameId ? (
         <div className="flex-1 min-h-0 w-full flex flex-col justify-between overflow-hidden">
-          {/* Compact Top Bar with Guide & Ticker Drawer Trigger (Integrated directly inside PubFruityGame on mobile) */}
+          {/* Compact Top Bar with Guide & Ticker Drawer Trigger (Hidden on mobile to maximize physical table felt) */}
           <div
-            className={`${
-              selectedGameId === 'pub-fruity' ? 'hidden md:flex mb-2' : 'flex'
-            } shrink-0 items-center justify-between flex-wrap gap-1.5 sm:gap-2 pb-1 sm:pb-2`}
+            className="hidden md:flex shrink-0 items-center justify-between flex-wrap gap-1.5 sm:gap-2 pb-1 sm:pb-2 mb-2"
           >
             <button
               onClick={() => setSelectedGameId(null)}
@@ -532,6 +530,7 @@ export default function VegasLobby() {
                 bankroll={totalChips}
                 onUpdateBankroll={handleUpdateBankroll}
                 onOpenTutorial={() => setTutorialGame(currentGame || null)}
+                onBackToFloor={() => setSelectedGameId(null)}
               />
             )}
 
@@ -541,6 +540,7 @@ export default function VegasLobby() {
                 onUpdateBankroll={handleUpdateBankroll}
                 onOpenTutorial={() => setTutorialGame(currentGame || null)}
                 onSwitchToPubFruity={() => setSelectedGameId('pub-fruity')}
+                onBackToFloor={() => setSelectedGameId(null)}
               />
             )}
 
@@ -560,6 +560,7 @@ export default function VegasLobby() {
                 bankroll={totalChips}
                 onUpdateBankroll={handleUpdateBankroll}
                 onOpenTutorial={() => setTutorialGame(currentGame || null)}
+                onBackToFloor={() => setSelectedGameId(null)}
               />
             )}
 
@@ -568,6 +569,7 @@ export default function VegasLobby() {
                 bankroll={totalChips}
                 onUpdateBankroll={handleUpdateBankroll}
                 onOpenTutorial={() => setTutorialGame(currentGame || null)}
+                onBackToFloor={() => setSelectedGameId(null)}
               />
             )}
 
@@ -576,6 +578,7 @@ export default function VegasLobby() {
                 bankroll={totalChips}
                 onUpdateBankroll={handleUpdateBankroll}
                 onOpenTutorial={() => setTutorialGame(currentGame || null)}
+                onBackToFloor={() => setSelectedGameId(null)}
               />
             )}
 
@@ -588,6 +591,7 @@ export default function VegasLobby() {
                 bankroll={totalChips}
                 onUpdateBankroll={handleUpdateBankroll}
                 onOpenTutorial={() => setTutorialGame(currentGame || null)}
+                onBackToFloor={() => setSelectedGameId(null)}
               />
             )}
 
@@ -596,6 +600,7 @@ export default function VegasLobby() {
                 bankroll={totalChips}
                 onUpdateBankroll={handleUpdateBankroll}
                 onOpenTutorial={() => setTutorialGame(currentGame || null)}
+                onBackToFloor={() => setSelectedGameId(null)}
               />
             )}
 
@@ -604,6 +609,7 @@ export default function VegasLobby() {
                 bankroll={totalChips}
                 onUpdateBankroll={handleUpdateBankroll}
                 onOpenTutorial={() => setTutorialGame(currentGame || null)}
+                onBackToFloor={() => setSelectedGameId(null)}
               />
             )}
 
@@ -612,6 +618,7 @@ export default function VegasLobby() {
                 bankroll={totalChips}
                 onUpdateBankroll={handleUpdateBankroll}
                 onOpenTutorial={() => setTutorialGame(currentGame || null)}
+                onBackToFloor={() => setSelectedGameId(null)}
               />
             )}
           </div>

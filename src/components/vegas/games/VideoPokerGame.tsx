@@ -2,10 +2,11 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { HelpCircle, Play, RotateCcw, Sparkles, Trophy, Brain, Wand2 } from 'lucide-react';
+import { HelpCircle, Play, RotateCcw, Sparkles, Trophy, Brain, Wand2, ChevronLeft } from 'lucide-react';
 import VegasCard, { CardModel } from '../VegasCard';
 import { VegasChipRack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
+import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playCardSound, playChipSound, playWinSound, playJackpotSound } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getVideoPokerAdvice } from '@/lib/vegas/VegasStrategyEngine';
@@ -15,6 +16,7 @@ interface Props {
   bankroll: number;
   onUpdateBankroll: (delta: number) => void;
   onOpenTutorial: () => void;
+  onBackToFloor?: () => void;
 }
 
 const SUITS: CardModel['suit'][] = ['♠', '♥', '♦', '♣'];
@@ -104,10 +106,11 @@ const PAYTABLE_DISPLAY = [
   { hand: 'Jacks or Better', mult: 1 },
 ];
 
-export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutorial }: Props) {
+export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutorial, onBackToFloor }: Props) {
   const { isHighRoller } = useKonamiHighRoller();
   const [deck, setDeck] = useState<CardModel[]>([]);
   const [cards, setCards] = useState<CardModel[]>([]);
+  const [showGuideOdds, setShowGuideOdds] = useState(false);
   const [held, setHeld] = useState<boolean[]>([false, false, false, false, false]);
   const [step, setStep] = useState<'betting' | 'holding'>('betting');
   const [bet, setBet] = useState(25);
@@ -223,23 +226,62 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
       />
 
       {/* Bar-Top Brass Rim & Drink Coaster Inset */}
-      <div className="shrink-0 flex items-center justify-between gap-2 border-b border-amber-900/40 pb-1.5 mb-1 relative z-10">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
-              Vegas Bar-Top Kiosk
-            </span>
-            <span className="text-emerald-400 text-[10px] font-mono font-bold hidden sm:inline">RTP: 99.54%</span>
+      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 border-b border-amber-900/40 pb-1.5 mb-1 relative z-10">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {onBackToFloor ? (
+            <button
+              type="button"
+              onClick={onBackToFloor}
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition active:scale-95 shrink-0"
+              title="Return to Casino Floor"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </button>
+          ) : (
+            <Link
+              href="/vegas"
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition shrink-0"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </Link>
+          )}
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[9px] font-black uppercase tracking-widest shrink-0">
+                Vegas Bar-Top Kiosk
+              </span>
+              <span className="text-emerald-400 text-[10px] font-mono font-bold hidden sm:inline">RTP: 99.54%</span>
+            </div>
+            <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1 mt-0.5 truncate">
+              <span>Game King™ Video Poker</span>
+              <span className="text-[9px] font-mono font-bold text-gold px-1.5 py-0.2 rounded bg-gold/15 border border-gold/30">
+                800:1 Royal
+              </span>
+            </h3>
           </div>
-          <h3 className="text-xs sm:text-sm font-black text-white tracking-tight flex items-center gap-1.5 mt-0.5 truncate">
-            <span>Game King™ Video Poker</span>
-            <span className="text-[9px] font-mono font-bold text-gold px-1.5 py-0.2 rounded bg-gold/15 border border-gold/30">
-              800:1 Royal Flush
-            </span>
-          </h3>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* Slide-over Guide & Odds Advisor Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowGuideOdds(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gradient-to-r from-blue-500/20 to-indigo-500/20 hover:from-blue-500/30 border border-blue-400/50 text-blue-300 hover:text-white text-[10px] font-black uppercase tracking-wider transition shadow active:scale-95"
+            title="Open 9/6 Video Poker Optimal Hold Advisor & Paytable Guide"
+          >
+            <Brain size={12} className="text-blue-400 shrink-0" />
+            <span className="hidden xs:inline">GUIDE / ODDS</span>
+            <span className="xs:hidden">ODDS</span>
+            {step === 'holding' && cards.length === 5 && (
+              <span className="ml-0.5 px-1 py-0.2 rounded bg-blue-500/40 border border-blue-300 text-white text-[9px] font-mono font-black animate-pulse">
+                OPTIMAL
+              </span>
+            )}
+          </button>
+
           <Link
             href="/academy?tab=leaderboard&discipline=blackjack"
             className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-[10px] font-bold text-gold transition"
@@ -252,15 +294,14 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
             className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition"
           >
             <HelpCircle size={12} className="text-gold" />
-            <span className="hidden sm:inline">Rules & Tutorial</span>
-            <span className="sm:hidden">Rules</span>
+            <span className="hidden sm:inline">Rules</span>
           </button>
         </div>
       </div>
 
-      {/* Live Video Poker Optimal Hold Advisor */}
+      {/* Live Video Poker Optimal Hold Advisor (Visible on desktop; collapsed into slide-over drawer on mobile) */}
       {step === 'holding' && cards.length === 5 && (
-        <div className="shrink-0 bg-gradient-to-r from-blue-950/80 via-black to-zinc-950 border border-blue-500/40 p-1.5 sm:p-2.5 rounded-xl flex items-center justify-between gap-2 text-xs shadow-lg mb-1">
+        <div className="shrink-0 hidden md:flex bg-gradient-to-r from-blue-950/80 via-black to-zinc-950 border border-blue-500/40 p-1.5 sm:p-2.5 rounded-xl items-center justify-between gap-2 text-xs shadow-lg mb-1">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-blue-500/20 border border-blue-400/40 flex items-center justify-center text-blue-300 shrink-0">
               <Brain size={14} />
@@ -481,6 +522,31 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
           )}
         </div>
       </div>
+
+      {/* Slide-Over Guide & Odds Advisor Drawer */}
+      <VegasGuideOddsDrawer
+        isOpen={showGuideOdds}
+        onClose={() => setShowGuideOdds(false)}
+        gameTitle="Video Poker (Jacks or Better)"
+        advisorTitle="9/6 Jacks or Better Optimal Strategy"
+        recommendation={
+          step === 'holding' && cards.length === 5
+            ? `HOLD: [${getVideoPokerAdvice(cards).holdIndices.map((i) => `#${i + 1}`).join(', ') || 'NONE'}]`
+            : null
+        }
+        recommendationHeadline={
+          step === 'holding' && cards.length === 5
+            ? getVideoPokerAdvice(cards).headline
+            : '9/6 Full Pay Jacks or Better returns 99.54% theoretical RTP'
+        }
+        recommendationExplanation="9/6 indicates a 9x payout on Full Houses and 6x on Flushes. Mathematically optimal play prioritizes high card pairs (JJ-AA), 4 to a Royal or Straight Flush, and three-of-a-kinds. Low pairs (22-1010) are retained over unsuited high cards."
+        rulesSummary={[
+          { label: 'Theoretical RTP', value: '99.54% (Optimal 9/6 Play)', highlight: true },
+          { label: 'Royal Flush', value: '800 to 1', highlight: true },
+          { label: 'Full House / Flush', value: '9 to 1 / 6 to 1' },
+          { label: 'Minimum Qualifying Hand', value: 'Pair of Jacks or Better (1 to 1)' },
+        ]}
+      />
     </div>
   );
 }

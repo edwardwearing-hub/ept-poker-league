@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { HelpCircle, Sparkles, Plus, Volume2, VolumeX, MessageSquare, Mic, MicOff, Trophy } from 'lucide-react';
+import { HelpCircle, Sparkles, Plus, Volume2, VolumeX, MessageSquare, Mic, MicOff, Trophy, Brain, ChevronLeft } from 'lucide-react';
 import RouletteWheelVisual, { getPocketColor, ROULETTE_NUMBERS } from '../RouletteWheelVisual';
 import VegasChip, { VegasChipStack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
+import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playChipSound, playWinSound, isSoundEnabled, setSoundEnabled } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getActivePlayerName } from '@/lib/poker-trainer/tracker';
@@ -16,6 +17,7 @@ interface Props {
   bankroll: number;
   onUpdateBankroll: (delta: number) => void;
   onOpenTutorial: () => void;
+  onBackToFloor?: () => void;
 }
 
 const RED_NUMS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
@@ -26,12 +28,13 @@ interface BetAction {
   amount: number;
 }
 
-export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutorial }: Props) {
+export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutorial, onBackToFloor }: Props) {
   const { isHighRoller } = useKonamiHighRoller();
   const [selectedChip, setSelectedChip] = useState<number>(25);
   const [soundOn, setSoundOn] = useState(true);
   const [voiceOn, setVoiceOn] = useState(false);
   const [playerName, setPlayerName] = useState('Player 1');
+  const [showGuideOdds, setShowGuideOdds] = useState(false);
 
   // Bet records
   const [numberBets, setNumberBets] = useState<Record<string | number, number>>({});
@@ -444,40 +447,72 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
       />
 
       {/* 1. TOP MOBILE-CASINO HUD STATUS BAR */}
-      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-2 rounded-xl sm:rounded-2xl bg-black/70 border border-white/10 mb-1 sm:mb-2 text-white">
-        {/* Left: Avatar & VIP Star Level */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-500 border border-white/40 flex items-center justify-center text-sm shadow-md">
+      <div className="shrink-0 flex items-center justify-between gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-xl sm:rounded-2xl bg-black/70 border border-white/10 mb-1 sm:mb-2 text-white">
+        {/* Left: Floor Return + Avatar */}
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          {onBackToFloor ? (
+            <button
+              type="button"
+              onClick={onBackToFloor}
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition active:scale-95 shrink-0"
+              title="Return to Casino Floor"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </button>
+          ) : (
+            <Link
+              href="/vegas"
+              className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition shrink-0"
+            >
+              <ChevronLeft size={13} className="text-gold" />
+              <span className="hidden sm:inline">Floor</span>
+            </Link>
+          )}
+
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-500 border border-white/40 flex items-center justify-center text-xs sm:text-sm shadow-md shrink-0">
             👤
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-blue-700 via-cyan-600 to-blue-600 border border-cyan-300/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)] text-xs font-black">
+          <div className="hidden xs:flex items-center gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-blue-700 via-cyan-600 to-blue-600 border border-cyan-300/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)] text-[10px] sm:text-xs font-black truncate">
             <span className="text-yellow-300">★ 1</span>
             <span className="text-white hidden sm:inline">{playerName}</span>
           </div>
         </div>
 
         {/* Center: Recessed BET Box */}
-        <div className="flex items-center gap-2 bg-[#09150e] border-2 border-[#166534] rounded-xl px-3 py-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400/80">BET</span>
-          <span className="font-mono font-black text-sm sm:text-base text-white">
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-[#09150e] border-2 border-[#166534] rounded-xl px-2.5 sm:px-3 py-0.5 sm:py-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-emerald-400/80">BET</span>
+          <span className="font-mono font-black text-xs sm:text-base text-white">
             £{totalWager.toLocaleString()}
           </span>
         </div>
 
-        {/* Right: Recessed BALANCE Box with Green '+' button */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-[#09150e] border-2 border-[#166534] rounded-xl px-3 py-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-            <span className="font-mono font-black text-sm sm:text-base text-yellow-300">
+        {/* Right: Balance + Slide-over Guide/Odds Trigger + Controls */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 bg-[#09150e] border-2 border-[#166534] rounded-xl px-2 sm:px-3 py-0.5 sm:py-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+            <span className="font-mono font-black text-xs sm:text-base text-yellow-300">
               £{bankroll.toLocaleString()}
             </span>
             <button
               onClick={() => window.dispatchEvent(new CustomEvent('ept_open_login'))}
-              className="w-5 h-5 rounded-full bg-gradient-to-b from-[#22c55e] to-[#15803d] hover:brightness-110 text-white flex items-center justify-center text-xs font-black shadow"
+              className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-b from-[#22c55e] to-[#15803d] hover:brightness-110 text-white flex items-center justify-center text-[10px] sm:text-xs font-black shadow"
               title="Add Chips / Claim Handle"
             >
-              <Plus size={12} strokeWidth={3} />
+              <Plus size={10} strokeWidth={3} />
             </button>
           </div>
+
+          {/* Slide-over Guide & Odds Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowGuideOdds(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 border border-emerald-400/50 text-emerald-300 hover:text-white text-[10px] font-black uppercase tracking-wider transition shadow active:scale-95 shrink-0"
+            title="Open Sarah's Croupier Chat & Roulette Odds Guide"
+          >
+            <Brain size={12} className="text-emerald-400 shrink-0" />
+            <span className="hidden xs:inline">GUIDE / ODDS</span>
+            <span className="xs:hidden">ODDS</span>
+          </button>
 
           {/* Sound & Voice Toggles */}
           <button
@@ -486,43 +521,33 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
               setSoundOn(next);
               setSoundEnabled(next);
             }}
-            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition shrink-0"
             title="Toggle Sound FX"
           >
-            {soundOn ? <Volume2 size={15} /> : <VolumeX size={15} className="text-zinc-400" />}
-          </button>
-
-          <button
-            onClick={() => setVoiceOn(!voiceOn)}
-            className={`w-8 h-8 rounded-xl border flex items-center justify-center transition ${
-              voiceOn ? 'bg-gold/25 border-gold text-gold shadow-[0_0_10px_#ffd700]' : 'bg-white/10 hover:bg-white/20 border-white/20 text-zinc-400'
-            }`}
-            title={voiceOn ? 'Dealer Voice ON' : 'Dealer Voice OFF (Click to hear Sarah speak)'}
-          >
-            {voiceOn ? <Mic size={15} /> : <MicOff size={15} />}
+            {soundOn ? <Volume2 size={13} /> : <VolumeX size={13} className="text-zinc-400" />}
           </button>
 
           <Link
             href="/academy?tab=leaderboard&discipline=roulette-craps"
-            className="px-2.5 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold font-black text-xs uppercase tracking-wider transition shadow flex items-center gap-1.5"
+            className="hidden sm:flex px-2.5 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold font-black text-xs uppercase tracking-wider transition shadow items-center gap-1.5"
             title="View Roulette & Craps League Standings"
           >
             <Trophy size={14} className="text-gold" />
-            <span className="hidden sm:inline">Wheel League</span>
+            <span>Wheel League</span>
           </Link>
 
           <button
             onClick={onOpenTutorial}
-            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-yellow-300 flex items-center justify-center transition"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-yellow-300 flex items-center justify-center transition shrink-0"
             title="Roulette Tutorial & Rules"
           >
-            <HelpCircle size={15} />
+            <HelpCircle size={14} />
           </button>
         </div>
       </div>
 
-      {/* 2. GLAMOROUS DEALER SARAH STANDING AT THE TABLE (TOP RAIL INTEGRATION) */}
-      <div className="shrink-0 relative mb-1 sm:mb-2 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#20130b] via-[#120a06] to-[#1c0f08] border border-gold/50 sm:border-2 p-1.5 sm:p-2.5 shadow-[0_6px_20px_rgba(0,0,0,0.85)] flex items-center justify-between gap-2 overflow-hidden">
+      {/* 2. GLAMOROUS DEALER SARAH (Visible on desktop; collapsed into slide-over drawer on mobile) */}
+      <div className="shrink-0 hidden md:flex relative mb-1 sm:mb-2 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#20130b] via-[#120a06] to-[#1c0f08] border border-gold/50 sm:border-2 p-1.5 sm:p-2.5 shadow-[0_6px_20px_rgba(0,0,0,0.85)] items-center justify-between gap-2 overflow-hidden">
         {/* Subtle Racetrack Wood Inlay */}
         <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-[#ffd700]/40 to-transparent pointer-events-none" />
 
@@ -1057,6 +1082,26 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
           </div>
         </div>
       )}
+      {/* Slide-Over Guide & Odds Advisor Drawer */}
+      <VegasGuideOddsDrawer
+        isOpen={showGuideOdds}
+        onClose={() => setShowGuideOdds(false)}
+        gameTitle="European Roulette"
+        dealerDialogue={dealerDialogue}
+        dealerStatus={spinning ? 'Wheel In Motion' : 'Place Your Bets'}
+        onAskSarah={() => askSarahAi('custom', { wager: totalWager })}
+        isAiThinking={isAiThinking}
+        advisorTitle="Zero Edge European Roulette Guide"
+        recommendation="OUTSIDE BETS (1:1)"
+        recommendationHeadline="European Single Zero Advantage (2.70% House Edge)"
+        recommendationExplanation="European Roulette has a single zero (0), offering half the house edge of American double-zero tables (5.26%). For optimal bankroll preservation, outside bets (Red/Black, Odd/Even, 1-18/19-36) cover 48.65% of table outcomes with 1:1 payouts."
+        rulesSummary={[
+          { label: 'Single Zero Edge', value: '2.70% (European Standard)', highlight: true },
+          { label: 'Straight Up (#0-36)', value: 'Pays 35:1', highlight: true },
+          { label: 'Column / Dozen', value: 'Pays 2:1' },
+          { label: 'Even Money Outside', value: 'Pays 1:1 (48.65% chance)' },
+        ]}
+      />
     </div>
   );
 }
