@@ -21,17 +21,11 @@ export default function AppMainLayout({ children }: Props) {
     <main
       className={`md:ml-72 min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-charcoal-light to-charcoal ${
         isGameRoute
-          ? 'p-0 pt-[58px] pb-[58px] md:p-8 md:pb-8 overflow-hidden md:overflow-visible'
+          ? 'p-0 pt-[58px] pb-[58px] md:p-8 md:pb-8'
           : 'px-3 py-4 pt-16 sm:px-6 sm:py-6 sm:pt-20 md:p-8 pb-28 md:pb-8'
       }`}
     >
-      <div
-        className={`max-w-7xl mx-auto ${
-          isGameRoute
-            ? 'h-[calc(100dvh-116px)] md:h-auto overflow-hidden md:overflow-visible'
-            : ''
-        }`}
-      >
+      <div className="max-w-7xl mx-auto">
         {children}
       </div>
       {!isGameRoute ? (

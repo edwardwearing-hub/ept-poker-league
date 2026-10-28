@@ -88,12 +88,18 @@ export function getDisciplineName(discipline: string): string {
 export default function VegasLobby() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
+  const gameParam = searchParams.get('game');
 
   const [activePlayerName, setActivePlayerName] = useState('Guest Trainee');
   const [trackerStats, setTrackerStats] = useState<CareerTrackerStats>(() =>
     loadTrackerStatsForPlayer('Guest Trainee')
   );
-  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(() => {
+    if (gameParam && VEGAS_GAMES_CATALOG.some((g) => g.id === gameParam)) {
+      return gameParam;
+    }
+    return null;
+  });
   const [tutorialGame, setTutorialGame] = useState<VegasGameTutorial | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>(
     tabParam === 'arcade' ? 'arcade' : 'all'
@@ -108,6 +114,12 @@ export default function VegasLobby() {
       setCategoryFilter('arcade');
     }
   }, [tabParam]);
+
+  useEffect(() => {
+    if (gameParam && VEGAS_GAMES_CATALOG.some((g) => g.id === gameParam)) {
+      setSelectedGameId(gameParam);
+    }
+  }, [gameParam]);
 
   // Sync player and bankroll on mount
   useEffect(() => {
@@ -252,7 +264,7 @@ export default function VegasLobby() {
       className={
         selectedGameId
           ? 'h-[calc(100dvh-116px)] flex flex-col justify-between overflow-hidden select-none touch-manipulation md:h-auto md:overflow-visible md:space-y-6 md:pb-12 animate-in fade-in duration-300'
-          : 'space-y-6 animate-in fade-in duration-300 pb-12'
+          : 'space-y-6 animate-in fade-in duration-300 pb-12 px-3 sm:px-6'
       }
     >
       {/* Las Vegas Neon Marquee Top Banner (Hidden when playing an active game on mobile to prevent scrolling) */}
