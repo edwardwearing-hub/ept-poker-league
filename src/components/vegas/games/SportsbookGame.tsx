@@ -6,6 +6,7 @@ import { HelpCircle, Trophy, Sparkles, Plus, Check, Trash2, ArrowRight, ChevronL
 import { VegasChipRack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import { playChipSound, playWinSound } from '@/lib/vegas/VegasAudio';
+import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 
 interface Props {
@@ -117,6 +118,7 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
 
   const toggleSelection = (fixture: Fixture, pickName: string, odds: number, outcomeType: BetSelection['outcomeType']) => {
     setSettledResult(null);
+    triggerHaptic(15);
     playChipSound();
     const existingIdx = betSlip.findIndex(
       (b) => b.fixtureId === fixture.id && b.pickName === pickName
@@ -429,7 +431,10 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
                   {/* Home Win */}
                   <button
                     onClick={() => toggleSelection(f, `${f.homeTeam} Win`, f.homeOdds, 'home')}
-                    className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 ${
+                    onPointerDown={(e) => {
+                      if (e.button === 0) toggleSelection(f, `${f.homeTeam} Win`, f.homeOdds, 'home');
+                    }}
+                    className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
                       isSelected(f.id, `${f.homeTeam} Win`)
                         ? 'bg-gradient-to-b from-[#ffd700] via-[#f59e0b] to-[#b45309] text-black border-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.7),inset_0_2px_4px_rgba(255,255,255,0.7)] font-black'
                         : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-amber-400/50 shadow-sm'
@@ -445,7 +450,10 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
                   {f.drawOdds && (
                     <button
                       onClick={() => toggleSelection(f, 'Draw', f.drawOdds!, 'draw')}
-                      className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 ${
+                      onPointerDown={(e) => {
+                        if (e.button === 0) toggleSelection(f, 'Draw', f.drawOdds!, 'draw');
+                      }}
+                      className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
                         isSelected(f.id, 'Draw')
                           ? 'bg-gradient-to-b from-[#ffd700] via-[#f59e0b] to-[#b45309] text-black border-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.7),inset_0_2px_4px_rgba(255,255,255,0.7)] font-black'
                           : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-amber-400/50 shadow-sm'
@@ -459,7 +467,10 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
                   {/* Away Win */}
                   <button
                     onClick={() => toggleSelection(f, `${f.awayTeam} Win`, f.awayOdds, 'away')}
-                    className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 ${
+                    onPointerDown={(e) => {
+                      if (e.button === 0) toggleSelection(f, `${f.awayTeam} Win`, f.awayOdds, 'away');
+                    }}
+                    className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
                       isSelected(f.id, `${f.awayTeam} Win`)
                         ? 'bg-gradient-to-b from-[#ffd700] via-[#f59e0b] to-[#b45309] text-black border-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.7),inset_0_2px_4px_rgba(255,255,255,0.7)] font-black'
                         : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-amber-400/50 shadow-sm'
@@ -474,7 +485,10 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
                   {/* Over 2.5 */}
                   <button
                     onClick={() => toggleSelection(f, 'Over 2.5 Goals', f.overOdds, 'over')}
-                    className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 ${
+                    onPointerDown={(e) => {
+                      if (e.button === 0) toggleSelection(f, 'Over 2.5 Goals', f.overOdds, 'over');
+                    }}
+                    className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
                       isSelected(f.id, 'Over 2.5 Goals')
                         ? 'bg-gradient-to-b from-cyan-400 via-cyan-500 to-blue-600 text-black border-cyan-200 shadow-[0_0_18px_rgba(6,182,212,0.7)] font-black'
                         : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-cyan-400/50 shadow-sm'
@@ -487,7 +501,10 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
                   {/* Under 2.5 */}
                   <button
                     onClick={() => toggleSelection(f, 'Under 2.5 Goals', f.underOdds, 'under')}
-                    className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 ${
+                    onPointerDown={(e) => {
+                      if (e.button === 0) toggleSelection(f, 'Under 2.5 Goals', f.underOdds, 'under');
+                    }}
+                    className={`py-2 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition-all duration-150 active:translate-y-0.5 touch-manipulation ${
                       isSelected(f.id, 'Under 2.5 Goals')
                         ? 'bg-gradient-to-b from-cyan-400 via-cyan-500 to-blue-600 text-black border-cyan-200 shadow-[0_0_18px_rgba(6,182,212,0.7)] font-black'
                         : 'bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-200 border-zinc-700 hover:border-cyan-400/50 shadow-sm'
@@ -652,7 +669,7 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
                 Select Stake Chip:
               </span>
               <VegasChipRack
-                values={[10, 25, 50, 100, 250]}
+                values={[5, 10, 25, 50, 100, 250]}
                 selectedValue={stake}
                 onSelect={setStake}
                 disabled={simulating}
@@ -676,7 +693,13 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
             <button
               disabled={betSlip.length === 0 || stake > bankroll || simulating}
               onClick={handleSimulateMatches}
-              className={`w-full py-3.5 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-2xl transition active:translate-y-0.5 ${
+              onPointerDown={(e) => {
+                if (e.button === 0 && betSlip.length > 0 && stake <= bankroll && !simulating) {
+                  triggerHaptic(15);
+                  handleSimulateMatches();
+                }
+              }}
+              className={`w-full py-3.5 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-2xl transition active:translate-y-0.5 touch-manipulation ${
                 simulating
                   ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                   : 'bg-gradient-to-r from-[#ffd700] via-[#f59e0b] to-[#ffd700] text-black hover:brightness-110 shadow-[0_0_20px_rgba(245,158,11,0.5)] disabled:opacity-40'
@@ -700,7 +723,7 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
           <div className="flex items-center gap-1 overflow-x-auto">
             <span className="text-zinc-400 font-bold uppercase text-[9px] font-mono shrink-0">Stake:</span>
             <VegasChipRack
-              values={[10, 25, 50, 100, 250]}
+              values={[5, 10, 25, 50, 100, 250]}
               selectedValue={stake}
               onSelect={setStake}
               disabled={simulating}
@@ -721,7 +744,13 @@ export default function SportsbookGame({ bankroll, onUpdateBankroll, onOpenTutor
         <button
           disabled={betSlip.length === 0 || stake > bankroll || simulating}
           onClick={handleSimulateMatches}
-          className={`w-full py-2.5 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow transition active:scale-95 ${
+          onPointerDown={(e) => {
+            if (e.button === 0 && betSlip.length > 0 && stake <= bankroll && !simulating) {
+              triggerHaptic(15);
+              handleSimulateMatches();
+            }
+          }}
+          className={`w-full py-2.5 rounded-xl font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow transition active:scale-95 touch-manipulation ${
             simulating
               ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
               : 'bg-gradient-to-r from-[#ffd700] via-[#f59e0b] to-[#ffd700] text-black shadow-[0_0_15px_rgba(245,158,11,0.5)] disabled:opacity-40'

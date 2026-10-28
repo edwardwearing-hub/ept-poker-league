@@ -10,6 +10,7 @@ import { VegasChipRack, VegasChipStack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
 import { playCardSound, playChipSound, playWinSound, playJackpotSound } from '@/lib/vegas/VegasAudio';
+import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getBlackjackAdvice } from '@/lib/vegas/VegasStrategyEngine';
 
@@ -507,18 +508,30 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
                 {outcomeMessage}
               </div>
             ) : (
-              <div className="relative group scale-90 sm:scale-100">
-                {/* Pulsing Golden Betting Spot with Solid Backplate */}
-                <div className="w-18 h-18 sm:w-22 sm:h-22 rounded-full border-2 border-gold/80 bg-zinc-950/95 flex flex-col items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,0.9),0_0_25px_rgba(212,175,55,0.4)]">
-                  <span className="text-[9px] sm:text-[10px] font-black uppercase text-gold tracking-widest">BET SPOT</span>
-                  <div className="mt-0.5">
-                    <VegasChipStack amount={activeWager} size="sm" />
+                <button
+                  type="button"
+                  disabled={gameState !== 'betting'}
+                  onPointerDown={() => {
+                    if (gameState === 'betting') {
+                      triggerHaptic(15);
+                      playChipSound();
+                      setBet((prev) => Math.min(bankroll, prev + 25));
+                    }
+                  }}
+                  className="relative group scale-90 sm:scale-100 cursor-pointer active:scale-95 transition touch-manipulation"
+                  title="Tap to add chips to bet spot"
+                >
+                  {/* Pulsing Golden Betting Spot with Solid Backplate */}
+                  <div className="w-18 h-18 sm:w-22 sm:h-22 rounded-full border-2 border-gold/80 bg-zinc-950/95 flex flex-col items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,0.9),0_0_25px_rgba(212,175,55,0.4)]">
+                    <span className="text-[9px] sm:text-[10px] font-black uppercase text-gold tracking-widest">BET SPOT</span>
+                    <div className="mt-0.5">
+                      <VegasChipStack amount={activeWager} size="sm" />
+                    </div>
                   </div>
-                </div>
-                <div className="text-[10px] sm:text-xs font-mono text-center text-white mt-0.5 font-black">
-                  £{activeWager} Active
-                </div>
-              </div>
+                  <div className="text-[10px] sm:text-xs font-mono text-center text-white mt-0.5 font-black">
+                    £{activeWager} Active
+                  </div>
+                </button>
             )}
           </div>
 
@@ -554,12 +567,12 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
         </Vegas3DTableArena>
       </div>
 
-      {/* Controls Bar with Authentic 3D Chip Rack (Pinned to bottom of locked container) */}
-      <div className="shrink-0 mt-auto bg-black/80 p-2 sm:p-3 rounded-2xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3">
-        {/* Chip Rack */}
+      {/* Controls Bar with Authentic 3D Chip Rack (Permanently anchored to bottom thumb zone) */}
+      <div className="shrink-0 mt-auto bg-black/90 p-2 sm:p-3 rounded-2xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3 touch-manipulation select-none z-20">
+        {/* Chip Rack with £5 to £250 selectors */}
         <div className="flex items-center gap-2">
           <VegasChipRack
-            values={[5, 10, 25, 50, 100]}
+            values={[5, 10, 25, 50, 100, 250]}
             selectedValue={bet}
             onSelect={setBet}
             disabled={gameState === 'player-turn' || gameState === 'dealer-turn'}
@@ -570,30 +583,48 @@ export default function BlackjackGame({ bankroll, onUpdateBankroll, onOpenTutori
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {gameState === 'betting' || gameState === 'game-over' ? (
             <button
+              type="button"
               disabled={bet > bankroll}
-              onClick={handleDeal}
-              className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-[#ffd700] via-[#cfb53b] to-[#ffd700] text-black font-black uppercase text-xs tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.5)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
+              onPointerDown={() => {
+                if (bet <= bankroll) {
+                  triggerHaptic(15);
+                  handleDeal();
+                }
+              }}
+              className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-[#ffd700] via-[#cfb53b] to-[#ffd700] text-black font-black uppercase text-xs tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.5)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 touch-manipulation cursor-pointer"
             >
               {gameState === 'game-over' ? 'DEAL NEXT HAND' : `DEAL (£${bet})`}
             </button>
           ) : gameState === 'player-turn' ? (
             <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
               <button
-                onClick={handleHit}
-                className="flex-1 sm:flex-initial px-4 sm:px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-xs tracking-wider shadow-lg active:scale-95 transition"
+                type="button"
+                onPointerDown={() => {
+                  triggerHaptic(15);
+                  handleHit();
+                }}
+                className="flex-1 sm:flex-initial px-4 sm:px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-xs tracking-wider shadow-lg active:scale-95 transition touch-manipulation cursor-pointer"
               >
                 HIT
               </button>
               <button
-                onClick={() => handleStand()}
-                className="flex-1 sm:flex-initial px-4 sm:px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-black uppercase text-xs tracking-wider shadow-lg active:scale-95 transition"
+                type="button"
+                onPointerDown={() => {
+                  triggerHaptic(15);
+                  handleStand();
+                }}
+                className="flex-1 sm:flex-initial px-4 sm:px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-black uppercase text-xs tracking-wider shadow-lg active:scale-95 transition touch-manipulation cursor-pointer"
               >
                 STAND
               </button>
               {playerCards.length === 2 && bankroll >= activeWager * 2 && (
                 <button
-                  onClick={handleDoubleDown}
-                  className="flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black uppercase text-xs tracking-wider shadow-lg active:scale-95 transition"
+                  type="button"
+                  onPointerDown={() => {
+                    triggerHaptic(15);
+                    handleDoubleDown();
+                  }}
+                  className="flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black uppercase text-xs tracking-wider shadow-lg active:scale-95 transition touch-manipulation cursor-pointer"
                 >
                   DOUBLE (£{activeWager * 2})
                 </button>

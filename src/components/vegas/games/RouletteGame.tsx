@@ -8,6 +8,7 @@ import VegasChip, { VegasChipStack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playChipSound, playWinSound, isSoundEnabled, setSoundEnabled } from '@/lib/vegas/VegasAudio';
+import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getActivePlayerName } from '@/lib/poker-trainer/tracker';
 import { fetchDealerComment, DealerEventPayload } from '@/lib/vegas/VegasAiService';
@@ -142,6 +143,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   const addNumberBet = (num: number | string) => {
     if (spinning) return;
     if (totalWager + selectedChip > bankroll) return;
+    triggerHaptic(15);
     playChipSound();
     setNumberBets((prev) => ({
       ...prev,
@@ -154,6 +156,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   const addColumnBet = (col: number) => {
     if (spinning) return;
     if (totalWager + selectedChip > bankroll) return;
+    triggerHaptic(15);
     playChipSound();
     setColumnBets((prev) => ({
       ...prev,
@@ -166,6 +169,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   const addDozenBet = (dozenId: '1st12' | '2nd12' | '3rd12') => {
     if (spinning) return;
     if (totalWager + selectedChip > bankroll) return;
+    triggerHaptic(15);
     playChipSound();
     setDozenBets((prev) => ({
       ...prev,
@@ -178,6 +182,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   const addOutsideBet = (key: string) => {
     if (spinning) return;
     if (totalWager + selectedChip > bankroll) return;
+    triggerHaptic(15);
     playChipSound();
     setOutsideBets((prev) => ({
       ...prev,
@@ -189,6 +194,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   // CLEAR ALL BETS
   const handleClearBets = () => {
     if (spinning || totalWager === 0) return;
+    triggerHaptic(15);
     playChipSound();
     setNumberBets({});
     setColumnBets({ 1: 0, 2: 0, 3: 0 });
@@ -200,6 +206,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   // UNDO LAST BET
   const handleUndo = () => {
     if (spinning || betHistory.length === 0) return;
+    triggerHaptic(15);
     playChipSound();
     const lastAction = betHistory[betHistory.length - 1];
     setBetHistory((prev) => prev.slice(0, -1));
@@ -235,6 +242,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   const handleDoubleBets = () => {
     if (spinning || totalWager === 0) return;
     if (totalWager * 2 > bankroll) return;
+    triggerHaptic(15);
     playChipSound();
 
     const doubleMap = <T extends Record<string | number, number>>(obj: T): T => {
@@ -264,6 +272,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
       Object.values(lastRoundBets.outside).reduce((a, b) => a + b, 0);
 
     if (prevTotal > bankroll) return;
+    triggerHaptic(15);
     playChipSound();
     setNumberBets({ ...lastRoundBets.numbers });
     setColumnBets({ ...lastRoundBets.columns });
@@ -274,6 +283,7 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
   // SPIN THE WHEEL
   const handleSpin = () => {
     if (spinning || totalWager === 0 || totalWager > bankroll) return;
+    triggerHaptic(15);
 
     // Save current bets for rebet
     setLastRoundBets({
@@ -708,8 +718,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                 {/* 00 (Top half) */}
                 <button
                   type="button"
-                  onClick={() => addNumberBet('00')}
-                  className={`flex-1 p-2 flex items-center justify-center relative hover:bg-white/10 transition group ${
+                  onPointerDown={() => addNumberBet('00')}
+                  className={`flex-1 p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation ${
                     numberBets['00'] ? 'bg-emerald-900/60' : ''
                   }`}
                 >
@@ -733,8 +743,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                 {/* 0 (Bottom half) */}
                 <button
                   type="button"
-                  onClick={() => addNumberBet(0)}
-                  className={`flex-1 p-2 flex items-center justify-center relative hover:bg-white/10 transition group ${
+                  onPointerDown={() => addNumberBet(0)}
+                  className={`flex-1 p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation ${
                     numberBets[0] ? 'bg-emerald-900/60' : ''
                   }`}
                 >
@@ -768,8 +778,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                       <button
                         key={num}
                         type="button"
-                        onClick={() => addNumberBet(num)}
-                        className={`flex-1 p-1.5 sm:p-2 flex items-center justify-center relative hover:bg-white/10 transition group ${
+                        onPointerDown={() => addNumberBet(num)}
+                        className={`flex-1 p-1.5 sm:p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation ${
                           bet > 0 ? 'bg-gold/15' : ''
                         }`}
                       >
@@ -809,8 +819,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                       <button
                         key={num}
                         type="button"
-                        onClick={() => addNumberBet(num)}
-                        className={`flex-1 p-1.5 sm:p-2 flex items-center justify-center relative hover:bg-white/10 transition group ${
+                        onPointerDown={() => addNumberBet(num)}
+                        className={`flex-1 p-1.5 sm:p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation ${
                           bet > 0 ? 'bg-gold/15' : ''
                         }`}
                       >
@@ -850,8 +860,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                       <button
                         key={num}
                         type="button"
-                        onClick={() => addNumberBet(num)}
-                        className={`flex-1 p-1.5 sm:p-2 flex items-center justify-center relative hover:bg-white/10 transition group ${
+                        onPointerDown={() => addNumberBet(num)}
+                        className={`flex-1 p-1.5 sm:p-2 flex items-center justify-center relative hover:bg-white/10 transition group touch-manipulation ${
                           bet > 0 ? 'bg-gold/15' : ''
                         }`}
                       >
@@ -888,8 +898,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                   <button
                     key={col}
                     type="button"
-                    onClick={() => addColumnBet(col)}
-                    className={`flex-1 p-2 flex items-center justify-center text-center font-serif font-black text-white text-xs sm:text-sm tracking-tight leading-tight hover:bg-white/10 transition relative ${
+                    onPointerDown={() => addColumnBet(col)}
+                    className={`flex-1 p-2 flex items-center justify-center text-center font-serif font-black text-white text-xs sm:text-sm tracking-tight leading-tight hover:bg-white/10 transition relative touch-manipulation ${
                       columnBets[col] ? 'bg-gold/20' : ''
                     }`}
                   >
@@ -914,8 +924,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                 <button
                   key={d.id}
                   type="button"
-                  onClick={() => addDozenBet(d.id as '1st12' | '2nd12' | '3rd12')}
-                  className={`flex-1 py-3 px-2 text-center font-serif font-black text-white text-xs sm:text-sm tracking-widest uppercase hover:bg-white/10 transition relative ${
+                  onPointerDown={() => addDozenBet(d.id as '1st12' | '2nd12' | '3rd12')}
+                  className={`flex-1 py-3 px-2 text-center font-serif font-black text-white text-xs sm:text-sm tracking-widest uppercase hover:bg-white/10 transition relative touch-manipulation ${
                     dozenBets[d.id] ? 'bg-gold/20' : ''
                   }`}
                 >
@@ -942,8 +952,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
                 <button
                   key={b.id}
                   type="button"
-                  onClick={() => addOutsideBet(b.id)}
-                  className={`flex-1 py-3 px-2 flex items-center justify-center hover:bg-white/10 transition relative ${
+                  onPointerDown={() => addOutsideBet(b.id)}
+                  className={`flex-1 py-3 px-2 flex items-center justify-center hover:bg-white/10 transition relative touch-manipulation ${
                     outsideBets[b.id] ? 'bg-gold/20' : ''
                   }`}
                 >
@@ -980,15 +990,15 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
         </div>
       )}
 
-      {/* 5. RECESSED MAHOGANY & LEATHER CONSOLE (BOTTOM CONTROLS BAR) */}
-      <div className="shrink-0 mt-auto rounded-xl sm:rounded-2xl p-1.5 sm:p-4 bg-gradient-to-b from-[#2a170d] via-[#1a0e08] to-[#0c0704] border-t-2 border-[#f59e0b]/80 shadow-[0_-8px_20px_rgba(0,0,0,0.8),inset_0_2px_4px_rgba(255,215,0,0.4)] flex flex-wrap items-center justify-between gap-1.5 sm:gap-4">
+      {/* 5. RECESSED MAHOGANY & LEATHER CONSOLE (BOTTOM THUMB ZONE CONTROLS BAR) */}
+      <div className="shrink-0 mt-auto rounded-xl sm:rounded-2xl p-1.5 sm:p-4 bg-gradient-to-b from-[#2a170d] via-[#1a0e08] to-[#0c0704] border-t-2 border-[#f59e0b]/80 shadow-[0_-8px_20px_rgba(0,0,0,0.8),inset_0_2px_4px_rgba(255,215,0,0.4)] flex flex-wrap items-center justify-between gap-1.5 sm:gap-4 touch-manipulation select-none z-20">
         {/* Left Side: Glossy Blue Action Buttons (X2, CLEAR) */}
         <div className="flex items-center gap-1.5 sm:gap-3">
           <button
             type="button"
             disabled={spinning || totalWager === 0}
-            onClick={handleDoubleBets}
-            className="px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[11px] sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            onPointerDown={handleDoubleBets}
+            className="px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[11px] sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
           >
             X2
           </button>
@@ -996,20 +1006,20 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
           <button
             type="button"
             disabled={spinning || totalWager === 0}
-            onClick={handleClearBets}
-            className="px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[11px] sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            onPointerDown={handleClearBets}
+            className="px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[11px] sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
           >
             CLEAR
           </button>
         </div>
 
-        {/* Center: Recessed Dark Velvet Chip Tray (10, 25, 50, 100, 250 + 500, 1000, 5000 in Konami High Roller Mode) */}
+        {/* Center: Recessed Dark Velvet Chip Tray (£5 to £250 + £500, £1k, £5k in Konami High Roller Mode) */}
         <div
-          className={`rounded-full bg-[#0a0a0d] border p-1 sm:p-1.5 shadow-[inset_0_4px_10px_rgba(0,0,0,0.9)] flex items-center gap-1 sm:gap-3 max-w-full overflow-x-auto touch-pan-x ${
+          className={`rounded-full bg-[#0a0a0d] border p-1 sm:p-1.5 shadow-[inset_0_4px_10px_rgba(0,0,0,0.9)] flex items-center gap-1 sm:gap-2.5 max-w-full overflow-x-auto touch-pan-x ${
             isHighRoller ? 'border-[#ffd700] shadow-[0_0_20px_rgba(255,215,0,0.3)]' : 'border-amber-600/40'
           }`}
         >
-          {(isHighRoller ? [10, 25, 50, 100, 250, 500, 1000, 5000] : [10, 25, 50, 100, 250]).map((val) => (
+          {(isHighRoller ? [5, 10, 25, 50, 100, 250, 500, 1000, 5000] : [5, 10, 25, 50, 100, 250]).map((val) => (
             <VegasChip
               key={val}
               value={val}
@@ -1026,8 +1036,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
           <button
             type="button"
             disabled={spinning || betHistory.length === 0}
-            onClick={handleUndo}
-            className="px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[11px] sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            onPointerDown={handleUndo}
+            className="px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[11px] sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
           >
             UNDO
           </button>
@@ -1035,8 +1045,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
           <button
             type="button"
             disabled={spinning || !lastRoundBets}
-            onClick={handleRebet}
-            className="px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[11px] sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            onPointerDown={handleRebet}
+            className="px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-[11px] sm:text-sm uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
           >
             REBET
           </button>
@@ -1045,8 +1055,8 @@ export default function RouletteGame({ bankroll, onUpdateBankroll, onOpenTutoria
           <button
             type="button"
             disabled={spinning || totalWager === 0 || totalWager > bankroll}
-            onClick={handleSpin}
-            className="px-4 py-1.5 sm:px-8 sm:py-3 rounded-xl bg-gradient-to-b from-[#00e676] via-[#00c853] to-[#00873a] border-2 border-[#b9f6ca] text-white font-black text-xs sm:text-base uppercase tracking-widest shadow-[0_6px_16px_rgba(0,200,83,0.5),inset_0_2px_4px_rgba(255,255,255,0.8)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 sm:gap-1.5"
+            onPointerDown={handleSpin}
+            className="px-4 py-1.5 sm:px-8 sm:py-3 rounded-xl bg-gradient-to-b from-[#00e676] via-[#00c853] to-[#00873a] border-2 border-[#b9f6ca] text-white font-black text-xs sm:text-base uppercase tracking-widest shadow-[0_6px_16px_rgba(0,200,83,0.5),inset_0_2px_4px_rgba(255,255,255,0.8)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 sm:gap-1.5 touch-manipulation cursor-pointer"
           >
             <Sparkles size={14} />
             <span>{spinning ? 'SPINNING...' : 'SPIN'}</span>

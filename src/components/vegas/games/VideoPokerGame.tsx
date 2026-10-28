@@ -8,6 +8,7 @@ import { VegasChipRack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playCardSound, playChipSound, playWinSound, playJackpotSound } from '@/lib/vegas/VegasAudio';
+import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getVideoPokerAdvice } from '@/lib/vegas/VegasStrategyEngine';
 import { useKonamiHighRoller } from '@/components/EasterEggs';
@@ -127,6 +128,7 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
 
   const toggleHold = (idx: number) => {
     if (step !== 'holding') return;
+    triggerHaptic(15);
     playCardSound();
     setHeld((prev) => {
       const copy = [...prev];
@@ -419,8 +421,11 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
                   cards.map((c, idx) => (
                     <div
                       key={idx}
-                      className="relative cursor-pointer transition-transform hover:-translate-y-1"
+                      className="relative cursor-pointer transition-transform hover:-translate-y-1 touch-manipulation"
                       onClick={() => toggleHold(idx)}
+                      onPointerDown={(e) => {
+                        if (e.button === 0) toggleHold(idx);
+                      }}
                     >
                       <VegasCard
                         card={c}
@@ -452,7 +457,10 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
                     type="button"
                     disabled={step !== 'holding'}
                     onClick={() => toggleHold(idx)}
-                    className={`group relative flex flex-col items-center justify-center py-2.5 sm:py-3.5 px-1 rounded-xl transition-all duration-150 active:translate-y-1 disabled:opacity-40 select-none ${
+                    onPointerDown={(e) => {
+                      if (e.button === 0 && step === 'holding') toggleHold(idx);
+                    }}
+                    className={`group relative flex flex-col items-center justify-center py-2.5 sm:py-3.5 px-1 rounded-xl transition-all duration-150 active:translate-y-1 disabled:opacity-40 select-none touch-manipulation ${
                       isHeld
                         ? 'bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 text-black border-2 border-amber-200 shadow-[0_0_22px_rgba(245,158,11,0.85),inset_0_2px_4px_rgba(255,255,255,0.9)] translate-y-0.5'
                         : 'bg-gradient-to-b from-zinc-700 via-zinc-800 to-zinc-900 text-zinc-300 border-2 border-zinc-600 shadow-[0_4px_10px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.2)] hover:border-zinc-400'
@@ -487,14 +495,14 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
           <div className="w-1.5 h-6 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981] animate-pulse" />
           <div className="text-[9px] font-mono text-zinc-400 uppercase leading-tight">
             <span className="text-emerald-400 font-bold block">Bill Validator</span>
-            <span>£5 - £100</span>
+            <span>£5 - £250</span>
           </div>
         </div>
 
         {/* Center: Chip Rack */}
         <div className="flex items-center gap-1.5">
           <VegasChipRack
-            values={[5, 10, 25, 50, 100]}
+            values={[5, 10, 25, 50, 100, 250]}
             selectedValue={bet}
             onSelect={setBet}
             disabled={step === 'holding'}
@@ -507,7 +515,13 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
             <button
               disabled={bet > bankroll}
               onClick={handleDeal}
-              className="px-4 py-2 sm:px-10 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#ffd700] via-[#f59e0b] to-[#ffd700] text-black font-black uppercase text-[11px] sm:text-sm tracking-wider shadow-[0_0_20px_rgba(245,158,11,0.6),inset_0_2px_4px_rgba(255,255,255,0.7)] hover:brightness-110 active:translate-y-1 transition disabled:opacity-40 flex items-center justify-center gap-1.5"
+              onPointerDown={(e) => {
+                if (e.button === 0 && bet <= bankroll) {
+                  triggerHaptic(15);
+                  handleDeal();
+                }
+              }}
+              className="px-4 py-2 sm:px-10 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#ffd700] via-[#f59e0b] to-[#ffd700] text-black font-black uppercase text-[11px] sm:text-sm tracking-wider shadow-[0_0_20px_rgba(245,158,11,0.6),inset_0_2px_4px_rgba(255,255,255,0.7)] hover:brightness-110 active:translate-y-1 transition disabled:opacity-40 flex items-center justify-center gap-1.5 touch-manipulation"
             >
               <Sparkles size={14} />
               <span>DEAL (£{bet})</span>
@@ -515,7 +529,13 @@ export default function VideoPokerGame({ bankroll, onUpdateBankroll, onOpenTutor
           ) : (
             <button
               onClick={handleDraw}
-              className="px-4 py-2 sm:px-10 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-blue-500 via-indigo-600 to-cyan-500 text-white font-black uppercase text-[11px] sm:text-sm tracking-wider shadow-[0_0_20px_rgba(59,130,246,0.7),inset_0_2px_4px_rgba(255,255,255,0.5)] hover:brightness-110 active:translate-y-1 transition flex items-center justify-center gap-1.5"
+              onPointerDown={(e) => {
+                if (e.button === 0) {
+                  triggerHaptic(15);
+                  handleDraw();
+                }
+              }}
+              className="px-4 py-2 sm:px-10 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-blue-500 via-indigo-600 to-cyan-500 text-white font-black uppercase text-[11px] sm:text-sm tracking-wider shadow-[0_0_20px_rgba(59,130,246,0.7),inset_0_2px_4px_rgba(255,255,255,0.5)] hover:brightness-110 active:translate-y-1 transition flex items-center justify-center gap-1.5 touch-manipulation"
             >
               <span>⚡ DRAW</span>
             </button>

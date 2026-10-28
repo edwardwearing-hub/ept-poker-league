@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { playChipSound } from '@/lib/vegas/VegasAudio';
+import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 import { useKonamiHighRoller } from '@/components/EasterEggs';
 
 export type ChipValue = 5 | 10 | 25 | 50 | 100 | 500 | 1000 | 5000 | number;
@@ -153,8 +154,10 @@ export default function VegasChip({
     },
   }[size];
 
-  const handleClick = () => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     if (disabled || !onClick) return;
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    triggerHaptic(15);
     playChipSound();
     onClick();
   };
@@ -163,16 +166,26 @@ export default function VegasChip({
     <button
       type="button"
       disabled={disabled}
-      onClick={handleClick}
-      className={`group relative rounded-full select-none transition-all duration-200 shrink-0 font-mono font-black ${
+      onPointerDown={handlePointerDown}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (disabled || !onClick) return;
+          triggerHaptic(15);
+          playChipSound();
+          onClick();
+        }
+      }}
+      style={{ touchAction: 'manipulation' }}
+      className={`group relative rounded-full select-none transition-all duration-150 shrink-0 font-mono font-black touch-manipulation ${
         sizeStyles.container
       } ${
         onClick && !disabled
-          ? 'cursor-pointer hover:scale-110 active:scale-95'
+          ? 'cursor-pointer hover:scale-105 active:scale-95'
           : 'cursor-default'
       } ${
         selected
-          ? '-translate-y-1.5 ring-4 ring-gold shadow-[0_0_20px_rgba(212,175,55,0.7)]'
+          ? '-translate-y-1 ring-4 ring-gold shadow-[0_0_20px_rgba(212,175,55,0.7)]'
           : 'shadow-[0_4px_8px_rgba(0,0,0,0.6)]'
       } ${disabled ? 'opacity-40 grayscale cursor-not-allowed' : ''} ${className}`}
     >
@@ -222,7 +235,7 @@ export default function VegasChip({
  * Chip Rack Bar for wagering (unlocks £500, £1k & £5k Whale chips in Konami High Roller Mode)
  */
 export function VegasChipRack({
-  values = [5, 10, 25, 50, 100, 500],
+  values = [5, 10, 25, 50, 100, 250],
   selectedValue,
   onSelect,
   disabled = false,
@@ -241,12 +254,13 @@ export function VegasChipRack({
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl bg-black/70 border ${
+      style={{ touchAction: 'pan-x' }}
+      className={`inline-flex items-center gap-1 sm:gap-2 p-1 sm:p-2 rounded-2xl bg-black/80 border ${
         isHighRoller ? 'border-[#ffd700]/60 shadow-[0_0_20px_rgba(255,215,0,0.2)]' : 'border-white/10 shadow-2xl'
-      } backdrop-blur-md max-w-full overflow-x-auto touch-pan-x ${className}`}
+      } backdrop-blur-md max-w-full overflow-x-auto touch-pan-x select-none ${className}`}
     >
       <span className="text-[10px] uppercase font-bold text-zinc-400 pl-1 pr-1 hidden sm:inline shrink-0">
-        {isHighRoller ? '👑 VIP Chips:' : 'Chips:'}
+        {isHighRoller ? '👑 VIP:' : 'Bet:'}
       </span>
       {displayValues.map((val) => (
         <VegasChip

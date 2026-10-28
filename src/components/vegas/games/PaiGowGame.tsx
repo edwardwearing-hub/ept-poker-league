@@ -10,6 +10,7 @@ import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
 import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playCardSound, playChipSound, playWinSound } from '@/lib/vegas/VegasAudio';
+import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 
 interface Props {
@@ -169,6 +170,7 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial,
   };
 
   const handleApplyHouseWay = () => {
+    triggerHaptic(15);
     playCardSound();
     const split = houseWaySplit(allPlayerCards);
     setHighCards(split.high);
@@ -180,6 +182,7 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial,
   const moveToLow = (card: CardModel) => {
     if (step !== 'setting') return;
     if (lowCards.length >= 2) return;
+    triggerHaptic(15);
     playCardSound();
     setHighCards((prev) => prev.filter((c) => c !== card));
     setLowCards((prev) => [...prev, card]);
@@ -188,6 +191,7 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial,
   const moveToHigh = (card: CardModel) => {
     if (step !== 'setting') return;
     if (highCards.length >= 5) return;
+    triggerHaptic(15);
     playCardSound();
     setLowCards((prev) => prev.filter((c) => c !== card));
     setHighCards((prev) => [...prev, card]);
@@ -460,6 +464,9 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial,
                   card={c}
                   size="md"
                   onClick={step === 'setting' ? () => moveToLow(c) : undefined}
+                  onPointerDown={step === 'setting' ? (e) => {
+                    if (e.button === 0) moveToLow(c);
+                  } : undefined}
                 />
               ))}
             </div>
@@ -483,6 +490,9 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial,
                   card={c}
                   size="md"
                   onClick={step === 'setting' ? () => moveToHigh(c) : undefined}
+                  onPointerDown={step === 'setting' ? (e) => {
+                    if (e.button === 0) moveToHigh(c);
+                  } : undefined}
                 />
               ))}
             </div>
@@ -495,10 +505,10 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial,
       </Vegas3DTableArena>
 
       {/* Controls Bar with Authentic 3D Chip Rack */}
-      <div className="shrink-0 mt-auto bg-black/70 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border border-white/10 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="shrink-0 mt-auto bg-black/70 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border border-white/10 flex items-center justify-between gap-2 sm:gap-4 z-20">
         <div className="flex items-center gap-1.5 sm:gap-2">
           <VegasChipRack
-            values={[5, 10, 25, 50, 100]}
+            values={[5, 10, 25, 50, 100, 250]}
             selectedValue={bet}
             onSelect={setBet}
             disabled={step === 'setting'}
@@ -507,7 +517,10 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial,
           {step === 'setting' && (
             <button
               onClick={handleApplyHouseWay}
-              className="px-2 sm:px-3 py-1.5 rounded-lg bg-purple-900/70 hover:bg-purple-800 text-purple-200 border border-purple-500/50 text-[10px] sm:text-xs font-bold flex items-center gap-1 transition shadow"
+              onPointerDown={(e) => {
+                if (e.button === 0) handleApplyHouseWay();
+              }}
+              className="px-2 sm:px-3 py-1.5 rounded-lg bg-purple-900/70 hover:bg-purple-800 text-purple-200 border border-purple-500/50 text-[10px] sm:text-xs font-bold flex items-center gap-1 transition shadow touch-manipulation active:scale-95"
             >
               <Wand2 size={12} />
               <span className="hidden sm:inline">Reset to House Way</span>
@@ -521,7 +534,13 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial,
             <button
               disabled={bet > bankroll}
               onClick={handleDeal}
-              className="px-4 py-2 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-xl hover:brightness-110 active:scale-95 transition"
+              onPointerDown={(e) => {
+                if (e.button === 0 && bet <= bankroll) {
+                  triggerHaptic(15);
+                  handleDeal();
+                }
+              }}
+              className="px-4 py-2 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-xl hover:brightness-110 active:scale-95 transition touch-manipulation disabled:opacity-40"
             >
               {step === 'showdown' ? 'Next 7 Cards' : `Deal 7 Cards (£${bet})`}
             </button>
@@ -529,7 +548,13 @@ export default function PaiGowGame({ bankroll, onUpdateBankroll, onOpenTutorial,
             <button
               disabled={highCards.length !== 5 || lowCards.length !== 2}
               onClick={handleConfirmHands}
-              className="px-4 py-2 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
+              onPointerDown={(e) => {
+                if (e.button === 0 && highCards.length === 5 && lowCards.length === 2) {
+                  triggerHaptic(15);
+                  handleConfirmHands();
+                }
+              }}
+              className="px-4 py-2 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#ffd700] to-[#cfb53b] text-black font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 touch-manipulation"
             >
               CONFIRM
             </button>

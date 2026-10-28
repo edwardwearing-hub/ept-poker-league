@@ -870,7 +870,13 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
           <button
             disabled={isAnySpinning || totalBet > bankroll}
             onClick={handleSpin}
-            className="group flex flex-col items-center cursor-pointer disabled:cursor-not-allowed select-none transition-transform active:scale-95"
+            onPointerDown={(e) => {
+              if (e.button === 0 && !isAnySpinning && totalBet <= bankroll) {
+                triggerHaptic(15);
+                handleSpin();
+              }
+            }}
+            className="group flex flex-col items-center cursor-pointer disabled:cursor-not-allowed select-none transition-transform active:scale-95 touch-manipulation"
             title="Pull 3D Slot Lever"
           >
             {/* Red Glossy Ball Knob */}
@@ -897,14 +903,14 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
       </div>
 
       {/* 5. TACTILE CASINO BUTTON DECK (CONSOLE) */}
-      <div className="shrink-0 mt-auto rounded-xl sm:rounded-2xl p-1.5 sm:p-4 bg-gradient-to-b from-[#2a173d] via-[#1a0c28] to-[#0c0514] border-t-2 border-[#f59e0b]/80 shadow-[0_-8px_20px_rgba(0,0,0,0.8),inset_0_2px_4px_rgba(255,215,0,0.4)] flex flex-wrap items-center justify-between gap-1.5 sm:gap-4">
+      <div className="shrink-0 mt-auto rounded-xl sm:rounded-2xl p-1.5 sm:p-4 bg-gradient-to-b from-[#2a173d] via-[#1a0c28] to-[#0c0514] border-t-2 border-[#f59e0b]/80 shadow-[0_-8px_20px_rgba(0,0,0,0.8),inset_0_2px_4px_rgba(255,215,0,0.4)] flex flex-wrap items-center justify-between gap-1.5 sm:gap-4 z-20">
         {/* Left Side: Bet Per Line & Lines Selector */}
         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
           {/* Bet per line chips */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             <span className="text-[10px] uppercase font-bold text-zinc-400">Bet / Line:</span>
             <VegasChipRack
-              values={[5, 10, 25, 50, 100]}
+              values={[5, 10, 25, 50, 100, 250]}
               selectedValue={betPerLine}
               onSelect={setBetPerLine}
               disabled={isAnySpinning}
@@ -919,7 +925,13 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
                 key={l}
                 disabled={isAnySpinning}
                 onClick={() => setActiveLines(l)}
-                className={`px-3 py-1 rounded-lg font-mono font-black text-xs transition ${
+                onPointerDown={(e) => {
+                  if (e.button === 0 && !isAnySpinning) {
+                    triggerHaptic(15);
+                    setActiveLines(l);
+                  }
+                }}
+                className={`px-3 py-1 rounded-lg font-mono font-black text-xs transition touch-manipulation active:scale-95 ${
                   activeLines === l
                     ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-[0_0_10px_#c084fc]'
                     : 'bg-white/5 text-zinc-400 hover:text-white'
@@ -938,9 +950,15 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
             type="button"
             onClick={() => {
               setIsTurbo((prev) => !prev);
-              triggerHaptic('tick');
+              triggerHaptic(15);
             }}
-            className={`flex-1 sm:flex-initial px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl border-2 font-black text-xs uppercase tracking-wider transition flex items-center justify-center gap-1.5 text-center ${
+            onPointerDown={(e) => {
+              if (e.button === 0) {
+                setIsTurbo((prev) => !prev);
+                triggerHaptic(15);
+              }
+            }}
+            className={`flex-1 sm:flex-initial px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl border-2 font-black text-xs uppercase tracking-wider transition flex items-center justify-center gap-1.5 text-center touch-manipulation active:scale-95 ${
               isTurbo
                 ? 'bg-gradient-to-r from-amber-500 to-yellow-500 border-yellow-200 text-black shadow-[0_0_15px_#f59e0b]'
                 : 'bg-white/10 border-white/20 text-zinc-300 hover:text-white'
@@ -959,7 +977,14 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
               setActiveLines(5);
               setBetPerLine(100);
             }}
-            className="flex-1 sm:flex-initial px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-xs uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4)] active:scale-95 transition disabled:opacity-40 text-center"
+            onPointerDown={(e) => {
+              if (e.button === 0 && !isAnySpinning) {
+                triggerHaptic(15);
+                setActiveLines(5);
+                setBetPerLine(100);
+              }
+            }}
+            className="flex-1 sm:flex-initial px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-b from-[#00b0ff] via-[#0091ea] to-[#0077c2] border-2 border-[#80d8ff]/70 text-white font-black text-xs uppercase tracking-wider shadow-[0_4px_10px_rgba(0,145,234,0.4)] active:scale-95 transition disabled:opacity-40 text-center touch-manipulation"
           >
             MAX BET
           </button>
@@ -973,7 +998,15 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
               setAutoSpin(next);
               if (next && !isAnySpinning) handleSpin();
             }}
-            className={`flex-1 sm:flex-initial px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl border-2 font-black text-xs uppercase tracking-wider transition text-center ${
+            onPointerDown={(e) => {
+              if (e.button === 0 && (!isAnySpinning || autoSpin)) {
+                triggerHaptic(15);
+                const next = !autoSpin;
+                setAutoSpin(next);
+                if (next && !isAnySpinning) handleSpin();
+              }
+            }}
+            className={`flex-1 sm:flex-initial px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl border-2 font-black text-xs uppercase tracking-wider transition text-center touch-manipulation active:scale-95 ${
               autoSpin
                 ? 'bg-red-600 border-white text-white shadow-[0_0_15px_#ef4444] animate-pulse'
                 : 'bg-white/10 border-white/20 text-zinc-300 hover:text-white'
@@ -987,7 +1020,13 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
             type="button"
             disabled={isAnySpinning || totalBet > bankroll}
             onClick={handleSpin}
-            className="flex-[2] sm:flex-initial px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-2xl bg-gradient-to-b from-[#00e676] via-[#00c853] to-[#00873a] border-2 border-[#b9f6ca] text-white font-black text-xs sm:text-base uppercase tracking-widest shadow-[0_6px_20px_rgba(0,200,83,0.6),inset_0_2px_4px_rgba(255,255,255,0.8)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 flex items-center justify-center gap-1.5 sm:gap-2"
+            onPointerDown={(e) => {
+              if (e.button === 0 && !isAnySpinning && totalBet <= bankroll) {
+                triggerHaptic(15);
+                handleSpin();
+              }
+            }}
+            className="flex-[2] sm:flex-initial px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-2xl bg-gradient-to-b from-[#00e676] via-[#00c853] to-[#00873a] border-2 border-[#b9f6ca] text-white font-black text-xs sm:text-base uppercase tracking-widest shadow-[0_6px_20px_rgba(0,200,83,0.6),inset_0_2px_4px_rgba(255,255,255,0.8)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 flex items-center justify-center gap-1.5 sm:gap-2 touch-manipulation"
             title="Spin (Spacebar)"
           >
             <Sparkles size={16} />

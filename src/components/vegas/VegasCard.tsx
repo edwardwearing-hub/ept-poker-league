@@ -19,6 +19,7 @@ interface Props {
   label?: string;
   isHeld?: boolean;
   onClick?: () => void;
+  onPointerDown?: (e: React.PointerEvent<HTMLDivElement>) => void;
   className?: string;
 }
 
@@ -32,6 +33,7 @@ export default function VegasCard({
   label,
   isHeld = false,
   onClick,
+  onPointerDown,
   className = '',
 }: Props) {
   const { isHighRoller } = useKonamiHighRoller();
@@ -65,8 +67,9 @@ export default function VegasCard({
   return (
     <div
       onClick={onClick}
-      className={`${sizeClasses} relative select-none font-sans font-black transition-all duration-300 ease-out group animate-in fade-in slide-in-from-top-6 duration-300 ${
-        onClick ? 'cursor-pointer hover:-translate-y-2 hover:shadow-[0_20px_30px_rgba(0,0,0,0.8)]' : 'cursor-default'
+      onPointerDown={onPointerDown}
+      className={`${sizeClasses} touch-manipulation relative select-none font-sans font-black transition-all duration-300 ease-out group animate-in fade-in slide-in-from-top-6 duration-300 ${
+        (onClick || onPointerDown) ? 'cursor-pointer hover:-translate-y-2 hover:shadow-[0_20px_30px_rgba(0,0,0,0.8)]' : 'cursor-default'
       } ${selected ? '-translate-y-3 ring-2 ring-gold shadow-[0_0_20px_#ffd700]' : 'shadow-[0_12px_22px_-4px_rgba(0,0,0,0.75)]'} ${
         highlighted ? 'ring-2 ring-emerald-400 shadow-[0_0_22px_rgba(52,211,153,0.85)]' : ''
       } ${dimmed ? 'opacity-40 grayscale' : 'opacity-100'} ${className}`}

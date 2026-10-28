@@ -10,6 +10,7 @@ import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
 import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playChipSound, playDiceSound, playWinSound } from '@/lib/vegas/VegasAudio';
+import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getCrapsAdvice } from '@/lib/vegas/VegasStrategyEngine';
 
@@ -51,12 +52,14 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
   const addBet = (type: BetType) => {
     if (rolling) return;
     if (totalActiveBets + selectedChip > bankroll) return;
+    triggerHaptic(15);
     playChipSound();
     setBets((prev) => ({ ...prev, [type]: prev[type] + selectedChip }));
   };
 
   const clearBets = () => {
     if (rolling) return;
+    triggerHaptic(15);
     playChipSound();
     setBets({
       pass: 0,
@@ -487,7 +490,10 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
             {/* Pass Line */}
             <div
               onClick={() => addBet('pass')}
-              className={`p-4 rounded-xl border-2 cursor-pointer transition select-none flex flex-col justify-between relative ${
+              onPointerDown={(e) => {
+                if (e.button === 0) addBet('pass');
+              }}
+              className={`p-4 rounded-xl border-2 cursor-pointer transition select-none touch-manipulation flex flex-col justify-between relative ${
                 bets.pass > 0
                   ? 'bg-emerald-950/90 border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.4)]'
                   : 'bg-black/60 border-white/20 hover:border-gold'
@@ -516,7 +522,10 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
             {/* Don't Pass */}
             <div
               onClick={() => addBet('dont-pass')}
-              className={`p-4 rounded-xl border-2 cursor-pointer transition select-none flex flex-col justify-between relative ${
+              onPointerDown={(e) => {
+                if (e.button === 0) addBet('dont-pass');
+              }}
+              className={`p-4 rounded-xl border-2 cursor-pointer transition select-none touch-manipulation flex flex-col justify-between relative ${
                 bets['dont-pass'] > 0
                   ? 'bg-red-950/90 border-red-400 shadow-[0_0_20px_rgba(239,68,68,0.4)]'
                   : 'bg-black/60 border-white/20 hover:border-gold'
@@ -545,7 +554,10 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
             {/* The Field */}
             <div
               onClick={() => addBet('field')}
-              className={`p-4 rounded-xl border-2 cursor-pointer transition select-none flex flex-col justify-between relative ${
+              onPointerDown={(e) => {
+                if (e.button === 0) addBet('field');
+              }}
+              className={`p-4 rounded-xl border-2 cursor-pointer transition select-none touch-manipulation flex flex-col justify-between relative ${
                 bets.field > 0
                   ? 'bg-purple-950/90 border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.4)]'
                   : 'bg-black/60 border-white/20 hover:border-gold'
@@ -576,7 +588,10 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
           <div className="grid grid-cols-3 gap-2 text-center text-xs relative z-10">
             <div
               onClick={() => addBet('any7')}
-              className={`p-2.5 rounded-xl border cursor-pointer transition select-none relative ${
+              onPointerDown={(e) => {
+                if (e.button === 0) addBet('any7');
+              }}
+              className={`p-2.5 rounded-xl border cursor-pointer transition select-none touch-manipulation relative ${
                 bets.any7 > 0
                   ? 'bg-gold/20 border-gold text-gold font-bold ring-1 ring-gold shadow-[0_0_15px_rgba(212,175,55,0.4)]'
                   : 'bg-black/60 border-white/10 text-zinc-300 hover:border-white/30'
@@ -594,7 +609,10 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
 
             <div
               onClick={() => addBet('hard6')}
-              className={`p-2.5 rounded-xl border cursor-pointer transition select-none relative ${
+              onPointerDown={(e) => {
+                if (e.button === 0) addBet('hard6');
+              }}
+              className={`p-2.5 rounded-xl border cursor-pointer transition select-none touch-manipulation relative ${
                 bets.hard6 > 0
                   ? 'bg-gold/20 border-gold text-gold font-bold ring-1 ring-gold shadow-[0_0_15px_rgba(212,175,55,0.4)]'
                   : 'bg-black/60 border-white/10 text-zinc-300 hover:border-white/30'
@@ -612,7 +630,10 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
 
             <div
               onClick={() => addBet('hard8')}
-              className={`p-2.5 rounded-xl border cursor-pointer transition select-none relative ${
+              onPointerDown={(e) => {
+                if (e.button === 0) addBet('hard8');
+              }}
+              className={`p-2.5 rounded-xl border cursor-pointer transition select-none touch-manipulation relative ${
                 bets.hard8 > 0
                   ? 'bg-gold/20 border-gold text-gold font-bold ring-1 ring-gold shadow-[0_0_15px_rgba(212,175,55,0.4)]'
                   : 'bg-black/60 border-white/10 text-zinc-300 hover:border-white/30'
@@ -639,11 +660,11 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
       )}
 
       {/* Controls Bar with Authentic 3D Chip Rack */}
-      <div className="shrink-0 mt-auto bg-black/60 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border border-white/10 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="shrink-0 mt-auto bg-black/60 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border border-white/10 flex items-center justify-between gap-2 sm:gap-4 z-20">
         {/* Chip Rack */}
         <div className="flex items-center gap-2">
           <VegasChipRack
-            values={[5, 10, 25, 50, 100]}
+            values={[5, 10, 25, 50, 100, 250]}
             selectedValue={selectedChip}
             onSelect={setSelectedChip}
             disabled={rolling}
@@ -651,7 +672,10 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
           {totalActiveBets > 0 && !rolling && (
             <button
               onClick={clearBets}
-              className="px-2 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 text-[10px] sm:text-xs font-bold transition"
+              onPointerDown={(e) => {
+                if (e.button === 0) clearBets();
+              }}
+              className="px-2 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 text-[10px] sm:text-xs font-bold transition touch-manipulation active:scale-95"
             >
               Clear
             </button>
@@ -670,7 +694,13 @@ export default function CrapsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
           <button
             disabled={rolling || totalActiveBets === 0 || totalActiveBets > bankroll}
             onClick={rollDice}
-            className="px-4 py-2 sm:px-8 sm:py-3 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-[0_0_15px_rgba(225,29,72,0.4)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
+            onPointerDown={(e) => {
+              if (e.button === 0 && !rolling && totalActiveBets > 0 && totalActiveBets <= bankroll) {
+                triggerHaptic(15);
+                rollDice();
+              }
+            }}
+            className="px-4 py-2 sm:px-8 sm:py-3 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-[0_0_15px_rgba(225,29,72,0.4)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 touch-manipulation"
           >
             {rolling ? 'ROLLING...' : 'SHOOT 🎲'}
           </button>

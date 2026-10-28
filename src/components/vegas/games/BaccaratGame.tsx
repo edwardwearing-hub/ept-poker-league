@@ -10,6 +10,7 @@ import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
 import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playCardSound, playChipSound, playWinSound } from '@/lib/vegas/VegasAudio';
+import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getBaccaratAdvice } from '@/lib/vegas/VegasStrategyEngine';
 
@@ -80,12 +81,14 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
   const addBet = (type: BaccaratBet) => {
     if (dealing) return;
     if (totalWager + selectedChip > bankroll) return;
+    triggerHaptic(15);
     playChipSound();
     setBets((prev) => ({ ...prev, [type]: prev[type] + selectedChip }));
   };
 
   const clearBets = () => {
     if (dealing) return;
+    triggerHaptic(15);
     playChipSound();
     setBets({
       player: 0,
@@ -515,7 +518,10 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
             {/* Player Bet */}
             <div
               onClick={() => addBet('player')}
-              className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all select-none flex flex-col items-center justify-center relative shadow-xl ${
+              onPointerDown={(e) => {
+                if (e.button === 0) addBet('player');
+              }}
+              className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all select-none touch-manipulation flex flex-col items-center justify-center relative shadow-xl ${
                 bets.player > 0
                   ? 'bg-blue-950 border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.7)]'
                   : 'bg-zinc-950/95 border-zinc-700 hover:border-blue-400 hover:bg-zinc-900'
@@ -537,7 +543,10 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
             {/* Tie Bet */}
             <div
               onClick={() => addBet('tie')}
-              className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all select-none flex flex-col items-center justify-center relative shadow-xl ${
+              onPointerDown={(e) => {
+                if (e.button === 0) addBet('tie');
+              }}
+              className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all select-none touch-manipulation flex flex-col items-center justify-center relative shadow-xl ${
                 bets.tie > 0
                   ? 'bg-emerald-950 border-emerald-400 shadow-[0_0_25px_rgba(52,211,153,0.7)]'
                   : 'bg-zinc-950/95 border-zinc-700 hover:border-emerald-400 hover:bg-zinc-900'
@@ -559,7 +568,10 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
             {/* Banker Bet */}
             <div
               onClick={() => addBet('banker')}
-              className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all select-none flex flex-col items-center justify-center relative shadow-xl ${
+              onPointerDown={(e) => {
+                if (e.button === 0) addBet('banker');
+              }}
+              className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all select-none touch-manipulation flex flex-col items-center justify-center relative shadow-xl ${
                 bets.banker > 0
                   ? 'bg-red-950 border-red-400 shadow-[0_0_25px_rgba(239,68,68,0.7)]'
                   : 'bg-zinc-950/95 border-zinc-700 hover:border-red-400 hover:bg-zinc-900'
@@ -583,7 +595,10 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
           <div className="grid grid-cols-2 gap-3 text-center text-xs relative z-10">
             <div
               onClick={() => addBet('player-pair')}
-              className={`p-3 rounded-xl border-2 cursor-pointer transition-all select-none relative shadow-lg ${
+              onPointerDown={(e) => {
+                if (e.button === 0) addBet('player-pair');
+              }}
+              className={`p-3 rounded-xl border-2 cursor-pointer transition-all select-none touch-manipulation relative shadow-lg ${
                 bets['player-pair'] > 0
                   ? 'bg-blue-950 border-blue-400 text-blue-200 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
                   : 'bg-zinc-950/95 border-zinc-700 text-zinc-200 hover:border-blue-400'
@@ -600,7 +615,10 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
 
             <div
               onClick={() => addBet('banker-pair')}
-              className={`p-3 rounded-xl border-2 cursor-pointer transition-all select-none relative shadow-lg ${
+              onPointerDown={(e) => {
+                if (e.button === 0) addBet('banker-pair');
+              }}
+              className={`p-3 rounded-xl border-2 cursor-pointer transition-all select-none touch-manipulation relative shadow-lg ${
                 bets['banker-pair'] > 0
                   ? 'bg-red-950 border-red-400 text-red-200 shadow-[0_0_15px_rgba(239,68,68,0.5)]'
                   : 'bg-zinc-950/95 border-zinc-700 text-zinc-200 hover:border-red-400'
@@ -626,11 +644,11 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
       )}
 
       {/* Controls Bar with Authentic 3D Chip Rack */}
-      <div className="shrink-0 mt-auto bg-black/60 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border border-white/10 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="shrink-0 mt-auto bg-black/60 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border border-white/10 flex items-center justify-between gap-2 sm:gap-4 z-20">
         {/* Chip Rack */}
         <div className="flex items-center gap-2">
           <VegasChipRack
-            values={[5, 10, 25, 50, 100]}
+            values={[5, 10, 25, 50, 100, 250]}
             selectedValue={selectedChip}
             onSelect={setSelectedChip}
             disabled={dealing}
@@ -638,7 +656,10 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
           {totalWager > 0 && !dealing && (
             <button
               onClick={clearBets}
-              className="px-2 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 text-[10px] sm:text-xs font-bold transition"
+              onPointerDown={(e) => {
+                if (e.button === 0) clearBets();
+              }}
+              className="px-2 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 text-[10px] sm:text-xs font-bold transition touch-manipulation active:scale-95"
             >
               Clear
             </button>
@@ -657,7 +678,13 @@ export default function BaccaratGame({ bankroll, onUpdateBankroll, onOpenTutoria
           <button
             disabled={dealing || totalWager === 0 || totalWager > bankroll}
             onClick={handleDeal}
-            className="px-4 py-2 sm:px-8 sm:py-3 rounded-xl bg-gradient-to-r from-[#ffd700] via-[#cfb53b] to-[#ffd700] text-black font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-[0_0_15px_rgba(212,175,55,0.5)] hover:brightness-110 active:scale-95 transition disabled:opacity-40"
+            onPointerDown={(e) => {
+              if (e.button === 0 && !dealing && totalWager > 0 && totalWager <= bankroll) {
+                triggerHaptic(15);
+                handleDeal();
+              }
+            }}
+            className="px-4 py-2 sm:px-8 sm:py-3 rounded-xl bg-gradient-to-r from-[#ffd700] via-[#cfb53b] to-[#ffd700] text-black font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-[0_0_15px_rgba(212,175,55,0.5)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 touch-manipulation"
           >
             {dealing ? 'DEALING...' : 'DEAL TABLEAU'}
           </button>

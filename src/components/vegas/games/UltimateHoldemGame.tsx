@@ -10,6 +10,7 @@ import VegasWinSplash from '../VegasWinSplash';
 import Vegas3DTableArena from '../Vegas3DTableArena';
 import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
 import { playCardSound, playChipSound, playWinSound, playJackpotSound } from '@/lib/vegas/VegasAudio';
+import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getUltimateHoldemAdvice } from '@/lib/vegas/VegasStrategyEngine';
 
@@ -554,7 +555,25 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
           </div>
         </div>
 
-        <div className="bg-black/70 p-3 rounded-2xl border border-white/10 flex flex-col items-center justify-center relative">
+        <div
+          onClick={() => {
+            if (street === 'betting' || street === 'showdown') {
+              triggerHaptic(15);
+              playChipSound();
+              setTripsBet((prev) => (prev >= 50 ? 0 : prev + 10));
+            }
+          }}
+          onPointerDown={(e) => {
+            if (e.button === 0 && (street === 'betting' || street === 'showdown')) {
+              triggerHaptic(15);
+              playChipSound();
+              setTripsBet((prev) => (prev >= 50 ? 0 : prev + 10));
+            }
+          }}
+          className={`bg-black/70 p-3 rounded-2xl border flex flex-col items-center justify-center relative touch-manipulation cursor-pointer transition ${
+            tripsBet > 0 ? 'border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'border-white/10'
+          }`}
+        >
           <span className="text-[10px] text-zinc-400 font-bold uppercase">Trips Bonus</span>
           <div className="font-mono text-amber-300 font-black text-sm mt-0.5">£{tripsBet}</div>
           <div className="mt-1">
@@ -584,11 +603,11 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
       </div>
 
       {/* Action Controls Bar with 3D Chip Rack */}
-      <div className="shrink-0 mt-auto bg-black/60 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border border-white/10 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="shrink-0 mt-auto bg-black/60 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border border-white/10 flex items-center justify-between gap-2 sm:gap-4 z-20">
         {/* Chip Rack */}
         <div className="flex items-center gap-1.5 sm:gap-3">
           <VegasChipRack
-            values={[5, 10, 25, 50, 100]}
+            values={[5, 10, 25, 50, 100, 250]}
             selectedValue={baseBet}
             onSelect={setBaseBet}
             disabled={street !== 'betting' && street !== 'showdown'}
@@ -601,7 +620,13 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
             <button
               disabled={totalAnteBlind + tripsBet > bankroll}
               onClick={handleDeal}
-              className="px-4 py-2 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-rose-500 to-amber-600 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-xl hover:brightness-110 active:scale-95 transition"
+              onPointerDown={(e) => {
+                if (e.button === 0 && totalAnteBlind + tripsBet <= bankroll) {
+                  triggerHaptic(15);
+                  handleDeal();
+                }
+              }}
+              className="px-4 py-2 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-rose-500 to-amber-600 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-xl hover:brightness-110 active:scale-95 transition touch-manipulation disabled:opacity-40"
             >
               {street === 'showdown' ? 'Next Hand' : `Deal (£${totalAnteBlind + tripsBet})`}
             </button>
@@ -609,13 +634,25 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
             <>
               <button
                 onClick={handlePreflopCheck}
-                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider transition"
+                onPointerDown={(e) => {
+                  if (e.button === 0) {
+                    triggerHaptic(15);
+                    handlePreflopCheck();
+                  }
+                }}
+                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider transition touch-manipulation active:scale-95"
               >
                 Check
               </button>
               <button
                 onClick={handlePreflopRaise4x}
-                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-lg transition"
+                onPointerDown={(e) => {
+                  if (e.button === 0) {
+                    triggerHaptic(15);
+                    handlePreflopRaise4x();
+                  }
+                }}
+                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-lg transition touch-manipulation active:scale-95"
               >
                 Raise 4x (£{baseBet * 4})
               </button>
@@ -624,13 +661,25 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
             <>
               <button
                 onClick={handleFlopCheck}
-                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider transition"
+                onPointerDown={(e) => {
+                  if (e.button === 0) {
+                    triggerHaptic(15);
+                    handleFlopCheck();
+                  }
+                }}
+                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider transition touch-manipulation active:scale-95"
               >
                 Check
               </button>
               <button
                 onClick={handleFlopRaise2x}
-                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-lg transition"
+                onPointerDown={(e) => {
+                  if (e.button === 0) {
+                    triggerHaptic(15);
+                    handleFlopRaise2x();
+                  }
+                }}
+                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-lg transition touch-manipulation active:scale-95"
               >
                 Raise 2x (£{baseBet * 2})
               </button>
@@ -639,13 +688,25 @@ export default function UltimateHoldemGame({ bankroll, onUpdateBankroll, onOpenT
             <>
               <button
                 onClick={handleFold}
-                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-red-700 hover:bg-red-600 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider transition"
+                onPointerDown={(e) => {
+                  if (e.button === 0) {
+                    triggerHaptic(15);
+                    handleFold();
+                  }
+                }}
+                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-red-700 hover:bg-red-600 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider transition touch-manipulation active:scale-95"
               >
                 Fold
               </button>
               <button
                 onClick={handleRiverRaise1x}
-                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-lg transition"
+                onPointerDown={(e) => {
+                  if (e.button === 0) {
+                    triggerHaptic(15);
+                    handleRiverRaise1x();
+                  }
+                }}
+                className="px-3 py-2 sm:px-6 sm:py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] sm:text-xs tracking-wider shadow-lg transition touch-manipulation active:scale-95"
               >
                 Raise 1x (£{baseBet})
               </button>

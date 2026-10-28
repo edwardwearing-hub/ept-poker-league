@@ -16,11 +16,16 @@ export type HapticType =
   | 'jackpot'     // Deep resonant rumble for major jackpots
   | 'bust';       // Heavy dual buzz on wipeout or bust
 
-export const triggerHaptic = (type: HapticType): void => {
+export const triggerHaptic = (type: HapticType | number = 'deal'): void => {
   if (typeof window === 'undefined') return;
   if (!('vibrate' in navigator) || typeof navigator.vibrate !== 'function') return;
 
   try {
+    if (typeof type === 'number') {
+      navigator.vibrate(type);
+      return;
+    }
+
     switch (type) {
       case 'tick':
         navigator.vibrate(8);
@@ -59,3 +64,23 @@ export const triggerHaptic = (type: HapticType): void => {
     // Ignore unsupported browser permission rejections
   }
 };
+
+/**
+ * Helper to produce zero-latency touch trigger props with 15ms haptic feedback
+ */
+export function touchActionProps(fn: () => void, haptic: HapticType | number = 15) {
+  return {
+    onPointerDown: (e: React.PointerEvent) => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      triggerHaptic(haptic);
+      fn();
+    },
+    onKeyDown: (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        triggerHaptic(haptic);
+        fn();
+      }
+    },
+  };
+}
