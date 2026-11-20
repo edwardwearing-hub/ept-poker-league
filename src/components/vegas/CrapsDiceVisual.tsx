@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 
 interface Props {
   value: number; // 1 to 6
@@ -15,10 +15,13 @@ export default function CrapsDiceVisual({
   size = 'md',
   className = '',
 }: Props) {
+  const [imgError, setImgError] = useState(false);
+  const clampedVal = Math.max(1, Math.min(6, Math.round(value) || 1));
+
   const sizeStyles = {
-    sm: 'w-10 h-10 rounded-lg p-1.5',
-    md: 'w-14 h-14 sm:w-16 sm:h-16 rounded-xl p-2',
-    lg: 'w-18 h-18 sm:w-20 sm:h-20 rounded-2xl p-2.5',
+    sm: 'w-10 h-10',
+    md: 'w-14 h-14 sm:w-16 sm:h-16',
+    lg: 'w-18 h-18 sm:w-20 sm:h-20',
   }[size];
 
   const dotSize = {
@@ -27,7 +30,7 @@ export default function CrapsDiceVisual({
     lg: 'w-3.5 h-3.5',
   }[size];
 
-  // Render authentic casino dice pips
+  // Render authentic casino dice pips (vector fallback)
   const renderPips = (val: number) => {
     switch (val) {
       case 1:
@@ -87,21 +90,29 @@ export default function CrapsDiceVisual({
 
   return (
     <div
-      className={`relative select-none ${sizeStyles} bg-gradient-to-br from-red-500 via-rose-600 to-red-950 border-2 border-red-300/90 shadow-[0_14px_28px_rgba(0,0,0,0.8),inset_0_3px_6px_rgba(255,255,255,0.6),inset_0_-4px_8px_rgba(0,0,0,0.7)] transition-all duration-150 ${
-        rolling ? 'animate-bounce scale-110 -rotate-12 shadow-[0_20px_40px_rgba(0,0,0,0.9)]' : 'hover:scale-105'
+      className={`relative select-none ${sizeStyles} transition-all duration-150 ${
+        rolling ? 'animate-bounce scale-110 -rotate-12 filter drop-shadow-[0_15px_25px_rgba(0,0,0,0.9)]' : 'hover:scale-105 filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.7)]'
       } ${className}`}
       style={{
         transformStyle: 'preserve-3d',
       }}
     >
-      {/* Specular glass reflection & bevel highlight */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/35 to-transparent rounded-[inherit] pointer-events-none" />
-      <div className="absolute top-0.5 inset-x-1 h-1 bg-white/40 rounded-full blur-[0.5px] pointer-events-none" />
-
-      {/* Pips Face */}
-      <div className="w-full h-full relative z-10 flex items-center justify-center">
-        {renderPips(value)}
-      </div>
+      {!imgError ? (
+        <img
+          src={`/dice/Dice_red${clampedVal}.png`}
+          alt={`Dice ${clampedVal}`}
+          className="w-full h-full object-contain pointer-events-none select-none drop-shadow-md"
+          onError={() => setImgError(true)}
+          draggable={false}
+        />
+      ) : (
+        <div className="w-full h-full rounded-xl bg-gradient-to-br from-red-500 via-rose-600 to-red-950 border-2 border-red-300/90 p-2 shadow-[inset_0_3px_6px_rgba(255,255,255,0.6),inset_0_-4px_8px_rgba(0,0,0,0.7)] relative overflow-hidden flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/35 to-transparent rounded-[inherit] pointer-events-none" />
+          <div className="w-full h-full relative z-10 flex items-center justify-center">
+            {renderPips(clampedVal)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

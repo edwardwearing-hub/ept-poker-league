@@ -30,6 +30,7 @@ import {
   playWheelTick,
   playWinSound,
   playJackpotSound,
+  playCoinPayout,
   isSoundEnabled,
 } from '@/lib/vegas/VegasAudio';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
@@ -750,6 +751,7 @@ export default function PubFruityGame({
   const handleExchangeCollectCash = () => {
     if (!exchangePending) return;
     pulseVibrate(15);
+    playCoinPayout();
     const { amount, description } = exchangePending;
     onUpdateBankroll(amount);
     setTotalOut((prev) => prev + amount);

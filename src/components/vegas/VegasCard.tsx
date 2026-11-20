@@ -1,12 +1,54 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useKonamiHighRoller } from '@/components/EasterEggs';
 
 export interface CardModel {
   rank: string;
   suit: '♠' | '♥' | '♦' | '♣' | string;
   value?: number;
+}
+
+export function getCardImagePath(card?: CardModel | null): string | null {
+  if (!card || !card.rank || !card.suit) return null;
+  const suitMap: Record<string, string> = {
+    '♠': 'spades',
+    's': 'spades',
+    'spades': 'spades',
+    '♥': 'hearts',
+    'h': 'hearts',
+    'hearts': 'hearts',
+    '♦': 'diamonds',
+    'd': 'diamonds',
+    'diamonds': 'diamonds',
+    '♣': 'clubs',
+    'c': 'clubs',
+    'clubs': 'clubs',
+  };
+  const suit = suitMap[card.suit.toLowerCase()] || suitMap[card.suit];
+  if (!suit) return null;
+
+  const rankStr = String(card.rank).toUpperCase().trim();
+  const rankMap: Record<string, string> = {
+    'A': 'ace',
+    'K': 'king',
+    'Q': 'queen',
+    'J': 'jack',
+    '10': '10',
+    'T': '10',
+    '9': '09',
+    '8': '08',
+    '7': '07',
+    '6': '06',
+    '5': '05',
+    '4': '04',
+    '3': '03',
+    '2': '02',
+  };
+  const rank = rankMap[rankStr];
+  if (!rank) return null;
+
+  return `/cards/${suit}_${rank}.png`;
 }
 
 interface Props {
@@ -37,6 +79,10 @@ export default function VegasCard({
   className = '',
 }: Props) {
   const { isHighRoller } = useKonamiHighRoller();
+  const [imgError, setImgError] = useState(false);
+  const [backImgError, setBackImgError] = useState(false);
+
+  const cardImgSrc = getCardImagePath(card);
   const isRed = card?.suit === '♥' || card?.suit === '♦';
   const isRoyalty = ['A', 'K', 'Q', 'J'].includes(card?.rank || '');
 
@@ -89,32 +135,44 @@ export default function VegasCard({
               : `bg-gradient-to-b from-white via-zinc-50 to-zinc-200 ${
                   isRoyalty ? 'border-amber-400/90 shadow-[inset_0_0_8px_rgba(212,175,55,0.4)]' : 'border-zinc-300'
                 }`
-          } flex flex-col justify-between p-1 sm:p-1.5 [backface-visibility:hidden] overflow-hidden`}
+          } flex flex-col justify-between [backface-visibility:hidden] overflow-hidden`}
         >
-          {/* Top Left Rank & Suit */}
-          <div className={`leading-none flex flex-col items-start ${pipColorClass}`}>
-            <span className="font-mono tracking-tighter text-[11px] sm:text-xs leading-none drop-shadow-sm font-black">
-              {card?.rank}
-            </span>
-            <span className="text-[10px] sm:text-[11px] leading-none drop-shadow-sm">{card?.suit}</span>
-          </div>
+          {!imgError && cardImgSrc ? (
+            <img
+              src={cardImgSrc}
+              alt={`${card?.rank} of ${card?.suit}`}
+              className="w-full h-full object-fill rounded-[inherit] select-none pointer-events-none drop-shadow-sm"
+              onError={() => setImgError(true)}
+              draggable={false}
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col justify-between p-1 sm:p-1.5 relative overflow-hidden">
+              {/* Top Left Rank & Suit */}
+              <div className={`leading-none flex flex-col items-start ${pipColorClass}`}>
+                <span className="font-mono tracking-tighter text-[11px] sm:text-xs leading-none drop-shadow-sm font-black">
+                  {card?.rank}
+                </span>
+                <span className="text-[10px] sm:text-[11px] leading-none drop-shadow-sm">{card?.suit}</span>
+              </div>
 
-          {/* Center Suit Art */}
-          <div
-            className={`absolute inset-0 flex items-center justify-center pointer-events-none select-none transition-transform group-hover:scale-110 ${centerPipColorClass}`}
-          >
-            <span className="text-xl sm:text-2xl drop-shadow-md opacity-90">{card?.suit}</span>
-          </div>
+              {/* Center Suit Art */}
+              <div
+                className={`absolute inset-0 flex items-center justify-center pointer-events-none select-none transition-transform group-hover:scale-110 ${centerPipColorClass}`}
+              >
+                <span className="text-xl sm:text-2xl drop-shadow-md opacity-90">{card?.suit}</span>
+              </div>
 
-          {/* Bottom Right Inverted Rank & Suit */}
-          <div
-            className={`leading-none flex flex-col items-end rotate-180 self-end ${pipColorClass}`}
-          >
-            <span className="font-mono tracking-tighter text-[11px] sm:text-xs leading-none drop-shadow-sm font-black">
-              {card?.rank}
-            </span>
-            <span className="text-[10px] sm:text-[11px] leading-none drop-shadow-sm">{card?.suit}</span>
-          </div>
+              {/* Bottom Right Inverted Rank & Suit */}
+              <div
+                className={`leading-none flex flex-col items-end rotate-180 self-end ${pipColorClass}`}
+              >
+                <span className="font-mono tracking-tighter text-[11px] sm:text-xs leading-none drop-shadow-sm font-black">
+                  {card?.rank}
+                </span>
+                <span className="text-[10px] sm:text-[11px] leading-none drop-shadow-sm">{card?.suit}</span>
+              </div>
+            </div>
+          )}
 
           {/* Subtle glossy sheen line across top corner */}
           <div
@@ -134,14 +192,24 @@ export default function VegasCard({
               : 'bg-gradient-to-br from-blue-900 via-indigo-950 to-blue-950 border-white/40'
           }`}
         >
-          <div className="w-[86%] h-[86%] rounded border-2 border-gold/60 bg-[radial-gradient(#ffd700_1px,transparent_1px)] [background-size:6px_6px] opacity-85 flex flex-col items-center justify-center shadow-inner">
-            <span className="text-gold font-mono text-[9px] font-black uppercase tracking-widest drop-shadow">
-              {isHighRoller ? '👑 24K' : 'VEGAS'}
-            </span>
-            <span className="text-white/60 text-[7px] uppercase font-bold tracking-tighter">
-              {isHighRoller ? 'OBSIDIAN' : 'VIP CLUB'}
-            </span>
-          </div>
+          {!backImgError ? (
+            <img
+              src={isHighRoller ? '/cards/back07.png' : '/cards/back01.png'}
+              alt="Card Back"
+              className="w-full h-full object-fill rounded-[inherit] select-none pointer-events-none"
+              onError={() => setBackImgError(true)}
+              draggable={false}
+            />
+          ) : (
+            <div className="w-[86%] h-[86%] rounded border-2 border-gold/60 bg-[radial-gradient(#ffd700_1px,transparent_1px)] [background-size:6px_6px] opacity-85 flex flex-col items-center justify-center shadow-inner">
+              <span className="text-gold font-mono text-[9px] font-black uppercase tracking-widest drop-shadow">
+                {isHighRoller ? '👑 24K' : 'VEGAS'}
+              </span>
+              <span className="text-white/60 text-[7px] uppercase font-bold tracking-tighter">
+                {isHighRoller ? 'OBSIDIAN' : 'VIP CLUB'}
+              </span>
+            </div>
+          )}
           {/* Back reflective gloss */}
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none" />
         </div>

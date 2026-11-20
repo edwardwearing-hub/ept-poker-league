@@ -1,8 +1,8 @@
 /**
- * Vegas Procedural Audio Engine
- * Uses the Web Audio API to synthesize realistic casino sound effects
- * (cards, chips, dice, roulette ticks, slot reels, win chimes)
- * with zero external asset dependencies or latency.
+ * Vegas Hybrid Audio Engine
+ * Combines high-fidelity recorded casino audio samples (cards, ceramic chips,
+ * dice table rolls, mechanical reel stops, win sirens, and jazz lounge tracks)
+ * with zero-latency Web Audio API procedural synthesis fallbacks.
  */
 
 let audioCtx: AudioContext | null = null;
@@ -22,6 +22,7 @@ function getAudioContext(): AudioContext | null {
 }
 
 export const SOUND_STORAGE_KEY = 'ept_vegas_sound_enabled';
+export const MUSIC_STORAGE_KEY = 'ept_vegas_music_enabled';
 
 export function isSoundEnabled(): boolean {
   if (typeof window === 'undefined') return false;
@@ -34,6 +35,97 @@ export function setSoundEnabled(enabled: boolean): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(SOUND_STORAGE_KEY, enabled ? 'true' : 'false');
   window.dispatchEvent(new CustomEvent('ept_vegas_sound_change', { detail: enabled }));
+  if (!enabled && loungeMusicAudio) {
+    pauseLoungeMusic();
+  }
+}
+
+export function isMusicEnabled(): boolean {
+  if (typeof window === 'undefined') return false;
+  const stored = localStorage.getItem(MUSIC_STORAGE_KEY);
+  return stored === 'true'; // Default OFF for respectful background music
+}
+
+export function setMusicEnabled(enabled: boolean): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(MUSIC_STORAGE_KEY, enabled ? 'true' : 'false');
+  window.dispatchEvent(new CustomEvent('ept_vegas_music_change', { detail: enabled }));
+  if (enabled) {
+    playLoungeMusic();
+  } else {
+    pauseLoungeMusic();
+  }
+}
+
+// Low-latency HTML5 Audio sample pool
+const samplePool: Record<string, HTMLAudioElement[]> = {};
+let loungeMusicAudio: HTMLAudioElement | null = null;
+
+function playAudioSample(src: string, volume = 0.5, onFail?: () => void): boolean {
+  if (typeof window === 'undefined' || !isSoundEnabled()) return false;
+  try {
+    if (!samplePool[src]) {
+      samplePool[src] = [];
+    }
+    let audio = samplePool[src].find((a) => a.paused || a.ended);
+    if (!audio) {
+      if (samplePool[src].length < 4) {
+        audio = new Audio(src);
+        samplePool[src].push(audio);
+      } else {
+        audio = samplePool[src][0];
+      }
+    }
+    audio.volume = Math.max(0, Math.min(1, volume));
+    audio.currentTime = 0;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        onFail?.();
+      });
+    }
+    return true;
+  } catch {
+    onFail?.();
+    return false;
+  }
+}
+
+/**
+ * Background Jazz Lounge Soundtrack
+ */
+export function playLoungeMusic(track = '/sounds/music/Raise_or_Fold_loop.mp3'): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!loungeMusicAudio) {
+      loungeMusicAudio = new Audio(track);
+      loungeMusicAudio.loop = true;
+      loungeMusicAudio.volume = 0.22; // Low ambient lounge volume
+    } else if (loungeMusicAudio.src !== track && !loungeMusicAudio.src.endsWith(track)) {
+      loungeMusicAudio.src = track;
+    }
+    loungeMusicAudio.play().catch(() => {});
+  } catch {
+    // Autoplay policy fallback
+  }
+}
+
+export function pauseLoungeMusic(): void {
+  if (loungeMusicAudio) {
+    try {
+      loungeMusicAudio.pause();
+    } catch {}
+  }
+}
+
+export function toggleLoungeMusic(): boolean {
+  const next = !isMusicEnabled();
+  setMusicEnabled(next);
+  return next;
+}
+
+export function isMusicPlaying(): boolean {
+  return loungeMusicAudio !== null && !loungeMusicAudio.paused;
 }
 
 function isKonamiHighRollerActive(): boolean {
@@ -53,13 +145,11 @@ function isKonamiHighRollerActive(): boolean {
  */
 export function playChipSound(): void {
   if (!isSoundEnabled()) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  const now = ctx.currentTime;
 
   if (isKonamiHighRollerActive()) {
-    // 8-Bit Arcade Gold Coin Chime (B5 -> E6)
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
     [987.77, 1318.51].forEach((freq, idx) => {
       const t = now + idx * 0.045;
       const osc = ctx.createOscillator();
@@ -76,30 +166,40 @@ export function playChipSound(): void {
     return;
   }
 
-  // Dual tone ceramic resonance
-  const osc1 = ctx.createOscillator();
-  const osc2 = ctx.createOscillator();
-  const gain = ctx.createGain();
+  // Realistic recorded chip sounds with variation
+  const chipVariants = [
+    '/sounds/chip_single_place_01.mp3',
+    '/sounds/chips/Casino_chip_Put_down_1.mp3',
+    '/sounds/chips/Casino_chip_Put_down_2.mp3',
+    '/sounds/chips/Casino_chip_Put_down_3.mp3',
+    '/sounds/chips/Casino_chip_Put_down_4.mp3',
+  ];
+  const chosenSrc = chipVariants[Math.floor(Math.random() * chipVariants.length)];
 
-  osc1.type = 'sine';
-  osc1.frequency.setValueAtTime(2200, now);
-  osc1.frequency.exponentialRampToValueAtTime(800, now + 0.04);
-
-  osc2.type = 'triangle';
-  osc2.frequency.setValueAtTime(4400, now);
-  osc2.frequency.exponentialRampToValueAtTime(1200, now + 0.03);
-
-  gain.gain.setValueAtTime(0.2, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-
-  osc1.connect(gain);
-  osc2.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc1.start(now);
-  osc2.start(now);
-  osc1.stop(now + 0.05);
-  osc2.stop(now + 0.05);
+  playAudioSample(chosenSrc, 0.45, () => {
+    // Procedural fallback
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(2200, now);
+    osc1.frequency.exponentialRampToValueAtTime(800, now + 0.04);
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(4400, now);
+    osc2.frequency.exponentialRampToValueAtTime(1200, now + 0.03);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.05);
+    osc2.stop(now + 0.05);
+  });
 }
 
 /**
@@ -107,35 +207,31 @@ export function playChipSound(): void {
  */
 export function playCardSound(): void {
   if (!isSoundEnabled()) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
 
-  const now = ctx.currentTime;
-  const bufferSize = ctx.sampleRate * 0.05; // 50ms
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-
-  for (let i = 0; i < bufferSize; i++) {
-    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.015));
-  }
-
-  const noise = ctx.createBufferSource();
-  noise.buffer = buffer;
-
-  const filter = ctx.createBiquadFilter();
-  filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(1400, now);
-  filter.Q.setValueAtTime(3.0, now);
-
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.3, now);
-  gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-
-  noise.connect(filter);
-  filter.connect(gain);
-  gain.connect(ctx.destination);
-
-  noise.start(now);
+  playAudioSample('/sounds/card_deal_01.mp3', 0.55, () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const bufferSize = ctx.sampleRate * 0.05;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.015));
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1400, now);
+    filter.Q.setValueAtTime(3.0, now);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(now);
+  });
 }
 
 /**
@@ -143,31 +239,28 @@ export function playCardSound(): void {
  */
 export function playDiceSound(): void {
   if (!isSoundEnabled()) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
 
-  const now = ctx.currentTime;
-  const taps = [0, 0.04, 0.09, 0.15];
-
-  taps.forEach((delay, idx) => {
-    const tapTime = now + delay;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sine';
-    const freq = 180 + Math.random() * 120 + idx * 30;
-    osc.frequency.setValueAtTime(freq, tapTime);
-    osc.frequency.exponentialRampToValueAtTime(60, tapTime + 0.03);
-
-    const vol = 0.25 / (idx + 1);
-    gain.gain.setValueAtTime(vol, tapTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, tapTime + 0.04);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(tapTime);
-    osc.stop(tapTime + 0.04);
+  playAudioSample('/sounds/dice_roll_table_01.mp3', 0.65, () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const taps = [0, 0.04, 0.09, 0.15];
+    taps.forEach((delay, idx) => {
+      const tapTime = now + delay;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      const freq = 180 + Math.random() * 120 + idx * 30;
+      osc.frequency.setValueAtTime(freq, tapTime);
+      osc.frequency.exponentialRampToValueAtTime(60, tapTime + 0.03);
+      const vol = 0.25 / (idx + 1);
+      gain.gain.setValueAtTime(vol, tapTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, tapTime + 0.04);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(tapTime);
+      osc.stop(tapTime + 0.04);
+    });
   });
 }
 
@@ -228,73 +321,106 @@ export function playSlotTick(): void {
  */
 export function playSlotStop(): void {
   if (!isSoundEnabled()) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
 
-  const now = ctx.currentTime;
-  
-  // Heavy low thud
-  const thud = ctx.createOscillator();
-  const thudGain = ctx.createGain();
-  thud.type = 'sine';
-  thud.frequency.setValueAtTime(160, now);
-  thud.frequency.exponentialRampToValueAtTime(45, now + 0.08);
+  playAudioSample('/sounds/slot_reel_stop_01.mp3', 0.6, () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const thud = ctx.createOscillator();
+    const thudGain = ctx.createGain();
+    thud.type = 'sine';
+    thud.frequency.setValueAtTime(160, now);
+    thud.frequency.exponentialRampToValueAtTime(45, now + 0.08);
+    thudGain.gain.setValueAtTime(0.35, now);
+    thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+    thud.connect(thudGain);
+    thudGain.connect(ctx.destination);
+    thud.start(now);
+    thud.stop(now + 0.09);
 
-  thudGain.gain.setValueAtTime(0.35, now);
-  thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
-
-  thud.connect(thudGain);
-  thudGain.connect(ctx.destination);
-  thud.start(now);
-  thud.stop(now + 0.09);
-
-  // Metal click snap
-  const snap = ctx.createOscillator();
-  const snapGain = ctx.createGain();
-  snap.type = 'square';
-  snap.frequency.setValueAtTime(880, now);
-  snap.frequency.exponentialRampToValueAtTime(220, now + 0.04);
-
-  snapGain.gain.setValueAtTime(0.15, now);
-  snapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-
-  snap.connect(snapGain);
-  snapGain.connect(ctx.destination);
-  snap.start(now);
-  snap.stop(now + 0.05);
+    const snap = ctx.createOscillator();
+    const snapGain = ctx.createGain();
+    snap.type = 'square';
+    snap.frequency.setValueAtTime(880, now);
+    snap.frequency.exponentialRampToValueAtTime(220, now + 0.04);
+    snapGain.gain.setValueAtTime(0.15, now);
+    snapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    snap.connect(snapGain);
+    snapGain.connect(ctx.destination);
+    snap.start(now);
+    snap.stop(now + 0.05);
+  });
 }
 
 /**
- * Win Arpeggio Chime (8-Bit Arcade Victory Arpeggio in Konami High Roller Mode)
+ * Slot Mechanical Lever Pull
+ */
+export function playLeverPull(): void {
+  if (!isSoundEnabled()) return;
+  playAudioSample('/sounds/slot_lever_pull_01.mp3', 0.55);
+}
+
+/**
+ * Physical Spin Button Punch
+ */
+export function playSpinButton(): void {
+  if (!isSoundEnabled()) return;
+  playAudioSample('/sounds/slot_spin_button_01.mp3', 0.5);
+}
+
+/**
+ * UI Bet Increase / Chip Increment
+ */
+export function playBetUp(): void {
+  if (!isSoundEnabled()) return;
+  playAudioSample('/sounds/ui_bet_up_01.mp3', 0.45);
+}
+
+/**
+ * Win Arpeggio Chime
  */
 export function playWinSound(): void {
   if (!isSoundEnabled()) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
 
-  const now = ctx.currentTime;
-  const highRoller = isKonamiHighRollerActive();
-  const notes = highRoller
-    ? [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98] // 6-note 8-bit fanfare
-    : [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+  if (isKonamiHighRollerActive()) {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98];
+    notes.forEach((freq, idx) => {
+      const noteTime = now + idx * 0.065;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, noteTime);
+      gain.gain.setValueAtTime(0.12, noteTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(noteTime);
+      osc.stop(noteTime + 0.35);
+    });
+    return;
+  }
 
-  notes.forEach((freq, idx) => {
-    const step = highRoller ? 0.065 : 0.09;
-    const noteTime = now + idx * step;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = highRoller ? 'square' : 'triangle';
-    osc.frequency.setValueAtTime(freq, noteTime);
-
-    gain.gain.setValueAtTime(highRoller ? 0.12 : 0.2, noteTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.35);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(noteTime);
-    osc.stop(noteTime + 0.35);
+  playAudioSample('/sounds/slot_win_small_01.mp3', 0.6, () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, idx) => {
+      const noteTime = now + idx * 0.09;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, noteTime);
+      gain.gain.setValueAtTime(0.2, noteTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(noteTime);
+      osc.stop(noteTime + 0.35);
+    });
   });
 }
 
@@ -303,68 +429,73 @@ export function playWinSound(): void {
  */
 export function playJackpotSound(): void {
   if (!isSoundEnabled()) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
 
-  const now = ctx.currentTime;
-  const fanfare = [
-    { f: 523.25, d: 0.1 },
-    { f: 659.25, d: 0.1 },
-    { f: 783.99, d: 0.1 },
-    { f: 1046.5, d: 0.2 },
-    { f: 880.0, d: 0.1 },
-    { f: 1046.5, d: 0.1 },
-    { f: 1318.51, d: 0.4 },
-  ];
-
-  let cumulativeTime = 0;
-  fanfare.forEach((n) => {
-    const t = now + cumulativeTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(n.f, t);
-
-    gain.gain.setValueAtTime(0.25, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + n.d * 1.5);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(t);
-    osc.stop(t + n.d * 1.5);
-    cumulativeTime += n.d;
+  playAudioSample('/sounds/slot_jackpot_alarm_01.mp3', 0.65, () => {
+    playAudioSample('/sounds/slot_win_big_01.mp3', 0.65, () => {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const fanfare = [
+        { f: 523.25, d: 0.1 },
+        { f: 659.25, d: 0.1 },
+        { f: 783.99, d: 0.1 },
+        { f: 1046.5, d: 0.2 },
+        { f: 880.0, d: 0.1 },
+        { f: 1046.5, d: 0.1 },
+        { f: 1318.51, d: 0.4 },
+      ];
+      let cumulativeTime = 0;
+      fanfare.forEach((n) => {
+        const t = now + cumulativeTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(n.f, t);
+        gain.gain.setValueAtTime(0.25, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + n.d * 1.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + n.d * 1.5);
+        cumulativeTime += n.d;
+      });
+    });
   });
 }
 
 /**
- * British Pub Fruity - Metallic 50p/£1 Coin Drop in Coin Mech
+ * Coin Mechanical Payout Pour (Hopper cascade)
+ */
+export function playCoinPayout(): void {
+  if (!isSoundEnabled()) return;
+  playAudioSample('/sounds/coin_payout_pour_01.mp3', 0.65);
+}
+
+/**
+ * British Pub Fruity - Metallic Coin Drop in Coin Mech
  */
 export function playPubCoinDrop(): void {
   if (!isSoundEnabled()) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
 
-  const now = ctx.currentTime;
-  const clicks = [0, 0.05, 0.11, 0.16];
-  clicks.forEach((delay, idx) => {
-    const t = now + delay;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(3200 + idx * 400, t);
-    osc.frequency.exponentialRampToValueAtTime(1400, t + 0.03);
-
-    gain.gain.setValueAtTime(0.2, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(t);
-    osc.stop(t + 0.04);
+  playAudioSample('/sounds/coin_single_drop_01.mp3', 0.55, () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const clicks = [0, 0.05, 0.11, 0.16];
+    clicks.forEach((delay, idx) => {
+      const t = now + delay;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(3200 + idx * 400, t);
+      osc.frequency.exponentialRampToValueAtTime(1400, t + 0.03);
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.04);
+    });
   });
 }
 

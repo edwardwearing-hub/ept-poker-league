@@ -1,5 +1,5 @@
-// Web Audio API Synthesizer for Casino & Syndicate Sound Effects
-// Generates responsive, zero-latency retro/modern casino sound effects without external audio files.
+// Hybrid Audio System for Casino & Syndicate Sound Effects
+// Combines authentic audio samples with zero-latency Web Audio API synthesizers as fallback.
 
 let audioCtx: AudioContext | null = null;
 
@@ -17,10 +17,23 @@ function getAudioContext(): AudioContext | null {
   return audioCtx;
 }
 
+function playSample(src: string, volume = 0.5): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const audio = new Audio(src);
+    audio.volume = volume;
+    audio.play().catch(() => {});
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const playSound = {
   // Soft, satisfying poker chip stack clink
   chip: (enabled = true) => {
     if (!enabled) return;
+    playSample('/sounds/chip_single_place_01.mp3', 0.45);
     const ctx = getAudioContext();
     if (!ctx) return;
 
@@ -44,6 +57,7 @@ export const playSound = {
   // Snappy card slide / dealing tick
   card: (enabled = true) => {
     if (!enabled) return;
+    playSample('/sounds/card_deal_01.mp3', 0.55);
     const ctx = getAudioContext();
     if (!ctx) return;
 
@@ -67,6 +81,7 @@ export const playSound = {
   // Crisp chip slide / bet placement click
   betPlaced: (enabled = true) => {
     if (!enabled) return;
+    playSample('/sounds/chip_single_place_01.mp3', 0.5);
     const ctx = getAudioContext();
     if (!ctx) return;
 
@@ -90,6 +105,7 @@ export const playSound = {
   // Two-tone bell cash register ding
   cash: (enabled = true) => {
     if (!enabled) return;
+    playSample('/sounds/coin_single_drop_01.mp3', 0.55);
     const ctx = getAudioContext();
     if (!ctx) return;
 
@@ -139,6 +155,7 @@ export const playSound = {
   // Big Jackpot / Blackjack Trumpet Fanfare
   jackpot: (enabled = true) => {
     if (!enabled) return;
+    playSample('/sounds/slot_win_big_01.mp3', 0.65);
     const ctx = getAudioContext();
     if (!ctx) return;
 

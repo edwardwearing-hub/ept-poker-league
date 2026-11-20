@@ -26,6 +26,7 @@ import {
   BookOpen,
   Activity,
   X,
+  Music,
 } from 'lucide-react';
 import {
   getActivePlayerName,
@@ -33,7 +34,7 @@ import {
   saveTrackerStatsForPlayer,
   transferGuestChipsToPlayer,
 } from '@/lib/poker-trainer/tracker';
-import { isSoundEnabled, setSoundEnabled } from '@/lib/vegas/VegasAudio';
+import { isSoundEnabled, setSoundEnabled, isMusicEnabled, toggleLoungeMusic } from '@/lib/vegas/VegasAudio';
 import { computeTotalAcademyChips, LEAGUE_PLAYERS } from '@/lib/poker-trainer/leaderboard';
 import { CareerTrackerStats } from '@/lib/poker-trainer/types';
 import { VEGAS_GAMES_CATALOG, VegasGameTutorial } from './vegas-rules-db';
@@ -106,6 +107,7 @@ export default function VegasLobby() {
   );
   const [showBailoutModal, setShowBailoutModal] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
+  const [musicOn, setMusicOn] = useState(false);
   const [showCompanionDrawer, setShowCompanionDrawer] = useState(false);
   const [authSyncNotice, setAuthSyncNotice] = useState<string | null>(null);
 
@@ -124,6 +126,7 @@ export default function VegasLobby() {
   // Sync player and bankroll on mount
   useEffect(() => {
     setSoundOn(isSoundEnabled());
+    setMusicOn(isMusicEnabled());
     const current = getActivePlayerName() || 'Guest Trainee';
     setActivePlayerName(current);
     const stats = loadTrackerStatsForPlayer(current);
@@ -273,7 +276,12 @@ export default function VegasLobby() {
           selectedGameId ? 'hidden md:flex' : 'flex'
         } relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-red-950/70 via-black to-purple-950/80 border-2 border-gold/50 p-4 sm:p-6 md:p-8 shadow-[0_0_40px_rgba(212,175,55,0.25)] flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6`}
       >
-        <div className="space-y-2 max-w-2xl">
+        {/* Luxury Monte Carlo / Vegas Interior Backdrop Watermark */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-25 pointer-events-none mix-blend-screen"
+          style={{ backgroundImage: "url('/backgrounds/Luxury_Casino_2048_1152.jpg')" }}
+        />
+        <div className="space-y-2 max-w-2xl relative z-10">
           <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-gold/15 border border-gold/40 text-gold text-[10px] sm:text-xs font-black uppercase tracking-widest">
             <Sparkles size={13} />
             <span>Fabulous Las Vegas Casino Floor</span>
@@ -352,30 +360,48 @@ export default function VegasLobby() {
             </div>
           )}
 
-          {/* Sound FX Toggle & Quick link back to Academy */}
-          <div className="flex items-center justify-between w-full gap-2 mt-1">
-            <button
-              onClick={() => {
-                const next = !soundOn;
-                setSoundOn(next);
-                setSoundEnabled(next);
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold text-zinc-300 hover:text-gold transition border border-white/10 hover:border-gold/30 bg-white/5"
-              title="Toggle Casino Sound FX"
-            >
-              {soundOn ? (
-                <Volume2 size={12} className="text-gold" />
-              ) : (
-                <VolumeX size={12} className="text-zinc-500" />
-              )}
-              <span>Sound: {soundOn ? 'ON' : 'MUTED'}</span>
-            </button>
+          {/* Sound FX & Ambient Music Toggles + Quick link back to Academy */}
+          <div className="flex flex-wrap items-center justify-between w-full gap-1.5 mt-1">
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  const next = !soundOn;
+                  setSoundOn(next);
+                  setSoundEnabled(next);
+                }}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-zinc-300 hover:text-gold transition border border-white/10 hover:border-gold/30 bg-white/5"
+                title="Toggle Casino Sound FX"
+              >
+                {soundOn ? (
+                  <Volume2 size={12} className="text-gold" />
+                ) : (
+                  <VolumeX size={12} className="text-zinc-500" />
+                )}
+                <span>Sound: {soundOn ? 'ON' : 'OFF'}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  const playing = toggleLoungeMusic();
+                  setMusicOn(playing);
+                }}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition border ${
+                  musicOn
+                    ? 'border-gold/60 text-gold bg-gold/10 shadow-[0_0_8px_rgba(255,215,0,0.3)]'
+                    : 'border-white/10 text-zinc-400 hover:text-zinc-200 bg-white/5'
+                }`}
+                title="Toggle Vegas Jazz Lounge Ambient Music"
+              >
+                <Music size={12} className={musicOn ? 'text-gold animate-pulse' : 'text-zinc-500'} />
+                <span>Music: {musicOn ? 'JAZZ ON' : 'OFF'}</span>
+              </button>
+            </div>
 
             <Link
               href="/academy?tab=leaderboard"
-              className="text-center py-1 px-2.5 rounded-lg text-[10px] font-black text-zinc-300 hover:text-gold transition border border-white/10 hover:border-gold/40 bg-white/5"
+              className="text-center py-1 px-2 rounded-lg text-[10px] font-black text-zinc-300 hover:text-gold transition border border-white/10 hover:border-gold/40 bg-white/5"
             >
-              ← Academy Leaderboard
+              ← Academy
             </Link>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { Sparkles, HelpCircle, Trophy, Volume2, VolumeX, Mic, MicOff, MessageSqu
 import { VegasChipRack } from '../VegasChip';
 import VegasWinSplash from '../VegasWinSplash';
 import VegasGuideOddsDrawer from '../VegasGuideOddsDrawer';
-import { playSlotTick, playSlotStop, playWinSound, playJackpotSound, isSoundEnabled, setSoundEnabled } from '@/lib/vegas/VegasAudio';
+import { playSlotTick, playSlotStop, playWinSound, playJackpotSound, playLeverPull, playSpinButton, playCoinPayout, isSoundEnabled, setSoundEnabled } from '@/lib/vegas/VegasAudio';
 import { triggerHaptic } from '@/lib/vegas/VegasHaptics';
 import { addGameHistory } from '@/lib/vegas/VegasHistory';
 import { getActivePlayerName } from '@/lib/poker-trainer/tracker';
@@ -241,6 +241,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
     setLeverPulled(true);
     setTimeout(() => setLeverPulled(false), 350);
     triggerHaptic('deal');
+    playLeverPull();
 
     setSpinningCols([true, true, true]);
     setWinningLines([]);
@@ -436,6 +437,7 @@ export default function SlotsGame({ bankroll, onUpdateBankroll, onOpenTutorial, 
 
       if (hasJackpot) {
         playJackpotSound();
+        setTimeout(() => playCoinPayout(), 400);
         triggerHaptic('jackpot');
         setIsJackpotSplash(true);
         setSplashDetails({
